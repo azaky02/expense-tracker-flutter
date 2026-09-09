@@ -26,26 +26,26 @@ class ScaffoldWithNavBar extends StatelessWidget {
           children: [
             _NavItem(
               icon: Icons.home,
-              label: 'nav.home'.tr(),
+              label: 'nav.home'.tr(context: context),
               selected: navigationShell.currentIndex == 0,
               onTap: () => navigationShell.goBranch(0),
             ),
             _NavItem(
               icon: Icons.receipt_long,
-              label: 'nav.transactions'.tr(),
+              label: 'nav.transactions'.tr(context: context),
               selected: navigationShell.currentIndex == 1,
               onTap: () => navigationShell.goBranch(1),
             ),
             const SizedBox(width: 48), // room for the docked FAB
             _NavItem(
               icon: Icons.credit_card,
-              label: 'nav.cards'.tr(),
+              label: 'nav.cards'.tr(context: context),
               selected: navigationShell.currentIndex == 2,
               onTap: () => navigationShell.goBranch(2),
             ),
             _NavItem(
               icon: Icons.settings,
-              label: 'nav.settings'.tr(),
+              label: 'nav.settings'.tr(context: context),
               selected: navigationShell.currentIndex == 3,
               onTap: () => navigationShell.goBranch(3),
             ),

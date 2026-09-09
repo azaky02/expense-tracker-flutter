@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/categories/presentation/category_management_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/lock/presentation/unlock_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/payment_methods/presentation/add_card_screen.dart';
+import '../../features/payment_methods/presentation/card_details_screen.dart';
+import '../../features/payment_methods/presentation/edit_card_screen.dart';
 import '../../features/payment_methods/presentation/payment_methods_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/transactions/presentation/add_transaction_screen.dart';
+import '../../features/transactions/presentation/edit_transaction_screen.dart';
 import '../../features/transactions/presentation/transactions_list_screen.dart';
 import '../security/lock_provider.dart';
 import '../settings/settings_provider.dart';
@@ -58,6 +63,41 @@ final routerProvider = Provider<GoRouter>((ref) {
           fullscreenDialog: true,
           child: AddTransactionScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/transactions/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: EditTransactionScreen(
+            transactionId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/cards/add',
+        pageBuilder: (context, state) => const MaterialPage(
+          fullscreenDialog: true,
+          child: AddCardScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/cards/:id',
+        builder: (context, state) => CardDetailsScreen(
+          cardId: int.parse(state.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/cards/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: EditCardScreen(
+            cardId: int.parse(state.pathParameters['id']!),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/categories',
+        builder: (context, state) => const CategoryManagementScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>

@@ -60,7 +60,17 @@
     "entertainment": "ترفيه",
     "health": "صحة",
     "other": "أخرى",
-    "manage": "إدارة الفئات"
+    "manage": "إدارة الفئات",
+    "manageCategories": "إدارة الفئات",
+    "addCategory": "إضافة فئة",
+    "editCategory": "تعديل الفئة",
+    "addSubCategory": "إضافة فئة فرعية",
+    "deleteCategory": "حذف الفئة",
+    "deleteConfirm": "حذف \"{name}\"؟ سيتم حذف الفئات الفرعية التابعة لها أيضاً.",
+    "noCategories": "لا توجد فئات بعد",
+    "name": "الاسم",
+    "icon": "الأيقونة (إيموجي)",
+    "color": "اللون"
   },
   "cards": {
     "paymentMethods": "طرق الدفع",

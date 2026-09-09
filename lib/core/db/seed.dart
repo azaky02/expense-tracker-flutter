@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/material.dart' show Color;
 
 import '../theme/app_colors.dart';
+import '../utils/color_utils.dart';
 import 'database.dart';
 import 'tables.dart';
 
@@ -53,9 +54,6 @@ final _defaultCategories = [
   ),
 ];
 
-String _colorToHex(Color c) =>
-    '#${c.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
-
 Future<void> seedIfNeeded(AppDatabase db) async {
   final existing = await (db.select(db.meta)..where((m) => m.key.equals(_seedFlagKey)))
       .getSingleOrNull();
@@ -73,7 +71,7 @@ Future<void> seedIfNeeded(AppDatabase db) async {
           CategoriesCompanion.insert(
             name: category.name,
             icon: category.icon,
-            color: _colorToHex(category.color),
+            color: colorToHex(category.color),
             type: category.type,
             isDefault: const Value(true),
           ),
@@ -88,7 +86,7 @@ Future<void> seedIfNeeded(AppDatabase db) async {
               parentCategoryId: Value(parentId),
               name: child.$1,
               icon: child.$2,
-              color: _colorToHex(category.color),
+              color: colorToHex(category.color),
               type: category.type,
               isDefault: const Value(true),
             ),

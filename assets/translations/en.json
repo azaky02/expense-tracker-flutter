@@ -60,7 +60,17 @@
     "entertainment": "Entertainment",
     "health": "Health",
     "other": "Other",
-    "manage": "Manage categories"
+    "manage": "Manage categories",
+    "manageCategories": "Manage categories",
+    "addCategory": "Add category",
+    "editCategory": "Edit category",
+    "addSubCategory": "Add sub-category",
+    "deleteCategory": "Delete category",
+    "deleteConfirm": "Delete \"{name}\"? This also deletes its sub-categories.",
+    "noCategories": "No categories yet",
+    "name": "Name",
+    "icon": "Icon (emoji)",
+    "color": "Color"
   },
   "cards": {
     "paymentMethods": "Payment methods",
