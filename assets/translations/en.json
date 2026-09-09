@@ -1,0 +1,130 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "optional": "optional",
+    "cash": "Cash",
+    "card": "Card",
+    "egp": "EGP",
+    "today": "Today",
+    "all": "All",
+    "loading": "Loading..."
+  },
+  "nav": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "cards": "Cards",
+    "settings": "Settings"
+  },
+  "onboarding": {
+    "welcome": "Welcome to My Expenses 👋",
+    "getStarted": "Get started"
+  },
+  "dashboard": {
+    "greeting": "Hi, {name} 👋",
+    "greetingGeneric": "Welcome 👋",
+    "totalSpentThisMonth": "Total spent this month",
+    "income": "Income",
+    "remaining": "Remaining",
+    "expenseByCategory": "Expenses by category",
+    "recentTransactions": "Recent transactions",
+    "dueSoonAlert": "{cardName} due in {days} days",
+    "reports": "Reports"
+  },
+  "transactions": {
+    "addTitle": "Add new transaction",
+    "expense": "Expense",
+    "income": "Income",
+    "amount": "Amount",
+    "date": "Date",
+    "category": "Category",
+    "paymentMethod": "Payment method",
+    "chooseCard": "Choose a card",
+    "beneficiary": "Beneficiary",
+    "beneficiaryPlaceholder": "Who was this expense for?",
+    "previous": "Previous",
+    "notes": "Notes",
+    "attachment": "Attachment",
+    "attachInvoice": "Take a photo of the invoice or pick from gallery",
+    "saveTransaction": "Save transaction",
+    "quickNote": "Quick note",
+    "monthTotalForCategory": "{category} total this month: {amount}"
+  },
+  "categories": {
+    "food": "Food & Drink",
+    "transport": "Transport",
+    "bills": "Bills",
+    "entertainment": "Entertainment",
+    "health": "Health",
+    "other": "Other",
+    "manage": "Manage categories"
+  },
+  "cards": {
+    "paymentMethods": "Payment methods",
+    "cashSpendThisMonth": "This month's spend: {amount}",
+    "addNewCard": "Add new card",
+    "cardDetails": "Card details",
+    "creditLimit": "Credit limit",
+    "dueDate": "Due date",
+    "spendThisMonth": "This month's spend",
+    "cardTransactions": "This card's transactions",
+    "editCard": "Edit card details",
+    "bank": "Bank",
+    "cardType": "Card type",
+    "cardCategory": "Category",
+    "credit": "Credit",
+    "debit": "Debit",
+    "nickname": "Nickname",
+    "last4Digits": "Last 4 digits"
+  },
+  "reports": {
+    "byPaymentMethod": "Expenses by payment method",
+    "monthOverMonth": "Month over month",
+    "byBeneficiary": "By beneficiary",
+    "exportPdf": "Export PDF"
+  },
+  "budgets": {
+    "title": "Category budget",
+    "monthlyLimit": "Monthly limit",
+    "enable": "Enable alert"
+  },
+  "dates": {
+    "year": "Year",
+    "month": "Month",
+    "day": "Day",
+    "gregorian": "Gregorian",
+    "hijri": "Hijri"
+  },
+  "settings": {
+    "yourName": "Your name",
+    "yourNamePlaceholder": "Enter your name",
+    "language": "Language",
+    "calendar": "Calendar",
+    "notifications": "Notifications",
+    "appLock": "App lock",
+    "backup": "Backup"
+  },
+  "security": {
+    "enterPin": "Enter your PIN",
+    "wrongPin": "Incorrect PIN",
+    "useBiometrics": "Use Face ID / Fingerprint",
+    "unlockPrompt": "Unlock the app",
+    "setupPin": "Set up a PIN",
+    "confirmPin": "Confirm PIN",
+    "pinMismatch": "PINs don't match",
+    "enableAppLock": "Enable app lock",
+    "enableBiometrics": "Enable Face ID / Fingerprint",
+    "pinSetSuccess": "PIN set up successfully"
+  },
+  "backup": {
+    "description": "Export all your data (transactions, cards, categories) to a file, or restore it from a previous file. Attached receipt photos are not included.",
+    "export": "Export backup",
+    "import": "Restore backup",
+    "importWarningTitle": "Restore backup",
+    "importWarningBody": "This will completely replace all current data. Continue?",
+    "importSuccess": "Restored successfully"
+  }
+}
