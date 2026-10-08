@@ -4,6 +4,7 @@ import '../../../core/db/database.dart';
 import '../../../core/db/tables.dart';
 import '../../../core/theme/app_semantic_colors.dart';
 import '../../../core/utils/color_utils.dart';
+import '../../accounts/data/account_repository.dart';
 
 class CardWithBank {
   const CardWithBank({required this.card, required this.bankName});
@@ -58,7 +59,7 @@ class CardRepository {
     final existingCount = await (_db.select(_db.cards)).get().then((rows) => rows.length);
     final color = AppSemanticColors.light.cardColorRotation[
         existingCount % AppSemanticColors.light.cardColorRotation.length];
-    return _db.into(_db.cards).insert(
+    final id = await _db.into(_db.cards).insert(
           CardsCompanion.insert(
             bankId: bankId,
             cardType: cardType,
@@ -71,6 +72,9 @@ class CardRepository {
             color: colorToHex(color),
           ),
         );
+    // Every card is also an account (balance, transfers, transactions).
+    await ensureCardAccount(_db, await (_db.select(_db.cards)..where((c) => c.id.equals(id))).getSingle());
+    return id;
   }
 
   Future<void> update(
@@ -83,8 +87,12 @@ class CardRepository {
     int? dueDateDay,
     int? statementDateDay,
     double? creditLimit,
-  }) {
-    return (_db.update(_db.cards)..where((c) => c.id.equals(id))).write(
+  }) async {
+    await (_db.update(_db.accounts)..where((a) => a.cardId.equals(id))).write(AccountsCompanion(
+          name: Value(nickname),
+          type: Value(cardCategory == CardCategory.credit ? AccountType.creditCard : AccountType.debitCard),
+        ));
+    await (_db.update(_db.cards)..where((c) => c.id.equals(id))).write(
       CardsCompanion(
         bankId: Value(bankId),
         cardType: Value(cardType),
@@ -98,8 +106,8 @@ class CardRepository {
     );
   }
 
-  Future<void> deactivate(int id) {
-    return (_db.update(_db.cards)..where((c) => c.id.equals(id)))
-        .write(const CardsCompanion(isActive: Value(false)));
+  Future<void> deactivate(int id) async {
+    await (_db.update(_db.accounts)..where((a) => a.cardId.equals(id))).write(const AccountsCompanion(isActive: Value(false)));
+    await (_db.update(_db.cards)..where((c) => c.id.equals(id))).write(const CardsCompanion(isActive: Value(false)));
   }
 }

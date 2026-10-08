@@ -22,6 +22,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/transactions/presentation/add_transaction_screen.dart';
 import '../../features/transactions/presentation/edit_transaction_screen.dart';
 import '../../features/transactions/presentation/transactions_list_screen.dart';
+import '../db/tables.dart';
 import '../security/lock_provider.dart';
 import '../settings/settings_provider.dart';
 import 'scaffold_with_nav_bar.dart';
@@ -68,7 +69,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/transactions/add',
         pageBuilder: (context, state) => MaterialPage(
           fullscreenDialog: true,
-          child: AddTransactionScreen(income: state.uri.queryParameters['type'] == 'income'),
+          child: AddTransactionScreen(
+            type: switch (state.uri.queryParameters['type']) {
+              'income' => TransactionType.income,
+              'transfer' => TransactionType.transfer,
+              _ => TransactionType.expense,
+            },
+          ),
         ),
       ),
       GoRoute(

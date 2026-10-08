@@ -91,6 +91,7 @@ class SyncService {
     await _db.transaction(() async {
       await _setMeta(syncApplyingKey, '1');
       await _db.customStatement('DELETE FROM ledger_entries');
+      await _db.customStatement('UPDATE transactions SET account_id = NULL, to_account_id = NULL');
       for (final t in syncTables.reversed) {
         await _db.customStatement('DELETE FROM ${t.table}');
       }
@@ -99,7 +100,7 @@ class SyncService {
       await _db.customStatement('DELETE FROM ledger_entries');
       await _db.customStatement('DELETE FROM app_notifications');
       await _delMeta(syncApplyingKey);
-      for (final k in [_cursorKey, _ledgerCursorKey, _notifCursorKey, _userKey, _lastSyncKey, 'seed-completed-v1']) {
+      for (final k in [_cursorKey, _ledgerCursorKey, _notifCursorKey, _userKey, _lastSyncKey, 'seed-completed-v1', 'accounts-v1']) {
         await _delMeta(k);
       }
     });
@@ -211,6 +212,8 @@ class SyncService {
     final banks = await _db.select(_db.banks).get();
     final cats = await _db.select(_db.categories).get();
     final cards = await _db.select(_db.cards).get();
+    final accounts = await _db.select(_db.accounts).get();
+    final accSync = {for (final a in accounts) a.id: a.syncId};
     final bankSync = {for (final b in banks) b.id: b.syncId};
     final catSync = {for (final c in cats) c.id: c.syncId};
     final cardSync = {for (final c in cards) c.id: c.syncId};
@@ -245,6 +248,13 @@ class SyncService {
         'creditLimit': c.creditLimit, 'color': c.color, 'isActive': c.isActive,
       });
     }
+    for (final a in accounts.where((a) => a.dirty && a.syncId != null)) {
+      add('accounts', 'accounts', a.id, a.updatedAt, {
+        'id': a.syncId, 'name': a.name, 'type': a.type.name, 'openingBalance': a.openingBalance,
+        'currency': a.currency, 'color': a.color, 'cardId': a.cardId == null ? null : cardSync[a.cardId],
+        'isActive': a.isActive,
+      });
+    }
     for (final b in await (_db.select(_db.beneficiaries)..where((b) => b.dirty.equals(true))).get()) {
       add('beneficiaries', 'beneficiaries', b.id, b.updatedAt, {
         'name': b.name, 'lastUsedAt': b.lastUsedAt.toUtc().toIso8601String(),
@@ -259,6 +269,8 @@ class SyncService {
         'paymentMethodType': t.paymentMethodType.name, 'cardId': card, 'date': _ymd(t.date),
         'note': t.note, 'beneficiaryName': t.beneficiaryName,
         'createdAt': t.createdAt.toUtc().toIso8601String(),
+        'accountId': t.accountId == null ? null : accSync[t.accountId],
+        'toAccountId': t.toAccountId == null ? null : accSync[t.toAccountId],
       });
     }
     for (final b in await (_db.select(_db.categoryBudgets)..where((b) => b.dirty.equals(true))).get()) {
@@ -318,6 +330,9 @@ class SyncService {
         applied++;
       }
     }
+    for (final r in live('accounts')) {
+      if (await _upsertAccount(r)) applied++;
+    }
     for (final r in live('beneficiaries')) {
       if (await _upsertBeneficiary(r)) applied++;
     }
@@ -364,6 +379,14 @@ class SyncService {
       // A person with ledger history on this device is kept (history is never dropped).
       if (!used && local.updatedAt <= _secs(r['deletedAt'] as String)) {
         await (_db.delete(_db.people)..where((p) => p.id.equals(local.id))).go();
+        applied++;
+      }
+    }
+    for (final r in dead('accounts')) {
+      // Archived rather than removed: transactions keep pointing at the account.
+      final local = await (_db.select(_db.accounts)..where((a) => a.syncId.equals(r['id'] as String))).getSingleOrNull();
+      if (local != null && local.updatedAt <= _secs(r['deletedAt'] as String)) {
+        await (_db.update(_db.accounts)..where((a) => a.id.equals(local.id))).write(const AccountsCompanion(isActive: Value(false)));
         applied++;
       }
     }
@@ -619,6 +642,38 @@ class SyncService {
     return true;
   }
 
+  Future<bool> _upsertAccount(_Json r) async {
+    final id = r['id'] as String;
+    int? cardId;
+    if (r['cardId'] != null) cardId = (await _idMap('cards'))[r['cardId'] as String];
+    final local = await (_db.select(_db.accounts)..where((a) => a.syncId.equals(id))).getSingleOrNull();
+    if (!_newer(local?.updatedAt, r)) return false;
+    final comp = AccountsCompanion(
+      syncId: Value(id),
+      name: Value(r['name'] as String),
+      type: Value(_enum(AccountType.values, r['type'], AccountType.other)),
+      openingBalance: Value((r['openingBalance'] as num).toDouble()),
+      currency: Value(r['currency'] as String? ?? 'EGP'),
+      color: Value(r['color'] as String),
+      cardId: Value(cardId),
+      isActive: Value(r['isActive'] as bool),
+      updatedAt: Value(_secs(r['updatedAt'] as String)),
+      dirty: const Value(false),
+    );
+    if (local == null) {
+      // Another device may already have created the same card's account under a different id.
+      final sameCard = cardId == null ? null : await (_db.select(_db.accounts)..where((a) => a.cardId.equals(cardId!))).getSingleOrNull();
+      if (sameCard != null) {
+        await (_db.update(_db.accounts)..where((a) => a.id.equals(sameCard.id))).write(comp);
+      } else {
+        await _db.into(_db.accounts).insert(comp);
+      }
+    } else {
+      await (_db.update(_db.accounts)..where((a) => a.id.equals(local.id))).write(comp);
+    }
+    return true;
+  }
+
   Future<bool> _upsertBeneficiary(_Json r) async {
     final name = r['name'] as String;
     final local = await (_db.select(_db.beneficiaries)..where((b) => b.name.equals(name))).getSingleOrNull();
@@ -648,7 +703,10 @@ class SyncService {
     }
     final local = await (_db.select(_db.transactions)..where((t) => t.syncId.equals(id))).getSingleOrNull();
     if (!_newer(local?.updatedAt, r)) return false;
+    final accounts = await _idMap('accounts');
     final comp = TransactionsCompanion(
+      accountId: Value(r['accountId'] == null ? null : accounts[r['accountId'] as String]),
+      toAccountId: Value(r['toAccountId'] == null ? null : accounts[r['toAccountId'] as String]),
       syncId: Value(id),
       amount: Value((r['amount'] as num).toDouble()),
       type: Value(_enum(TransactionType.values, r['type'], TransactionType.expense)),

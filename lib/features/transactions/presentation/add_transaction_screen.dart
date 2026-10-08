@@ -10,8 +10,8 @@ import 'transaction_form_state.dart';
 import 'transaction_providers.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key, this.income = false});
-  final bool income;
+  const AddTransactionScreen({super.key, this.type = TransactionType.expense});
+  final TransactionType type;
 
   @override
   ConsumerState<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -23,11 +23,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('transactions.addTitle'.tr())),
+      appBar: AppBar(title: Text(switch (widget.type) {
+        TransactionType.income => 'transactions.addIncome',
+        TransactionType.transfer => 'transactions.addTransfer',
+        _ => 'transactions.addExpense',
+      }.tr())),
       body: TransactionForm(
         initialValues: TransactionFormValues(
           amount: 0,
-          type: widget.income ? TransactionType.income : TransactionType.expense,
+          type: widget.type,
           categoryId: 0,
           paymentMethodType: PaymentMethodType.cash,
           date: todayDateOnly(),

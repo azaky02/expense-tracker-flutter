@@ -27,6 +27,7 @@ part 'database.g.dart';
     LedgerEntries,
     LedgerOutbox,
     AppNotifications,
+    Accounts,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -36,7 +37,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -85,6 +86,16 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(ledgerEntries);
             await m.createTable(ledgerOutbox);
             await m.createTable(appNotifications);
+            await createSyncObjects(this);
+          }
+          if (from < 4) {
+            // v4: accounts + transfers. Existing cash/card data is moved onto accounts after
+            // opening, see migrateToAccounts().
+            await m.createTable(accounts);
+            await m.addColumn(transactions, transactions.accountId);
+            await m.addColumn(transactions, transactions.toAccountId);
+            // The change trigger must now also watch the new account columns.
+            await customStatement('DROP TRIGGER IF EXISTS sync_au_transactions');
             await createSyncObjects(this);
           }
         },

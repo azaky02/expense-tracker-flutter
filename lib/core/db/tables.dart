@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 /// `trust` is the single system category that carries amanat (money held for / paid to a person).
-enum CategoryType { expense, income, trust }
+enum CategoryType { expense, income, trust, transfer }
 
 enum CardType { visa, mastercard, meeza }
 
@@ -9,9 +9,13 @@ enum CardCategory { credit, debit }
 
 enum PaymentMethodType { cash, card }
 
+/// Where money lives (UI/UX document §13).
+enum AccountType { cash, bank, creditCard, debitCard, wallet, savings, other }
+
 /// trustIn = cash received from a person to hold for them; trustOut = cash paid out to a person.
 /// Neither counts as income or expense.
-enum TransactionType { expense, income, trustIn, trustOut }
+/// transfer = money moved between two of the user's own accounts (not income or expense).
+enum TransactionType { expense, income, trustIn, trustOut, transfer }
 
 enum NotificationKind { dueDateReminder, budgetAlert, dailyReminder }
 
@@ -104,6 +108,10 @@ class Transactions extends Table with SyncColumns {
   TextColumn get attachmentUri => text().nullable()();
   TextColumn get beneficiaryName => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  /// The account the money left (expense, transfer) or arrived in (income).
+  IntColumn get accountId => integer().nullable().references(Accounts, #id)();
+  /// Transfers only: the receiving account.
+  IntColumn get toAccountId => integer().nullable().references(Accounts, #id)();
 }
 
 /// Per-main-category monthly budget thresholds (optional budget-exceeded alerts).
@@ -211,4 +219,18 @@ class AppNotifications extends Table {
 
   @override
   Set<Column> get primaryKey => {id};
+}
+
+/// The user's accounts. The balance is derived: opening balance + income - expenses ± transfers.
+/// Card accounts point at their row in Cards (bank, last 4 digits, due date, limit).
+@DataClassName('Account')
+class Accounts extends Table with SyncColumns {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get type => textEnum<AccountType>()();
+  RealColumn get openingBalance => real().withDefault(const Constant(0))();
+  TextColumn get currency => text().withDefault(const Constant('EGP'))();
+  TextColumn get color => text()();
+  IntColumn get cardId => integer().nullable().references(Cards, #id)();
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 }

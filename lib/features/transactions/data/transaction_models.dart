@@ -7,6 +7,9 @@ class TransactionWithDetails {
     required this.categoryIcon,
     required this.categoryColor,
     this.cardNickname,
+    this.accountName,
+    this.toAccountName,
+    this.parentCategoryId,
   });
 
   final Transaction transaction;
@@ -14,6 +17,9 @@ class TransactionWithDetails {
   final String categoryIcon;
   final String categoryColor;
   final String? cardNickname;
+  final String? accountName;
+  final String? toAccountName;
+  final int? parentCategoryId;
 }
 
 class MonthSummary {

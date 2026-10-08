@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/database_provider.dart';
+import '../../../core/db/tables.dart';
 import '../../../core/utils/date_utils.dart';
 import '../data/transaction_models.dart';
 import '../data/transaction_repository.dart';
@@ -79,4 +80,8 @@ final trustTransactionsProvider = StreamProvider.family<List<TransactionWithDeta
 
 final trustCategoryIdProvider = FutureProvider<int>(
   (ref) => ref.watch(transactionRepositoryProvider).trustCategoryId(),
+);
+
+final systemCategoryIdProvider = FutureProvider.family<int, CategoryType>(
+  (ref, type) => ref.watch(transactionRepositoryProvider).systemCategoryId(type),
 );

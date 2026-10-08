@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'database.dart';
+import '../../features/accounts/data/account_repository.dart';
 import '../../features/people/data/amanat_migration.dart';
 import 'seed.dart';
 
@@ -18,4 +19,5 @@ final databaseReadyProvider = FutureProvider<void>((ref) async {
   await seedIfNeeded(db);
   await ensureTrustCategory(db);
   await migrateAmanatToLedger(db);
+  await migrateToAccounts(db);
 });

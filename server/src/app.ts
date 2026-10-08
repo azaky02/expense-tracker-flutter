@@ -15,6 +15,7 @@ const credentials = z.object({
 });
 const registerSchema = credentials.extend({
   name: z.string().trim().max(100).default(''),
+  phone: z.string().trim().max(30).optional(),
   signupCode: z.string().max(100).optional(),
 });
 
@@ -94,8 +95,8 @@ export function createApp() {
       const exists = await tx.query('SELECT 1 FROM users WHERE lower(email) = $1', [body.email]);
       if (exists.rowCount) return null;
       const user: UserRow = { id: crypto.randomUUID(), email: body.email, name: body.name, password_hash: passwordHash };
-      await tx.query('INSERT INTO users (id, email, name, password_hash, last_login_at) VALUES ($1,$2,$3,$4, now())', [
-        user.id, user.email, user.name, user.password_hash,
+      await tx.query('INSERT INTO users (id, email, name, password_hash, phone, last_login_at) VALUES ($1,$2,$3,$4,$5, now())', [
+        user.id, user.email, user.name, user.password_hash, body.phone || null,
       ]);
       return issueTokens(tx, user, req.header('user-agent'));
     });

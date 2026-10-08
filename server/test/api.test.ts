@@ -88,7 +88,7 @@ describe('sync', () => {
       },
     }, u.token);
     assert.equal(push.status, 200);
-    assert.deepEqual(push.body.applied, { banks: 0, categories: 1, cards: 0, beneficiaries: 1, transactions: 2, people: 0, categoryBudgets: 0 });
+    assert.deepEqual(push.body.applied, { banks: 0, categories: 1, cards: 0, accounts: 0, beneficiaries: 1, transactions: 2, people: 0, categoryBudgets: 0 });
     assert.deepEqual(push.body.changes, {}, 'own writes are not echoed');
     assert.ok(push.body.cursor > 0);
 
@@ -185,6 +185,28 @@ describe('amanat', () => {
     assert.equal(r.status, 200);
     assert.equal(r.body.applied.transactions, 2);
     const bad = await call('POST', '/api/sync', { cursor: 0, changes: { transactions: [tx('x', { type: 'loan' })] } }, u.token);
+    assert.equal(bad.status, 400);
+  });
+});
+
+describe('accounts & transfers', () => {
+  it('syncs accounts and a transfer between them', async () => {
+    const u = await newUser();
+    const now = iso();
+    const acc = (id: string, type: string, opening: number) => ({ id, name: id, type, openingBalance: opening, currency: 'EGP', color: '#123456', cardId: null, isActive: true, updatedAt: now });
+    const r = await call('POST', '/api/sync', {
+      cursor: 0,
+      changes: {
+        accounts: [acc('cash', 'cash', 1000), acc('cib', 'bank', 5000)],
+        transactions: [tx('tr1', { type: 'transfer', accountId: 'cib', toAccountId: 'cash', amount: 500 })],
+      },
+    }, u.token);
+    assert.equal(r.status, 200);
+    assert.equal(r.body.applied.accounts, 2);
+    const data = (await call('GET', '/api/export', undefined, u.token)).body.data;
+    assert.equal(data.accounts.length, 2);
+    assert.equal(data.transactions[0].toAccountId, 'cash');
+    const bad = await call('POST', '/api/sync', { cursor: 0, changes: { accounts: [acc('x', 'piggy', 0)] } }, u.token);
     assert.equal(bad.status, 400);
   });
 });

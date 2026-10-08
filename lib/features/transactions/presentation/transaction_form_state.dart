@@ -12,17 +12,22 @@ class TransactionFormValues {
     this.note,
     this.attachmentUri,
     this.beneficiaryName,
+    this.accountId,
+    this.toAccountId,
   });
 
   final double amount;
   final TransactionType type;
   final int categoryId;
+  /// Derived from the account (card accounts = card) and kept for older reports/filters.
   final PaymentMethodType paymentMethodType;
   final int? cardId;
   final DateTime date;
   final String? note;
   final String? attachmentUri;
   final String? beneficiaryName;
+  final int? accountId;
+  final int? toAccountId;
 
   TransactionFormValues copyWith({
     double? amount,
@@ -37,6 +42,9 @@ class TransactionFormValues {
     bool clearAttachment = false,
     String? beneficiaryName,
     bool clearBeneficiary = false,
+    int? accountId,
+    int? toAccountId,
+    bool clearToAccount = false,
   }) {
     return TransactionFormValues(
       amount: amount ?? this.amount,
@@ -48,26 +56,32 @@ class TransactionFormValues {
       note: note ?? this.note,
       attachmentUri: clearAttachment ? null : (attachmentUri ?? this.attachmentUri),
       beneficiaryName: clearBeneficiary ? null : (beneficiaryName ?? this.beneficiaryName),
+      accountId: accountId ?? this.accountId,
+      toAccountId: clearToAccount ? null : (toAccountId ?? this.toAccountId),
     );
   }
 
   bool get isTrust => type == TransactionType.trustIn || type == TransactionType.trustOut;
+  bool get isTransfer => type == TransactionType.transfer;
 
-  bool get isValid =>
-      amount > 0 &&
-      categoryId != 0 &&
-      (!isTrust || (beneficiaryName?.trim().isNotEmpty ?? false)) &&
-      (paymentMethodType == PaymentMethodType.cash || cardId != null);
+  bool get isValid {
+    if (amount <= 0 || categoryId == 0) return false;
+    if (isTransfer) return accountId != null && toAccountId != null && accountId != toAccountId;
+    if (isTrust) return beneficiaryName?.trim().isNotEmpty ?? false;
+    return accountId != null;
+  }
 
   TransactionInput toInput() => TransactionInput(
         amount: amount,
         type: type,
         categoryId: categoryId,
         paymentMethodType: paymentMethodType,
-        cardId: cardId,
+        cardId: paymentMethodType == PaymentMethodType.card ? cardId : null,
         date: date,
         note: note,
         attachmentUri: attachmentUri,
         beneficiaryName: beneficiaryName,
+        accountId: accountId,
+        toAccountId: isTransfer ? toAccountId : null,
       );
 }

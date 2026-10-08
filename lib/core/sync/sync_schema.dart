@@ -20,10 +20,12 @@ const syncTables = <SyncTable>[
     'bank_id', 'card_type', 'card_category', 'nickname', 'last4_digits', 'due_date_day',
     'statement_date_day', 'credit_limit', 'color', 'is_active',
   ]),
+  SyncTable('accounts', 'accounts',
+      ['name', 'type', 'opening_balance', 'currency', 'color', 'card_id', 'is_active']),
   SyncTable('beneficiaries', 'beneficiaries', ['last_used_at'], tombstoneExpr: 'OLD.name'),
   SyncTable('transactions', 'transactions', [
     'amount', 'type', 'category_id', 'payment_method_type', 'card_id', 'date', 'note',
-    'beneficiary_name',
+    'beneficiary_name', 'account_id', 'to_account_id',
   ]),
   SyncTable('people', 'people', ['name', 'phone', 'email', 'notes', 'linked_user_id']),
   SyncTable('categoryBudgets', 'category_budgets', ['category_id', 'monthly_limit', 'is_enabled'],

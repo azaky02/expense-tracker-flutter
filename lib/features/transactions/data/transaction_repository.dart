@@ -15,6 +15,8 @@ class TransactionInput {
     this.note,
     this.attachmentUri,
     this.beneficiaryName,
+    this.accountId,
+    this.toAccountId,
   });
 
   final double amount;
@@ -26,25 +28,88 @@ class TransactionInput {
   final String? note;
   final String? attachmentUri;
   final String? beneficiaryName;
+  final int? accountId;
+  final int? toAccountId;
 }
 
 class TransactionFilters {
-  const TransactionFilters({this.categoryIds, this.paymentMethodType, this.cardId});
+  const TransactionFilters({
+    this.categoryIds,
+    this.paymentMethodType,
+    this.cardId,
+    this.types,
+    this.accountId,
+    this.from,
+    this.to,
+    this.minAmount,
+    this.maxAmount,
+    this.person,
+    this.search,
+    this.hasAttachment,
+  });
   /// Pass the main category's id plus all its children's ids to filter "this category or any
   /// of its sub-categories".
   final List<int>? categoryIds;
   final PaymentMethodType? paymentMethodType;
   final int? cardId;
+  final Set<TransactionType>? types;
+  final int? accountId;
+  final DateTime? from;
+  final DateTime? to;
+  final double? minAmount;
+  final double? maxAmount;
+  final String? person;
+  final String? search;
+  final bool? hasAttachment;
+
+  bool get isEmpty =>
+      (categoryIds?.isEmpty ?? true) && paymentMethodType == null && cardId == null && types == null &&
+      accountId == null && from == null && to == null && minAmount == null && maxAmount == null &&
+      (person?.isEmpty ?? true) && (search?.isEmpty ?? true) && hasAttachment == null;
+
+  TransactionFilters copyWith({String? search, Set<TransactionType>? types, bool clearTypes = false}) => TransactionFilters(
+        categoryIds: categoryIds, paymentMethodType: paymentMethodType, cardId: cardId,
+        types: clearTypes ? null : (types ?? this.types), accountId: accountId, from: from, to: to,
+        minAmount: minAmount, maxAmount: maxAmount, person: person, search: search ?? this.search,
+        hasAttachment: hasAttachment,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      other is TransactionFilters &&
+      _listEq(other.categoryIds, categoryIds) && other.paymentMethodType == paymentMethodType && other.cardId == cardId &&
+      _setEq(other.types, types) && other.accountId == accountId && other.from == from && other.to == to &&
+      other.minAmount == minAmount && other.maxAmount == maxAmount && other.person == person &&
+      other.search == search && other.hasAttachment == hasAttachment;
+
+  @override
+  int get hashCode => Object.hash(categoryIds?.length, paymentMethodType, cardId, types?.length, accountId, from, to,
+      minAmount, maxAmount, person, search, hasAttachment);
 }
+
+bool _listEq(List<int>? a, List<int>? b) {
+  if (a == null || b == null) return a == b;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
+bool _setEq<T>(Set<T>? a, Set<T>? b) => a == null || b == null ? a == b : (a.length == b.length && a.containsAll(b));
 
 class TransactionRepository {
   TransactionRepository(this._db);
   final AppDatabase _db;
 
+  late final _toAccounts = _db.alias(_db.accounts, 'to_acc');
+
   JoinedSelectStatement<HasResultSet, dynamic> _baseQuery() {
     return _db.select(_db.transactions).join([
       innerJoin(_db.categories, _db.categories.id.equalsExp(_db.transactions.categoryId)),
       leftOuterJoin(_db.cards, _db.cards.id.equalsExp(_db.transactions.cardId)),
+      leftOuterJoin(_db.accounts, _db.accounts.id.equalsExp(_db.transactions.accountId)),
+      leftOuterJoin(_toAccounts, _toAccounts.id.equalsExp(_db.transactions.toAccountId)),
     ]);
   }
 
@@ -58,6 +123,9 @@ class TransactionRepository {
       categoryIcon: category.icon,
       categoryColor: category.color,
       cardNickname: card?.nickname,
+      accountName: row.readTableOrNull(_db.accounts)?.name,
+      toAccountName: row.readTableOrNull(_toAccounts)?.name,
+      parentCategoryId: category.parentCategoryId,
     );
   }
 
@@ -73,6 +141,8 @@ class TransactionRepository {
             note: Value(input.note),
             attachmentUri: Value(input.attachmentUri),
             beneficiaryName: Value(input.beneficiaryName),
+            accountId: Value(input.accountId),
+            toAccountId: Value(input.type == TransactionType.transfer ? input.toAccountId : null),
           ),
         );
     await _upsertBeneficiary(input.beneficiaryName);
@@ -91,6 +161,8 @@ class TransactionRepository {
         note: Value(input.note),
         attachmentUri: Value(input.attachmentUri),
         beneficiaryName: Value(input.beneficiaryName),
+        accountId: Value(input.accountId),
+        toAccountId: Value(input.type == TransactionType.transfer ? input.toAccountId : null),
       ),
     );
     await _upsertBeneficiary(input.beneficiaryName);
@@ -129,6 +201,24 @@ class TransactionRepository {
     }
     if (filters.cardId != null) {
       query.where(_db.transactions.cardId.equals(filters.cardId!));
+    }
+    final t = _db.transactions;
+    if (filters.types != null && filters.types!.isNotEmpty) {
+      query.where(t.type.isIn(filters.types!.map((x) => x.name)));
+    }
+    if (filters.accountId != null) {
+      query.where(t.accountId.equals(filters.accountId!) | t.toAccountId.equals(filters.accountId!));
+    }
+    if (filters.from != null) query.where(t.date.isBiggerOrEqualValue(filters.from!));
+    if (filters.to != null) query.where(t.date.isSmallerOrEqualValue(filters.to!));
+    if (filters.minAmount != null) query.where(t.amount.isBiggerOrEqualValue(filters.minAmount!));
+    if (filters.maxAmount != null) query.where(t.amount.isSmallerOrEqualValue(filters.maxAmount!));
+    if (filters.person != null && filters.person!.isNotEmpty) query.where(t.beneficiaryName.equals(filters.person!));
+    if (filters.hasAttachment == true) query.where(t.attachmentUri.isNotNull());
+    final q = filters.search?.trim();
+    if (q != null && q.isNotEmpty) {
+      final like = '%$q%';
+      query.where(t.note.like(like) | t.beneficiaryName.like(like) | _db.categories.name.like(like) | t.amount.cast<String>().like(like));
     }
     return query.watch().map((rows) => rows.map(_mapRow).toList());
   }
@@ -306,9 +396,11 @@ class TransactionRepository {
   }
 
   /// The one system category (type 'trust') every amanat transaction is filed under.
-  Future<int> trustCategoryId() async {
-    final row = await (_db.select(_db.categories)..where((c) => c.type.equalsValue(CategoryType.trust)))
-        .getSingle();
+  Future<int> trustCategoryId() => systemCategoryId(CategoryType.trust);
+
+  /// The system category of a non-user type (trust, transfer).
+  Future<int> systemCategoryId(CategoryType type) async {
+    final row = await (_db.select(_db.categories)..where((c) => c.type.equalsValue(type))..limit(1)).getSingle();
     return row.id;
   }
 

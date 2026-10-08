@@ -32,7 +32,7 @@ export const ENTITIES: Entity[] = [
     cols: [
       t('parentId', 'parent_id', { nullable: true, max: 64 }),
       t('name', 'name', { max: 200 }), t('icon', 'icon', { max: 16 }), t('color', 'color', { max: 16 }),
-      t('type', 'type', { oneOf: ['expense', 'income', 'trust'] }), col('isDefault', 'is_default', 'bool'),
+      t('type', 'type', { oneOf: ['expense', 'income', 'trust', 'transfer'] }), col('isDefault', 'is_default', 'bool'),
     ],
   },
   {
@@ -52,6 +52,19 @@ export const ENTITIES: Entity[] = [
     ],
   },
   {
+    name: 'accounts', table: 'accounts',
+    keys: [t('id', 'id', { max: 64 })],
+    cols: [
+      t('name', 'name', { max: 100 }),
+      t('type', 'type', { oneOf: ['cash', 'bank', 'creditCard', 'debitCard', 'wallet', 'savings', 'other'] }),
+      col('openingBalance', 'opening_balance', 'num'),
+      t('currency', 'currency', { max: 3 }),
+      t('color', 'color', { max: 16 }),
+      t('cardId', 'card_id', { nullable: true, max: 64 }),
+      col('isActive', 'is_active', 'bool'),
+    ],
+  },
+  {
     name: 'beneficiaries', table: 'beneficiaries',
     keys: [t('name', 'name', { max: 200 })],
     cols: [col('lastUsedAt', 'last_used_at', 'ts')],
@@ -61,7 +74,7 @@ export const ENTITIES: Entity[] = [
     keys: [t('id', 'id', { max: 64 })],
     cols: [
       col('amount', 'amount', 'num'),
-      t('type', 'type', { oneOf: ['expense', 'income', 'trustIn', 'trustOut'] }),
+      t('type', 'type', { oneOf: ['expense', 'income', 'trustIn', 'trustOut', 'transfer'] }),
       t('categoryId', 'category_id', { max: 64 }),
       t('paymentMethodType', 'payment_method_type', { oneOf: ['cash', 'card'] }),
       t('cardId', 'card_id', { nullable: true, max: 64 }),
@@ -69,6 +82,8 @@ export const ENTITIES: Entity[] = [
       t('note', 'note', { nullable: true, max: 2000 }),
       t('beneficiaryName', 'beneficiary_name', { nullable: true, max: 200 }),
       col('createdAt', 'created_at', 'ts'),
+      t('accountId', 'account_id', { nullable: true, max: 64 }),
+      t('toAccountId', 'to_account_id', { nullable: true, max: 64 }),
     ],
   },
   {

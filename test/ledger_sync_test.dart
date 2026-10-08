@@ -10,6 +10,7 @@ import 'package:expense_tracker_flutter/core/db/seed.dart';
 import 'package:expense_tracker_flutter/core/db/tables.dart';
 import 'package:expense_tracker_flutter/core/sync/sync_api.dart';
 import 'package:expense_tracker_flutter/core/sync/sync_service.dart';
+import 'package:expense_tracker_flutter/features/accounts/data/account_repository.dart';
 import 'package:expense_tracker_flutter/features/people/data/amanat_migration.dart';
 import 'package:expense_tracker_flutter/features/people/data/ledger_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -82,6 +83,45 @@ void main() {
     expect(p.balance.iOweHim, 600, reason: 'held 1000, returned 400');
     await db.close();
   });
+
+  test('accounts: cash/card migration, derived balances, transfer synced to a second device', () async {
+    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final a = await _signedUpDevice('Me', 'acc_$stamp@example.com');
+    await ensureTrustCategory(a.db);
+    await migrateToAccounts(a.db);
+    final repo = AccountRepository(a.db);
+    final cash = (await repo.watchAccounts().first).single;
+    expect(cash.account.type, AccountType.cash);
+    final bank = await repo.create(name: 'CIB', type: AccountType.bank, openingBalance: 5000);
+    final transferCat = await (a.db.select(a.db.categories)..where((c) => c.type.equalsValue(CategoryType.transfer))).getSingle();
+    await a.db.into(a.db.transactions).insert(TransactionsCompanion.insert(
+        amount: 1500, type: TransactionType.transfer, categoryId: transferCat.id, paymentMethodType: PaymentMethodType.cash,
+        date: DateTime(2026, 10, 8), accountId: Value(bank), toAccountId: Value(cash.account.id)));
+    await a.db.into(a.db.transactions).insert(TransactionsCompanion.insert(
+        amount: 200, type: TransactionType.expense, categoryId: 1, paymentMethodType: PaymentMethodType.cash,
+        date: DateTime(2026, 10, 8), accountId: Value(cash.account.id)));
+    var balances = {for (final x in await repo.watchAccounts().first) x.account.name: x.balance};
+    expect(balances['CIB'], 3500);
+    expect(balances[cash.account.name], 1300);
+    await a.sync.run();
+
+    // Second device of the same user: same cash account (deterministic id), same balances.
+    final db2 = AppDatabase.forTesting(NativeDatabase.memory());
+    await seedIfNeeded(db2);
+    await ensureTrustCategory(db2);
+    await migrateToAccounts(db2);
+    final session = await SyncApi(_url).login('acc_$stamp@example.com', 'password123');
+    final svc2 = SyncService(db2, SyncApi(_url, session: session));
+    await svc2.prepareForAccount(session.userId);
+    await svc2.run();
+    final b = await AccountRepository(db2).watchAccounts().first;
+    expect(b, hasLength(2), reason: 'cash account not duplicated');
+    balances = {for (final x in b) x.account.name: x.balance};
+    expect(balances['CIB'], 3500);
+    expect(balances[cash.account.name], 1300);
+    await a.db.close();
+    await db2.close();
+  }, timeout: const Timeout(Duration(minutes: 2)));
 
   test('balance math follows the design document scenario', () {
     LedgerEntry e(LedgerKind k, LedgerDirection d, double a) => LedgerEntry(

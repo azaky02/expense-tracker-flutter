@@ -6,24 +6,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/db/tables.dart';
+import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/attachments.dart';
+import '../../../core/utils/color_utils.dart';
+import '../../../core/widgets/ds_widgets.dart';
+import '../../accounts/data/account_repository.dart';
+import '../../accounts/presentation/account_providers.dart';
+import '../../accounts/presentation/account_widgets.dart';
 import '../../categories/data/category_repository.dart';
 import '../../categories/presentation/category_picker_sheet.dart';
 import '../../categories/presentation/category_providers.dart';
-import '../../payment_methods/presentation/payment_method_providers.dart';
 import 'person_picker_sheet.dart';
 import 'transaction_form_state.dart';
 import 'transaction_providers.dart';
 
-/// The three kinds the user chooses between; amanat then has a direction (in / out).
-enum _Kind { expense, income, trust }
-
-_Kind _kindOf(TransactionType t) => switch (t) {
-      TransactionType.expense => _Kind.expense,
-      TransactionType.income => _Kind.income,
-      TransactionType.trustIn || TransactionType.trustOut => _Kind.trust,
-    };
-
+/// Add / edit form for expenses, income and transfers (UI/UX document §8, TRX-04..06):
+/// amount first, then date, category and account, then description and attachment.
 class TransactionForm extends ConsumerStatefulWidget {
   const TransactionForm({
     super.key,
@@ -46,14 +44,23 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
   late TransactionFormValues _values;
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
+  bool _defaultsApplied = false;
 
   @override
   void initState() {
     super.initState();
     _values = widget.initialValues;
-    _amountController.text = _values.amount == 0 ? '' : _values.amount.toString();
+    _amountController.text = _values.amount == 0 ? '' : _trimAmount(_values.amount);
     _noteController.text = _values.note ?? '';
+    if (_values.isTransfer && _values.categoryId == 0) {
+      Future.microtask(() async {
+        final id = await ref.read(systemCategoryIdProvider(CategoryType.transfer).future);
+        if (mounted) _update((v) => v.copyWith(categoryId: id));
+      });
+    }
   }
+
+  String _trimAmount(double a) => a == a.roundToDouble() ? a.toStringAsFixed(0) : a.toString();
 
   @override
   void dispose() {
@@ -66,28 +73,30 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     setState(() => _values = updater(_values));
   }
 
-  Future<void> _setKind(_Kind kind) async {
-    switch (kind) {
-      case _Kind.expense:
-        _update((v) => v.copyWith(type: TransactionType.expense, categoryId: 0));
-      case _Kind.income:
-        _update((v) => v.copyWith(type: TransactionType.income, categoryId: 0));
-      case _Kind.trust:
-        final id = await ref.read(trustCategoryIdProvider.future);
-        _update((v) => v.copyWith(
-              type: _kindOf(v.type) == _Kind.trust ? v.type : TransactionType.trustIn,
-              categoryId: id,
-            ));
+  /// New entries start on the Cash account.
+  void _applyDefaults(List<AccountWithBalance> accounts) {
+    if (_defaultsApplied || accounts.isEmpty) return;
+    _defaultsApplied = true;
+    if (_values.accountId == null) {
+      final cash = accounts.firstWhere((a) => a.account.type == AccountType.cash, orElse: () => accounts.first);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _setAccount(cash));
     }
   }
 
+  void _setAccount(AccountWithBalance a) {
+    final isCard = a.account.cardId != null;
+    _update((v) => v.copyWith(
+          accountId: a.account.id,
+          paymentMethodType: isCard ? PaymentMethodType.card : PaymentMethodType.cash,
+          cardId: a.account.cardId,
+          clearCardId: !isCard,
+        ));
+  }
+
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 70);
+    final picked = await ImagePicker().pickImage(source: source, imageQuality: 70);
     if (picked == null) return;
-    if (_values.attachmentUri != null) {
-      await deleteAttachment(_values.attachmentUri);
-    }
+    if (_values.attachmentUri != null) await deleteAttachment(_values.attachmentUri);
     final persisted = await persistAttachment(picked.path);
     _update((v) => v.copyWith(attachmentUri: persisted));
   }
@@ -95,27 +104,25 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
   void _showAttachmentPicker() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: Text('transactions.attachment'.tr()),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
+      builder: (ctx) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: Text('transactions.camera'.tr()),
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: Text('transactions.gallery'.tr()),
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+        ]),
       ),
     );
   }
@@ -131,235 +138,184 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
   }
 
   Future<void> _pickCategory(CategoryType type) async {
-    final id = await showCategoryPicker(
-      context,
-      type: type,
-      selectedId: _values.categoryId == 0 ? null : _values.categoryId,
-    );
+    final id = await showCategoryPicker(context, type: type, selectedId: _values.categoryId == 0 ? null : _values.categoryId);
     if (id != null) _update((v) => v.copyWith(categoryId: id));
   }
 
-  Future<void> _pickPerson({required bool required}) async {
-    final isTrust = _kindOf(_values.type) == _Kind.trust;
+  Future<void> _pickAccount({required bool destination}) async {
+    final accounts = ref.read(accountsProvider).value ?? const <AccountWithBalance>[];
+    final id = await showAccountPicker(
+      context,
+      selectedId: destination ? _values.toAccountId : _values.accountId,
+      excludeId: _values.isTransfer ? (destination ? _values.accountId : _values.toAccountId) : null,
+      title: destination ? 'transactions.toAccount'.tr() : (_values.isTransfer ? 'transactions.fromAccount'.tr() : null),
+    );
+    if (id == null) return;
+    if (destination) {
+      _update((v) => v.copyWith(toAccountId: id));
+    } else {
+      _setAccount(accounts.firstWhere((a) => a.account.id == id));
+    }
+  }
+
+  Future<void> _pickPerson() async {
     final name = await showPersonPicker(
       context,
-      title: (isTrust ? 'transactions.person' : 'transactions.beneficiary').tr(),
+      title: 'transactions.beneficiary'.tr(),
       selected: _values.beneficiaryName,
-      allowNone: !required,
+      allowNone: true,
     );
     if (name == null) return;
     _update((v) => v.copyWith(beneficiaryName: name, clearBeneficiary: name.isEmpty));
   }
 
-  /// A tappable box that looks like a dropdown.
-  Widget _dropdownBox(ThemeData theme, {required String text, required bool placeholder, IconData? icon}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              text,
-              overflow: TextOverflow.ellipsis,
-              style: placeholder ? TextStyle(color: theme.colorScheme.onSurfaceVariant) : null,
-            ),
-          ),
-          Icon(icon ?? Icons.arrow_drop_down),
-        ],
-      ),
+  Widget _accountField(List<AccountWithBalance> accounts, int? id, {required bool destination}) {
+    AccountWithBalance? a;
+    for (final x in accounts) {
+      if (x.account.id == id) a = x;
+    }
+    return PickerField(
+      text: a?.account.name ?? 'accounts.choose'.tr(),
+      placeholder: a == null,
+      leading: a == null ? null : AccountBubble(a, size: 28),
+      onTap: () => _pickAccount(destination: destination),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final kind = _kindOf(_values.type);
-    final isTrust = kind == _Kind.trust;
-    final categoryType = kind == _Kind.income ? CategoryType.income : CategoryType.expense;
+    final type = _values.type;
+    final isTransfer = _values.isTransfer;
+    final categoryType = type == TransactionType.income ? CategoryType.income : CategoryType.expense;
     final categoryTree = ref.watch(categoryTreeProvider(categoryType)).value ?? const <CategoryTreeNode>[];
-    final cardsAsync = ref.watch(activeCardsProvider);
+    final accounts = ref.watch(accountsProvider).value ?? const <AccountWithBalance>[];
+    _applyDefaults(accounts);
     final theme = Theme.of(context);
 
     String? categoryLabel;
+    String? categoryIcon;
+    Color? categoryColor;
     for (final node in categoryTree) {
       if (node.main.id == _values.categoryId) {
-        categoryLabel = '${node.main.icon} ${node.main.name}';
+        categoryLabel = node.main.name;
+        categoryIcon = node.main.icon;
+        categoryColor = colorFromHex(node.main.color);
       }
       for (final c in node.children) {
-        if (c.id == _values.categoryId) categoryLabel = '${node.main.icon} ${node.main.name} / ${c.name}';
+        if (c.id == _values.categoryId) {
+          categoryLabel = '${node.main.name} / ${c.name}';
+          categoryIcon = c.icon;
+          categoryColor = colorFromHex(node.main.color);
+        }
       }
     }
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        SegmentedButton<_Kind>(
-          segments: [
-            ButtonSegment(value: _Kind.expense, label: Text('transactions.expense'.tr())),
-            ButtonSegment(value: _Kind.income, label: Text('transactions.income'.tr())),
-            // Amanat moved to People / Shared Ledger in V2; old entries are migrated there.
-            if (kind == _Kind.trust) ButtonSegment(value: _Kind.trust, label: Text('transactions.trust'.tr())),
-          ],
-          selected: {kind},
-          onSelectionChanged: (s) => _setKind(s.first),
-        ),
-        if (isTrust) ...[
-          const SizedBox(height: 8),
-          SegmentedButton<TransactionType>(
-            segments: [
-              ButtonSegment(value: TransactionType.trustIn, label: Text('transactions.trustIn'.tr())),
-              ButtonSegment(value: TransactionType.trustOut, label: Text('transactions.trustOut'.tr())),
-            ],
-            selected: {_values.type},
-            onSelectionChanged: (s) => _update((v) => v.copyWith(type: s.first)),
-          ),
-        ],
-        const SizedBox(height: 16),
-        Text('transactions.amount'.tr(), style: theme.textTheme.labelLarge),
-        TextField(
+        FieldLabel('transactions.amount'.tr()),
+        AmountField(
           controller: _amountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall,
-          decoration: const InputDecoration(hintText: '0.00'),
-          onChanged: (text) => _update((v) => v.copyWith(amount: double.tryParse(text) ?? 0)),
+          autofocus: widget.initialValues.amount == 0,
+          onChanged: (text) => _update((v) => v.copyWith(amount: double.tryParse(text.replaceAll(',', '')) ?? 0)),
         ),
-        const SizedBox(height: 16),
-        if (isTrust) ...[
-          Text('transactions.person'.tr(), style: theme.textTheme.labelLarge),
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () => _pickPerson(required: true),
-            borderRadius: BorderRadius.circular(12),
-            child: _dropdownBox(
-              theme,
-              text: _values.beneficiaryName ?? 'transactions.choosePerson'.tr(),
-              placeholder: _values.beneficiaryName == null,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        Text('transactions.date'.tr(), style: theme.textTheme.labelLarge),
-        const SizedBox(height: 4),
-        InkWell(
+        FieldLabel('transactions.date'.tr()),
+        PickerField(
+          text: DateFormat.yMMMMd(context.locale.languageCode).format(_values.date),
+          trailingIcon: Icons.calendar_today_outlined,
           onTap: _pickDate,
-          borderRadius: BorderRadius.circular(12),
-          child: _dropdownBox(theme,
-              text: DateFormat.yMMMd().format(_values.date), placeholder: false, icon: Icons.calendar_today),
         ),
-        const SizedBox(height: 16),
-        if (!isTrust) ...[
-          Text('transactions.category'.tr(), style: theme.textTheme.labelLarge),
-          const SizedBox(height: 4),
-          InkWell(
+        if (isTransfer) ...[
+          FieldLabel('transactions.fromAccount'.tr()),
+          _accountField(accounts, _values.accountId, destination: false),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: IconBubble(icon: Icons.south, color: theme.colorScheme.primary, size: 32),
+            ),
+          ),
+          FieldLabel('transactions.toAccount'.tr()),
+          _accountField(accounts, _values.toAccountId, destination: true),
+        ] else ...[
+          FieldLabel('transactions.category'.tr()),
+          PickerField(
+            text: categoryLabel ?? 'transactions.chooseCategory'.tr(),
+            placeholder: categoryLabel == null,
+            leading: categoryLabel == null ? null : IconBubble(emoji: categoryIcon, color: categoryColor ?? DS.primary, size: 28),
             onTap: () => _pickCategory(categoryType),
-            borderRadius: BorderRadius.circular(12),
-            child: _dropdownBox(
-              theme,
-              text: categoryLabel ?? 'transactions.chooseCategory'.tr(),
-              placeholder: categoryLabel == null,
-            ),
           ),
-          const SizedBox(height: 16),
+          FieldLabel('transactions.account'.tr()),
+          _accountField(accounts, _values.accountId, destination: false),
         ],
-        Text('transactions.paymentMethod'.tr(), style: theme.textTheme.labelLarge),
-        const SizedBox(height: 8),
-        SegmentedButton<PaymentMethodType>(
-          segments: [
-            ButtonSegment(value: PaymentMethodType.cash, label: Text('common.cash'.tr())),
-            ButtonSegment(value: PaymentMethodType.card, label: Text('common.card'.tr())),
-          ],
-          selected: {_values.paymentMethodType},
-          onSelectionChanged: (s) => _update(
-            (v) => v.copyWith(
-              paymentMethodType: s.first,
-              clearCardId: s.first == PaymentMethodType.cash,
-            ),
-          ),
-        ),
-        if (_values.paymentMethodType == PaymentMethodType.card) ...[
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final c in cardsAsync.value ?? const [])
-                ChoiceChip(
-                  label: Text('${c.card.nickname} •${c.card.last4Digits}'),
-                  selected: _values.cardId == c.card.id,
-                  onSelected: (_) => _update((v) => v.copyWith(cardId: c.card.id)),
-                ),
-            ],
-          ),
-        ],
-        const SizedBox(height: 16),
-        if (!isTrust) ...[
-          Text('${'transactions.beneficiary'.tr()} (${'common.optional'.tr()})', style: theme.textTheme.labelLarge),
-          const SizedBox(height: 4),
-          InkWell(
-            onTap: () => _pickPerson(required: false),
-            borderRadius: BorderRadius.circular(12),
-            child: _dropdownBox(
-              theme,
-              text: _values.beneficiaryName ?? 'transactions.beneficiaryPlaceholder'.tr(),
-              placeholder: _values.beneficiaryName == null,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        Text('${'transactions.notes'.tr()} (${'common.optional'.tr()})', style: theme.textTheme.labelLarge),
+        FieldLabel('transactions.notes'.tr()),
         TextField(
           controller: _noteController,
           maxLines: 3,
+          minLines: 2,
+          decoration: InputDecoration(hintText: 'transactions.notesHint'.tr()),
           onChanged: (text) => _update((v) => v.copyWith(note: text)),
         ),
-        const SizedBox(height: 16),
-        Text('${'transactions.attachment'.tr()} (${'common.optional'.tr()})', style: theme.textTheme.labelLarge),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: _showAttachmentPicker,
-          child: _values.attachmentUri != null
-              ? Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(File(_values.attachmentUri!), width: 100, height: 100, fit: BoxFit.cover),
-                    ),
-                    Positioned(
-                      top: -8,
-                      right: -8,
-                      child: IconButton(
-                        icon: const CircleAvatar(radius: 12, child: Icon(Icons.close, size: 14)),
-                        onPressed: () async {
-                          await deleteAttachment(_values.attachmentUri);
-                          _update((v) => v.copyWith(clearAttachment: true));
-                        },
-                      ),
-                    ),
-                  ],
-                )
-              : Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: theme.colorScheme.outline, style: BorderStyle.solid),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.camera_alt_outlined),
-                ),
-        ),
+        if (!isTransfer) ...[
+          FieldLabel('${'transactions.beneficiary'.tr()} (${'common.optional'.tr()})'),
+          PickerField(
+            text: _values.beneficiaryName ?? 'transactions.beneficiaryPlaceholder'.tr(),
+            placeholder: _values.beneficiaryName == null,
+            leading: const Icon(Icons.person_outline, size: 20),
+            onTap: _pickPerson,
+          ),
+          FieldLabel('${'transactions.attachment'.tr()} (${'common.optional'.tr()})'),
+          _attachment(theme),
+        ],
         const SizedBox(height: 24),
         FilledButton(
           onPressed: widget.isSubmitting || !_values.isValid ? null : () => widget.onSubmit(_values),
           child: widget.isSubmitting
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator())
+              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
               : Text(widget.submitLabel),
         ),
       ],
+    );
+  }
+
+  Widget _attachment(ThemeData theme) {
+    if (_values.attachmentUri != null) {
+      return Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Stack(children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(DS.radius),
+            child: Image.file(File(_values.attachmentUri!), width: 110, height: 110, fit: BoxFit.cover),
+          ),
+          PositionedDirectional(
+            top: 4,
+            end: 4,
+            child: InkWell(
+              onTap: () async {
+                await deleteAttachment(_values.attachmentUri);
+                _update((v) => v.copyWith(clearAttachment: true));
+              },
+              child: const CircleAvatar(radius: 12, child: Icon(Icons.close, size: 14)),
+            ),
+          ),
+        ]),
+      );
+    }
+    return InkWell(
+      onTap: _showAttachmentPicker,
+      borderRadius: BorderRadius.circular(DS.radius),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(DS.radius),
+          border: Border.all(color: theme.colorScheme.outline),
+          color: theme.colorScheme.surface,
+        ),
+        child: Column(children: [
+          Icon(Icons.add_a_photo_outlined, color: theme.colorScheme.primary),
+          const SizedBox(height: 6),
+          Text('transactions.attachInvoice'.tr(), style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
+        ]),
+      ),
     );
   }
 }

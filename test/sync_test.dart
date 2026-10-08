@@ -132,7 +132,7 @@ void main() {
     expect(moved.beneficiaryName, 'Coach');
     expect(moved.date, DateTime(2026, 10, 1));
     expect(await b.select(b.banks).get(), hasLength(12), reason: 'seeded defaults are not duplicated');
-    expect((await b.select(b.categories).get()).where((c) => c.isDefault), hasLength(13));
+    expect((await b.select(b.categories).get()).where((c) => c.isDefault), hasLength(14));
     expect((await b.select(b.transactions).get()).every((t) => !t.dirty), isTrue,
         reason: 'applied rows are not mistaken for local edits');
 

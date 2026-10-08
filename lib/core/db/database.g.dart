@@ -2301,6 +2301,655 @@ class BeneficiariesCompanion extends UpdateCompanion<Beneficiary> {
   }
 }
 
+class $AccountsTable extends Accounts with TableInfo<$AccountsTable, Account> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AccountsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  @override
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+    'sync_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
+  @override
+  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
+    'dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<AccountType, String> type =
+      GeneratedColumn<String>(
+        'type',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<AccountType>($AccountsTable.$convertertype);
+  static const VerificationMeta _openingBalanceMeta = const VerificationMeta(
+    'openingBalance',
+  );
+  @override
+  late final GeneratedColumn<double> openingBalance = GeneratedColumn<double>(
+    'opening_balance',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('EGP'),
+  );
+  static const VerificationMeta _colorMeta = const VerificationMeta('color');
+  @override
+  late final GeneratedColumn<String> color = GeneratedColumn<String>(
+    'color',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cardIdMeta = const VerificationMeta('cardId');
+  @override
+  late final GeneratedColumn<int> cardId = GeneratedColumn<int>(
+    'card_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES cards (id)',
+    ),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncId,
+    updatedAt,
+    dirty,
+    id,
+    name,
+    type,
+    openingBalance,
+    currency,
+    color,
+    cardId,
+    isActive,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'accounts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Account> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('sync_id')) {
+      context.handle(
+        _syncIdMeta,
+        syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('dirty')) {
+      context.handle(
+        _dirtyMeta,
+        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('opening_balance')) {
+      context.handle(
+        _openingBalanceMeta,
+        openingBalance.isAcceptableOrUnknown(
+          data['opening_balance']!,
+          _openingBalanceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('color')) {
+      context.handle(
+        _colorMeta,
+        color.isAcceptableOrUnknown(data['color']!, _colorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_colorMeta);
+    }
+    if (data.containsKey('card_id')) {
+      context.handle(
+        _cardIdMeta,
+        cardId.isAcceptableOrUnknown(data['card_id']!, _cardIdMeta),
+      );
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Account map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Account(
+      syncId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      dirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dirty'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: $AccountsTable.$convertertype.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}type'],
+        )!,
+      ),
+      openingBalance: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}opening_balance'],
+      )!,
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      color: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}color'],
+      )!,
+      cardId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}card_id'],
+      ),
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+    );
+  }
+
+  @override
+  $AccountsTable createAlias(String alias) {
+    return $AccountsTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<AccountType, String, String> $convertertype =
+      const EnumNameConverter<AccountType>(AccountType.values);
+}
+
+class Account extends DataClass implements Insertable<Account> {
+  /// Stable cross-device id (random hex, or 'seed-...' for the built-in defaults).
+  final String? syncId;
+
+  /// Unix seconds of the last local change, or of the remote version that was applied.
+  final int updatedAt;
+
+  /// True while the row has local changes the server has not seen yet.
+  final bool dirty;
+  final int id;
+  final String name;
+  final AccountType type;
+  final double openingBalance;
+  final String currency;
+  final String color;
+  final int? cardId;
+  final bool isActive;
+  const Account({
+    this.syncId,
+    required this.updatedAt,
+    required this.dirty,
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.openingBalance,
+    required this.currency,
+    required this.color,
+    this.cardId,
+    required this.isActive,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || syncId != null) {
+      map['sync_id'] = Variable<String>(syncId);
+    }
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['dirty'] = Variable<bool>(dirty);
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    {
+      map['type'] = Variable<String>($AccountsTable.$convertertype.toSql(type));
+    }
+    map['opening_balance'] = Variable<double>(openingBalance);
+    map['currency'] = Variable<String>(currency);
+    map['color'] = Variable<String>(color);
+    if (!nullToAbsent || cardId != null) {
+      map['card_id'] = Variable<int>(cardId);
+    }
+    map['is_active'] = Variable<bool>(isActive);
+    return map;
+  }
+
+  AccountsCompanion toCompanion(bool nullToAbsent) {
+    return AccountsCompanion(
+      syncId: syncId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncId),
+      updatedAt: Value(updatedAt),
+      dirty: Value(dirty),
+      id: Value(id),
+      name: Value(name),
+      type: Value(type),
+      openingBalance: Value(openingBalance),
+      currency: Value(currency),
+      color: Value(color),
+      cardId: cardId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cardId),
+      isActive: Value(isActive),
+    );
+  }
+
+  factory Account.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Account(
+      syncId: serializer.fromJson<String?>(json['syncId']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      dirty: serializer.fromJson<bool>(json['dirty']),
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      type: $AccountsTable.$convertertype.fromJson(
+        serializer.fromJson<String>(json['type']),
+      ),
+      openingBalance: serializer.fromJson<double>(json['openingBalance']),
+      currency: serializer.fromJson<String>(json['currency']),
+      color: serializer.fromJson<String>(json['color']),
+      cardId: serializer.fromJson<int?>(json['cardId']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncId': serializer.toJson<String?>(syncId),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'dirty': serializer.toJson<bool>(dirty),
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(
+        $AccountsTable.$convertertype.toJson(type),
+      ),
+      'openingBalance': serializer.toJson<double>(openingBalance),
+      'currency': serializer.toJson<String>(currency),
+      'color': serializer.toJson<String>(color),
+      'cardId': serializer.toJson<int?>(cardId),
+      'isActive': serializer.toJson<bool>(isActive),
+    };
+  }
+
+  Account copyWith({
+    Value<String?> syncId = const Value.absent(),
+    int? updatedAt,
+    bool? dirty,
+    int? id,
+    String? name,
+    AccountType? type,
+    double? openingBalance,
+    String? currency,
+    String? color,
+    Value<int?> cardId = const Value.absent(),
+    bool? isActive,
+  }) => Account(
+    syncId: syncId.present ? syncId.value : this.syncId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    dirty: dirty ?? this.dirty,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    openingBalance: openingBalance ?? this.openingBalance,
+    currency: currency ?? this.currency,
+    color: color ?? this.color,
+    cardId: cardId.present ? cardId.value : this.cardId,
+    isActive: isActive ?? this.isActive,
+  );
+  Account copyWithCompanion(AccountsCompanion data) {
+    return Account(
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      dirty: data.dirty.present ? data.dirty.value : this.dirty,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      openingBalance: data.openingBalance.present
+          ? data.openingBalance.value
+          : this.openingBalance,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      color: data.color.present ? data.color.value : this.color,
+      cardId: data.cardId.present ? data.cardId.value : this.cardId,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Account(')
+          ..write('syncId: $syncId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('openingBalance: $openingBalance, ')
+          ..write('currency: $currency, ')
+          ..write('color: $color, ')
+          ..write('cardId: $cardId, ')
+          ..write('isActive: $isActive')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncId,
+    updatedAt,
+    dirty,
+    id,
+    name,
+    type,
+    openingBalance,
+    currency,
+    color,
+    cardId,
+    isActive,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Account &&
+          other.syncId == this.syncId &&
+          other.updatedAt == this.updatedAt &&
+          other.dirty == this.dirty &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.openingBalance == this.openingBalance &&
+          other.currency == this.currency &&
+          other.color == this.color &&
+          other.cardId == this.cardId &&
+          other.isActive == this.isActive);
+}
+
+class AccountsCompanion extends UpdateCompanion<Account> {
+  final Value<String?> syncId;
+  final Value<int> updatedAt;
+  final Value<bool> dirty;
+  final Value<int> id;
+  final Value<String> name;
+  final Value<AccountType> type;
+  final Value<double> openingBalance;
+  final Value<String> currency;
+  final Value<String> color;
+  final Value<int?> cardId;
+  final Value<bool> isActive;
+  const AccountsCompanion({
+    this.syncId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.openingBalance = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.color = const Value.absent(),
+    this.cardId = const Value.absent(),
+    this.isActive = const Value.absent(),
+  });
+  AccountsCompanion.insert({
+    this.syncId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.id = const Value.absent(),
+    required String name,
+    required AccountType type,
+    this.openingBalance = const Value.absent(),
+    this.currency = const Value.absent(),
+    required String color,
+    this.cardId = const Value.absent(),
+    this.isActive = const Value.absent(),
+  }) : name = Value(name),
+       type = Value(type),
+       color = Value(color);
+  static Insertable<Account> custom({
+    Expression<String>? syncId,
+    Expression<int>? updatedAt,
+    Expression<bool>? dirty,
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<double>? openingBalance,
+    Expression<String>? currency,
+    Expression<String>? color,
+    Expression<int>? cardId,
+    Expression<bool>? isActive,
+  }) {
+    return RawValuesInsertable({
+      if (syncId != null) 'sync_id': syncId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (dirty != null) 'dirty': dirty,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (openingBalance != null) 'opening_balance': openingBalance,
+      if (currency != null) 'currency': currency,
+      if (color != null) 'color': color,
+      if (cardId != null) 'card_id': cardId,
+      if (isActive != null) 'is_active': isActive,
+    });
+  }
+
+  AccountsCompanion copyWith({
+    Value<String?>? syncId,
+    Value<int>? updatedAt,
+    Value<bool>? dirty,
+    Value<int>? id,
+    Value<String>? name,
+    Value<AccountType>? type,
+    Value<double>? openingBalance,
+    Value<String>? currency,
+    Value<String>? color,
+    Value<int?>? cardId,
+    Value<bool>? isActive,
+  }) {
+    return AccountsCompanion(
+      syncId: syncId ?? this.syncId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      dirty: dirty ?? this.dirty,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      openingBalance: openingBalance ?? this.openingBalance,
+      currency: currency ?? this.currency,
+      color: color ?? this.color,
+      cardId: cardId ?? this.cardId,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (dirty.present) {
+      map['dirty'] = Variable<bool>(dirty.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(
+        $AccountsTable.$convertertype.toSql(type.value),
+      );
+    }
+    if (openingBalance.present) {
+      map['opening_balance'] = Variable<double>(openingBalance.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (color.present) {
+      map['color'] = Variable<String>(color.value);
+    }
+    if (cardId.present) {
+      map['card_id'] = Variable<int>(cardId.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountsCompanion(')
+          ..write('syncId: $syncId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('openingBalance: $openingBalance, ')
+          ..write('currency: $currency, ')
+          ..write('color: $color, ')
+          ..write('cardId: $cardId, ')
+          ..write('isActive: $isActive')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TransactionsTable extends Transactions
     with TableInfo<$TransactionsTable, Transaction> {
   @override
@@ -2462,6 +3111,34 @@ class $TransactionsTable extends Transactions
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _accountIdMeta = const VerificationMeta(
+    'accountId',
+  );
+  @override
+  late final GeneratedColumn<int> accountId = GeneratedColumn<int>(
+    'account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id)',
+    ),
+  );
+  static const VerificationMeta _toAccountIdMeta = const VerificationMeta(
+    'toAccountId',
+  );
+  @override
+  late final GeneratedColumn<int> toAccountId = GeneratedColumn<int>(
+    'to_account_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES accounts (id)',
+    ),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     syncId,
@@ -2478,6 +3155,8 @@ class $TransactionsTable extends Transactions
     attachmentUri,
     beneficiaryName,
     createdAt,
+    accountId,
+    toAccountId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2572,6 +3251,21 @@ class $TransactionsTable extends Transactions
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('account_id')) {
+      context.handle(
+        _accountIdMeta,
+        accountId.isAcceptableOrUnknown(data['account_id']!, _accountIdMeta),
+      );
+    }
+    if (data.containsKey('to_account_id')) {
+      context.handle(
+        _toAccountIdMeta,
+        toAccountId.isAcceptableOrUnknown(
+          data['to_account_id']!,
+          _toAccountIdMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -2641,6 +3335,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      accountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}account_id'],
+      ),
+      toAccountId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}to_account_id'],
+      ),
     );
   }
 
@@ -2685,6 +3387,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String? attachmentUri;
   final String? beneficiaryName;
   final DateTime createdAt;
+
+  /// The account the money left (expense, transfer) or arrived in (income).
+  final int? accountId;
+
+  /// Transfers only: the receiving account.
+  final int? toAccountId;
   const Transaction({
     this.syncId,
     required this.updatedAt,
@@ -2700,6 +3408,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.attachmentUri,
     this.beneficiaryName,
     required this.createdAt,
+    this.accountId,
+    this.toAccountId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2736,6 +3446,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       map['beneficiary_name'] = Variable<String>(beneficiaryName);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || accountId != null) {
+      map['account_id'] = Variable<int>(accountId);
+    }
+    if (!nullToAbsent || toAccountId != null) {
+      map['to_account_id'] = Variable<int>(toAccountId);
+    }
     return map;
   }
 
@@ -2763,6 +3479,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? const Value.absent()
           : Value(beneficiaryName),
       createdAt: Value(createdAt),
+      accountId: accountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accountId),
+      toAccountId: toAccountId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(toAccountId),
     );
   }
 
@@ -2789,6 +3511,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       attachmentUri: serializer.fromJson<String?>(json['attachmentUri']),
       beneficiaryName: serializer.fromJson<String?>(json['beneficiaryName']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      accountId: serializer.fromJson<int?>(json['accountId']),
+      toAccountId: serializer.fromJson<int?>(json['toAccountId']),
     );
   }
   @override
@@ -2815,6 +3539,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'attachmentUri': serializer.toJson<String?>(attachmentUri),
       'beneficiaryName': serializer.toJson<String?>(beneficiaryName),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'accountId': serializer.toJson<int?>(accountId),
+      'toAccountId': serializer.toJson<int?>(toAccountId),
     };
   }
 
@@ -2833,6 +3559,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<String?> attachmentUri = const Value.absent(),
     Value<String?> beneficiaryName = const Value.absent(),
     DateTime? createdAt,
+    Value<int?> accountId = const Value.absent(),
+    Value<int?> toAccountId = const Value.absent(),
   }) => Transaction(
     syncId: syncId.present ? syncId.value : this.syncId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -2852,6 +3580,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
         ? beneficiaryName.value
         : this.beneficiaryName,
     createdAt: createdAt ?? this.createdAt,
+    accountId: accountId.present ? accountId.value : this.accountId,
+    toAccountId: toAccountId.present ? toAccountId.value : this.toAccountId,
   );
   Transaction copyWithCompanion(TransactionsCompanion data) {
     return Transaction(
@@ -2877,6 +3607,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ? data.beneficiaryName.value
           : this.beneficiaryName,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      accountId: data.accountId.present ? data.accountId.value : this.accountId,
+      toAccountId: data.toAccountId.present
+          ? data.toAccountId.value
+          : this.toAccountId,
     );
   }
 
@@ -2896,7 +3630,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('note: $note, ')
           ..write('attachmentUri: $attachmentUri, ')
           ..write('beneficiaryName: $beneficiaryName, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('accountId: $accountId, ')
+          ..write('toAccountId: $toAccountId')
           ..write(')'))
         .toString();
   }
@@ -2917,6 +3653,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     attachmentUri,
     beneficiaryName,
     createdAt,
+    accountId,
+    toAccountId,
   );
   @override
   bool operator ==(Object other) =>
@@ -2935,7 +3673,9 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.note == this.note &&
           other.attachmentUri == this.attachmentUri &&
           other.beneficiaryName == this.beneficiaryName &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.accountId == this.accountId &&
+          other.toAccountId == this.toAccountId);
 }
 
 class TransactionsCompanion extends UpdateCompanion<Transaction> {
@@ -2953,6 +3693,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String?> attachmentUri;
   final Value<String?> beneficiaryName;
   final Value<DateTime> createdAt;
+  final Value<int?> accountId;
+  final Value<int?> toAccountId;
   const TransactionsCompanion({
     this.syncId = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -2968,6 +3710,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.attachmentUri = const Value.absent(),
     this.beneficiaryName = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.toAccountId = const Value.absent(),
   });
   TransactionsCompanion.insert({
     this.syncId = const Value.absent(),
@@ -2984,6 +3728,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.attachmentUri = const Value.absent(),
     this.beneficiaryName = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.accountId = const Value.absent(),
+    this.toAccountId = const Value.absent(),
   }) : amount = Value(amount),
        type = Value(type),
        categoryId = Value(categoryId),
@@ -3004,6 +3750,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? attachmentUri,
     Expression<String>? beneficiaryName,
     Expression<DateTime>? createdAt,
+    Expression<int>? accountId,
+    Expression<int>? toAccountId,
   }) {
     return RawValuesInsertable({
       if (syncId != null) 'sync_id': syncId,
@@ -3020,6 +3768,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (attachmentUri != null) 'attachment_uri': attachmentUri,
       if (beneficiaryName != null) 'beneficiary_name': beneficiaryName,
       if (createdAt != null) 'created_at': createdAt,
+      if (accountId != null) 'account_id': accountId,
+      if (toAccountId != null) 'to_account_id': toAccountId,
     });
   }
 
@@ -3038,6 +3788,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String?>? attachmentUri,
     Value<String?>? beneficiaryName,
     Value<DateTime>? createdAt,
+    Value<int?>? accountId,
+    Value<int?>? toAccountId,
   }) {
     return TransactionsCompanion(
       syncId: syncId ?? this.syncId,
@@ -3054,6 +3806,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       attachmentUri: attachmentUri ?? this.attachmentUri,
       beneficiaryName: beneficiaryName ?? this.beneficiaryName,
       createdAt: createdAt ?? this.createdAt,
+      accountId: accountId ?? this.accountId,
+      toAccountId: toAccountId ?? this.toAccountId,
     );
   }
 
@@ -3108,6 +3862,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (accountId.present) {
+      map['account_id'] = Variable<int>(accountId.value);
+    }
+    if (toAccountId.present) {
+      map['to_account_id'] = Variable<int>(toAccountId.value);
+    }
     return map;
   }
 
@@ -3127,7 +3887,9 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('note: $note, ')
           ..write('attachmentUri: $attachmentUri, ')
           ..write('beneficiaryName: $beneficiaryName, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('accountId: $accountId, ')
+          ..write('toAccountId: $toAccountId')
           ..write(')'))
         .toString();
   }
@@ -7267,6 +8029,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CategoriesTable categories = $CategoriesTable(this);
   late final $CardsTable cards = $CardsTable(this);
   late final $BeneficiariesTable beneficiaries = $BeneficiariesTable(this);
+  late final $AccountsTable accounts = $AccountsTable(this);
   late final $TransactionsTable transactions = $TransactionsTable(this);
   late final $CategoryBudgetsTable categoryBudgets = $CategoryBudgetsTable(
     this,
@@ -7292,6 +8055,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     categories,
     cards,
     beneficiaries,
+    accounts,
     transactions,
     categoryBudgets,
     notificationPreferences,
@@ -8293,6 +9057,25 @@ final class $$CardsTableReferences
     );
   }
 
+  static MultiTypedResultKey<$AccountsTable, List<Account>> _accountsRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.accounts,
+    aliasName: 'cards__id__accounts__card_id',
+  );
+
+  $$AccountsTableProcessedTableManager get accountsRefs {
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.cardId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_accountsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$TransactionsTable, List<Transaction>>
   _transactionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.transactions,
@@ -8433,6 +9216,31 @@ class $$CardsTableFilterComposer extends Composer<_$AppDatabase, $CardsTable> {
           ),
     );
     return composer;
+  }
+
+  Expression<bool> accountsRefs(
+    Expression<bool> Function($$AccountsTableFilterComposer f) f,
+  ) {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.cardId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 
   Expression<bool> transactionsRefs(
@@ -8667,6 +9475,31 @@ class $$CardsTableAnnotationComposer
     return composer;
   }
 
+  Expression<T> accountsRefs<T extends Object>(
+    Expression<T> Function($$AccountsTableAnnotationComposer a) f,
+  ) {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.cardId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> transactionsRefs<T extends Object>(
     Expression<T> Function($$TransactionsTableAnnotationComposer a) f,
   ) {
@@ -8734,6 +9567,7 @@ class $$CardsTableTableManager
           Card,
           PrefetchHooks Function({
             bool bankId,
+            bool accountsRefs,
             bool transactionsRefs,
             bool scheduledNotificationsRefs,
           })
@@ -8824,12 +9658,14 @@ class $$CardsTableTableManager
           prefetchHooksCallback:
               ({
                 bankId = false,
+                accountsRefs = false,
                 transactionsRefs = false,
                 scheduledNotificationsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
+                    if (accountsRefs) db.accounts,
                     if (transactionsRefs) db.transactions,
                     if (scheduledNotificationsRefs) db.scheduledNotifications,
                   ],
@@ -8867,6 +9703,23 @@ class $$CardsTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (accountsRefs)
+                        await $_getPrefetchedData<Card, $CardsTable, Account>(
+                          currentTable: table,
+                          referencedTable: $$CardsTableReferences
+                              ._accountsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$CardsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).accountsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.cardId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (transactionsRefs)
                         await $_getPrefetchedData<
                           Card,
@@ -8931,6 +9784,7 @@ typedef $$CardsTableProcessedTableManager =
       Card,
       PrefetchHooks Function({
         bool bankId,
+        bool accountsRefs,
         bool transactionsRefs,
         bool scheduledNotificationsRefs,
       })
@@ -9159,6 +10013,434 @@ typedef $$BeneficiariesTableProcessedTableManager =
       Beneficiary,
       PrefetchHooks Function()
     >;
+typedef $$AccountsTableCreateCompanionBuilder =
+    AccountsCompanion Function({
+      Value<String?> syncId,
+      Value<int> updatedAt,
+      Value<bool> dirty,
+      Value<int> id,
+      required String name,
+      required AccountType type,
+      Value<double> openingBalance,
+      Value<String> currency,
+      required String color,
+      Value<int?> cardId,
+      Value<bool> isActive,
+    });
+typedef $$AccountsTableUpdateCompanionBuilder =
+    AccountsCompanion Function({
+      Value<String?> syncId,
+      Value<int> updatedAt,
+      Value<bool> dirty,
+      Value<int> id,
+      Value<String> name,
+      Value<AccountType> type,
+      Value<double> openingBalance,
+      Value<String> currency,
+      Value<String> color,
+      Value<int?> cardId,
+      Value<bool> isActive,
+    });
+
+final class $$AccountsTableReferences
+    extends BaseReferences<_$AppDatabase, $AccountsTable, Account> {
+  $$AccountsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $CardsTable _cardIdTable(_$AppDatabase db) =>
+      db.cards.createAlias('accounts__card_id__cards__id');
+
+  $$CardsTableProcessedTableManager? get cardId {
+    final $_column = $_itemColumn<int>('card_id');
+    if ($_column == null) return null;
+    final manager = $$CardsTableTableManager(
+      $_db,
+      $_db.cards,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_cardIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$AccountsTableFilterComposer
+    extends Composer<_$AppDatabase, $AccountsTable> {
+  $$AccountsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<AccountType, AccountType, String> get type =>
+      $composableBuilder(
+        column: $table.type,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<double> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CardsTableFilterComposer get cardId {
+    final $$CardsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.cards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CardsTableFilterComposer(
+            $db: $db,
+            $table: $db.cards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AccountsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AccountsTable> {
+  $$AccountsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get color => $composableBuilder(
+    column: $table.color,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CardsTableOrderingComposer get cardId {
+    final $$CardsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.cards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CardsTableOrderingComposer(
+            $db: $db,
+            $table: $db.cards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AccountsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AccountsTable> {
+  $$AccountsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get dirty =>
+      $composableBuilder(column: $table.dirty, builder: (column) => column);
+
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<AccountType, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<double> get openingBalance => $composableBuilder(
+    column: $table.openingBalance,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<String> get color =>
+      $composableBuilder(column: $table.color, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  $$CardsTableAnnotationComposer get cardId {
+    final $$CardsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.cardId,
+      referencedTable: $db.cards,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CardsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.cards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$AccountsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AccountsTable,
+          Account,
+          $$AccountsTableFilterComposer,
+          $$AccountsTableOrderingComposer,
+          $$AccountsTableAnnotationComposer,
+          $$AccountsTableCreateCompanionBuilder,
+          $$AccountsTableUpdateCompanionBuilder,
+          (Account, $$AccountsTableReferences),
+          Account,
+          PrefetchHooks Function({bool cardId})
+        > {
+  $$AccountsTableTableManager(_$AppDatabase db, $AccountsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AccountsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AccountsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AccountsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String?> syncId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<AccountType> type = const Value.absent(),
+                Value<double> openingBalance = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<String> color = const Value.absent(),
+                Value<int?> cardId = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+              }) => AccountsCompanion(
+                syncId: syncId,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                id: id,
+                name: name,
+                type: type,
+                openingBalance: openingBalance,
+                currency: currency,
+                color: color,
+                cardId: cardId,
+                isActive: isActive,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String?> syncId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                required String name,
+                required AccountType type,
+                Value<double> openingBalance = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                required String color,
+                Value<int?> cardId = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+              }) => AccountsCompanion.insert(
+                syncId: syncId,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                id: id,
+                name: name,
+                type: type,
+                openingBalance: openingBalance,
+                currency: currency,
+                color: color,
+                cardId: cardId,
+                isActive: isActive,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AccountsTable, Account>(table),
+                  $$AccountsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({cardId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (cardId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.cardId,
+                                referencedTable: $$AccountsTableReferences
+                                    ._cardIdTable(db),
+                                referencedColumn: $$AccountsTableReferences
+                                    ._cardIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AccountsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AccountsTable,
+      Account,
+      $$AccountsTableFilterComposer,
+      $$AccountsTableOrderingComposer,
+      $$AccountsTableAnnotationComposer,
+      $$AccountsTableCreateCompanionBuilder,
+      $$AccountsTableUpdateCompanionBuilder,
+      (Account, $$AccountsTableReferences),
+      Account,
+      PrefetchHooks Function({bool cardId})
+    >;
 typedef $$TransactionsTableCreateCompanionBuilder =
     TransactionsCompanion Function({
       Value<String?> syncId,
@@ -9175,6 +10457,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> attachmentUri,
       Value<String?> beneficiaryName,
       Value<DateTime> createdAt,
+      Value<int?> accountId,
+      Value<int?> toAccountId,
     });
 typedef $$TransactionsTableUpdateCompanionBuilder =
     TransactionsCompanion Function({
@@ -9192,6 +10476,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> attachmentUri,
       Value<String?> beneficiaryName,
       Value<DateTime> createdAt,
+      Value<int?> accountId,
+      Value<int?> toAccountId,
     });
 
 final class $$TransactionsTableReferences
@@ -9226,6 +10512,40 @@ final class $$TransactionsTableReferences
       $_db.cards,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_cardIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $AccountsTable _accountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias('transactions__account_id__accounts__id');
+
+  $$AccountsTableProcessedTableManager? get accountId {
+    final $_column = $_itemColumn<int>('account_id');
+    if ($_column == null) return null;
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_accountIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $AccountsTable _toAccountIdTable(_$AppDatabase db) =>
+      db.accounts.createAlias('transactions__to_account_id__accounts__id');
+
+  $$AccountsTableProcessedTableManager? get toAccountId {
+    final $_column = $_itemColumn<int>('to_account_id');
+    if ($_column == null) return null;
+    final manager = $$AccountsTableTableManager(
+      $_db,
+      $_db.accounts,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_toAccountIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -9341,6 +10661,52 @@ class $$TransactionsTableFilterComposer
           }) => $$CardsTableFilterComposer(
             $db: $db,
             $table: $db.cards,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableFilterComposer get accountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableFilterComposer get toAccountId {
+    final $$AccountsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.toAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableFilterComposer(
+            $db: $db,
+            $table: $db.accounts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -9465,6 +10831,52 @@ class $$TransactionsTableOrderingComposer
     );
     return composer;
   }
+
+  $$AccountsTableOrderingComposer get accountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableOrderingComposer get toAccountId {
+    final $$AccountsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.toAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableOrderingComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableAnnotationComposer
@@ -9564,6 +10976,52 @@ class $$TransactionsTableAnnotationComposer
     );
     return composer;
   }
+
+  $$AccountsTableAnnotationComposer get accountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.accountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$AccountsTableAnnotationComposer get toAccountId {
+    final $$AccountsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.toAccountId,
+      referencedTable: $db.accounts,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$AccountsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.accounts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$TransactionsTableTableManager
@@ -9579,7 +11037,12 @@ class $$TransactionsTableTableManager
           $$TransactionsTableUpdateCompanionBuilder,
           (Transaction, $$TransactionsTableReferences),
           Transaction,
-          PrefetchHooks Function({bool categoryId, bool cardId})
+          PrefetchHooks Function({
+            bool categoryId,
+            bool cardId,
+            bool accountId,
+            bool toAccountId,
+          })
         > {
   $$TransactionsTableTableManager(_$AppDatabase db, $TransactionsTable table)
     : super(
@@ -9609,6 +11072,8 @@ class $$TransactionsTableTableManager
                 Value<String?> attachmentUri = const Value.absent(),
                 Value<String?> beneficiaryName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int?> accountId = const Value.absent(),
+                Value<int?> toAccountId = const Value.absent(),
               }) => TransactionsCompanion(
                 syncId: syncId,
                 updatedAt: updatedAt,
@@ -9624,6 +11089,8 @@ class $$TransactionsTableTableManager
                 attachmentUri: attachmentUri,
                 beneficiaryName: beneficiaryName,
                 createdAt: createdAt,
+                accountId: accountId,
+                toAccountId: toAccountId,
               ),
           createCompanionCallback:
               ({
@@ -9641,6 +11108,8 @@ class $$TransactionsTableTableManager
                 Value<String?> attachmentUri = const Value.absent(),
                 Value<String?> beneficiaryName = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int?> accountId = const Value.absent(),
+                Value<int?> toAccountId = const Value.absent(),
               }) => TransactionsCompanion.insert(
                 syncId: syncId,
                 updatedAt: updatedAt,
@@ -9656,6 +11125,8 @@ class $$TransactionsTableTableManager
                 attachmentUri: attachmentUri,
                 beneficiaryName: beneficiaryName,
                 createdAt: createdAt,
+                accountId: accountId,
+                toAccountId: toAccountId,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -9665,60 +11136,100 @@ class $$TransactionsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({categoryId = false, cardId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (categoryId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.categoryId,
-                                referencedTable: $$TransactionsTableReferences
-                                    ._categoryIdTable(db),
-                                referencedColumn: $$TransactionsTableReferences
-                                    ._categoryIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
-                    if (cardId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.cardId,
-                                referencedTable: $$TransactionsTableReferences
-                                    ._cardIdTable(db),
-                                referencedColumn: $$TransactionsTableReferences
-                                    ._cardIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({
+                categoryId = false,
+                cardId = false,
+                accountId = false,
+                toAccountId = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (categoryId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.categoryId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._categoryIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._categoryIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (cardId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.cardId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._cardIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._cardIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (accountId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.accountId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._accountIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._accountIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+                        if (toAccountId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.toAccountId,
+                                    referencedTable:
+                                        $$TransactionsTableReferences
+                                            ._toAccountIdTable(db),
+                                    referencedColumn:
+                                        $$TransactionsTableReferences
+                                            ._toAccountIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -9735,7 +11246,12 @@ typedef $$TransactionsTableProcessedTableManager =
       $$TransactionsTableUpdateCompanionBuilder,
       (Transaction, $$TransactionsTableReferences),
       Transaction,
-      PrefetchHooks Function({bool categoryId, bool cardId})
+      PrefetchHooks Function({
+        bool categoryId,
+        bool cardId,
+        bool accountId,
+        bool toAccountId,
+      })
     >;
 typedef $$CategoryBudgetsTableCreateCompanionBuilder =
     CategoryBudgetsCompanion Function({
@@ -12416,6 +13932,8 @@ class $AppDatabaseManager {
       $$CardsTableTableManager(_db, _db.cards);
   $$BeneficiariesTableTableManager get beneficiaries =>
       $$BeneficiariesTableTableManager(_db, _db.beneficiaries);
+  $$AccountsTableTableManager get accounts =>
+      $$AccountsTableTableManager(_db, _db.accounts);
   $$TransactionsTableTableManager get transactions =>
       $$TransactionsTableTableManager(_db, _db.transactions);
   $$CategoryBudgetsTableTableManager get categoryBudgets =>

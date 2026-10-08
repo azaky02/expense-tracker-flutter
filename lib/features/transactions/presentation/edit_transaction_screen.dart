@@ -73,6 +73,8 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
               note: t.transaction.note,
               attachmentUri: t.transaction.attachmentUri,
               beneficiaryName: t.transaction.beneficiaryName,
+              accountId: t.transaction.accountId,
+              toAccountId: t.transaction.toAccountId,
             ),
             submitLabel: 'common.save'.tr(),
             isSubmitting: _isSubmitting,
