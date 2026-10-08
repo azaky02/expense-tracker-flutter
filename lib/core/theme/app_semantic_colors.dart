@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'ds_tokens.dart';
 
 /// Tokens that don't fit ColorScheme's built-in slots: chart palette, per-card-brand
 /// color rotation, and income/expense semantic colors. Read via
@@ -32,60 +32,42 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
   final List<Color> cardColorRotation;
 
   static const light = AppSemanticColors(
-    expense: AppColors.red600,
-    income: AppColors.teal700,
-    cash: AppColors.navy900,
-    chip: AppColors.grey100,
-    chipSelected: AppColors.teal600,
-    chipSelectedText: AppColors.white,
-    warningSurface: AppColors.orange100,
-    dangerSurface: AppColors.red100,
-    chartPalette: [
-      AppColors.teal600,
-      AppColors.orange600,
-      AppColors.navy600,
-      AppColors.red500,
-      AppColors.grey400,
-      AppColors.brown600,
-      AppColors.teal500,
-      AppColors.grey300,
-    ],
+    expense: DS.danger,
+    income: DS.success,
+    cash: DS.navy,
+    chip: DS.surfaceAlt,
+    chipSelected: DS.primary,
+    chipSelectedText: Colors.white,
+    warningSurface: DS.warningSoft,
+    dangerSurface: DS.dangerSoft,
+    chartPalette: DS.palette,
     cardColorRotation: [
-      AppColors.navy700,
-      AppColors.teal600,
-      AppColors.brown600,
-      AppColors.navy600,
-      AppColors.teal700,
-      AppColors.brown700,
+      Color(0xFF0A2A66),
+      Color(0xFF0E8C7F),
+      Color(0xFF7C3AED),
+      Color(0xFF1250C4),
+      Color(0xFFB45309),
+      Color(0xFF334155),
     ],
   );
 
   static const dark = AppSemanticColors(
-    expense: AppColors.red500,
-    income: AppColors.teal500,
-    cash: AppColors.navy900,
-    chip: AppColors.grey700,
-    chipSelected: AppColors.teal600,
-    chipSelectedText: AppColors.white,
-    warningSurface: AppColors.brown700,
-    dangerSurface: AppColors.brown700,
-    chartPalette: [
-      AppColors.teal500,
-      AppColors.orange600,
-      AppColors.navy600,
-      AppColors.red500,
-      AppColors.grey400,
-      AppColors.brown600,
-      AppColors.teal600,
-      AppColors.grey500,
-    ],
+    expense: Color(0xFFF87171),
+    income: Color(0xFF4ADE80),
+    cash: Color(0xFF13306B),
+    chip: DS.surfaceAltDark,
+    chipSelected: DS.primaryDark,
+    chipSelectedText: Colors.white,
+    warningSurface: Color(0xFF3A2A0A),
+    dangerSurface: Color(0xFF3A1414),
+    chartPalette: DS.palette,
     cardColorRotation: [
-      AppColors.navy600,
-      AppColors.teal500,
-      AppColors.brown600,
-      AppColors.navy700,
-      AppColors.teal700,
-      AppColors.brown700,
+      Color(0xFF13306B),
+      Color(0xFF0E6E64),
+      Color(0xFF5B21B6),
+      Color(0xFF1E40AF),
+      Color(0xFF92400E),
+      Color(0xFF334155),
     ],
   );
 
