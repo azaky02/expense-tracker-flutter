@@ -29,6 +29,7 @@ export const config = {
   jwtSecret: env.JWT_ACCESS_SECRET ?? '',
   registration,
   signupCode: env.SIGNUP_CODE ?? '',
+  webDir: path.resolve(env.WEB_DIR ?? 'public'),
   corsOrigins: (env.CORS_ORIGIN ?? '').split(',').map((s) => s.trim()).filter(Boolean),
   accessTtlSec: 15 * 60,
   refreshTtlDays: 60,

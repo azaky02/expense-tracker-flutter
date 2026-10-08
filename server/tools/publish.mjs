@@ -62,6 +62,7 @@ fs.writeFileSync(path.join(out, 'web.config'), `<?xml version="1.0" encoding="UT
 </configuration>
 `);
 
+fs.mkdirSync(path.join(out, 'public'), { recursive: true }); // put index.html + the APKs here
 const secret = crypto.randomBytes(48).toString('base64url');
 fs.writeFileSync(path.join(out, '.env'), keepEnv ?? `# Masarefy server – production settings. Fill in the lines marked <<…>>, then upload the folder.
 # Never share this file. All HTTP requests go to the Node process, which does not serve files from disk.

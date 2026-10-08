@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { z, ZodError } from 'zod';
 import { config } from './config.ts';
@@ -46,7 +47,7 @@ export function createApp() {
 
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Cache-Control', 'no-store');
+    if (req.path.startsWith('/api')) res.setHeader('Cache-Control', 'no-store');
     const origin = req.header('origin');
     if (origin && config.corsOrigins.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
@@ -187,6 +188,10 @@ export function createApp() {
 
   app.use('/api', api);
 
+  // Optional download page: anything in ./public (index.html, the APKs) is served as-is.
+  if (fs.existsSync(config.webDir)) {
+    app.use(express.static(config.webDir, { index: 'index.html', dotfiles: 'ignore', maxAge: '5m' }));
+  }
   app.get('/', (_req, res) => {
     res
       .type('html')
