@@ -51,7 +51,16 @@
     "attachInvoice": "التقط صورة الفاتورة من الكاميرا أو المعرض",
     "saveTransaction": "حفظ المعاملة",
     "quickNote": "ملاحظة سريعة",
-    "monthTotalForCategory": "إجمالي {category} هذا الشهر: {amount}"
+    "monthTotalForCategory": "إجمالي {category} هذا الشهر: {amount}",
+    "trust": "أمانات",
+    "trustIn": "استلمت منه",
+    "trustOut": "صرفت له",
+    "person": "الشخص",
+    "choosePerson": "اختر الشخص",
+    "chooseCategory": "اختر الفئة",
+    "searchOrAddPerson": "ابحث أو اكتب اسمًا جديدًا",
+    "addPerson": "إضافة «{name}»",
+    "noPerson": "بدون"
   },
   "categories": {
     "food": "أكل و شرب",
@@ -116,7 +125,8 @@
     "notifications": "الإشعارات",
     "appLock": "قفل التطبيق",
     "backup": "نسخة احتياطية",
-    "accountSync": "الحساب والمزامنة"
+    "accountSync": "الحساب والمزامنة",
+    "trust": "الأمانات"
   },
   "security": {
     "enterPin": "أدخل رمز PIN",
@@ -182,5 +192,16 @@
       "unexpected": "حصل خطأ. جرّب تاني.",
       "invalid_url": "اكتب عنوان السيرفر."
     }
+  },
+  "trust": {
+    "title": "الأمانات",
+    "empty": "لا توجد أمانات بعد. سجّل معاملة من نوع «أمانات».",
+    "holding": "أمانته عندي",
+    "owesMe": "عليه لي",
+    "settled": "مسوّى",
+    "received": "استلمت",
+    "paid": "صرفت",
+    "totalHeld": "إجمالي الأمانات عندي",
+    "dashboardCard": "الأمانات"
   }
 }

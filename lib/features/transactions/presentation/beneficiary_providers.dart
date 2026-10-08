@@ -10,3 +10,7 @@ final beneficiaryRepositoryProvider = Provider<BeneficiaryRepository>((ref) {
 final recentBeneficiariesProvider = FutureProvider<List<String>>((ref) {
   return ref.watch(beneficiaryRepositoryProvider).listRecent();
 });
+
+final allBeneficiariesProvider = StreamProvider<List<String>>((ref) {
+  return ref.watch(beneficiaryRepositoryProvider).watchAll();
+});

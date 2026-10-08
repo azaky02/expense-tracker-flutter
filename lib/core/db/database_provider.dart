@@ -15,4 +15,5 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 final databaseReadyProvider = FutureProvider<void>((ref) async {
   final db = ref.watch(databaseProvider);
   await seedIfNeeded(db);
+  await ensureTrustCategory(db);
 });

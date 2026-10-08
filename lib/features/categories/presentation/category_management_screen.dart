@@ -4,20 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/database.dart' hide Card;
 import '../../../core/db/tables.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/color_utils.dart';
+import 'category_editor.dart';
 import 'category_providers.dart';
-
-const _paletteChoices = [
-  AppColors.teal600,
-  AppColors.orange600,
-  AppColors.navy600,
-  AppColors.red500,
-  AppColors.brown600,
-  AppColors.grey400,
-  AppColors.teal700,
-  AppColors.orange700,
-];
 
 class CategoryManagementScreen extends ConsumerStatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -50,96 +39,7 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
     int? parentCategoryId,
     Category? existing,
   }) async {
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final iconController = TextEditingController(text: existing?.icon ?? '📦');
-    var selectedColor = existing != null ? colorFromHex(existing.color) : _paletteChoices.first;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(existing == null ? 'categories.addCategory'.tr() : 'categories.editCategory'.tr()),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(labelText: 'categories.name'.tr()),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: iconController,
-                      decoration: InputDecoration(labelText: 'categories.icon'.tr()),
-                    ),
-                    const SizedBox(height: 12),
-                    Text('categories.color'.tr()),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final color in _paletteChoices)
-                          GestureDetector(
-                            onTap: () => setDialogState(() => selectedColor = color),
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: selectedColor == color
-                                    ? Border.all(color: Colors.black, width: 2)
-                                    : null,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text('common.cancel'.tr()),
-                ),
-                FilledButton(
-                  onPressed: nameController.text.trim().isEmpty && existing == null
-                      ? null
-                      : () => Navigator.of(context).pop(true),
-                  child: Text('common.save'.tr()),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (result != true) return;
-    final name = nameController.text.trim();
-    if (name.isEmpty) return;
-    final repo = ref.read(categoryRepositoryProvider);
-    if (existing == null) {
-      await repo.create(
-        name: name,
-        icon: iconController.text.trim().isEmpty ? '📦' : iconController.text.trim(),
-        color: colorToHex(selectedColor),
-        type: type,
-        parentCategoryId: parentCategoryId,
-      );
-    } else {
-      await repo.update(
-        existing.id,
-        name: name,
-        icon: iconController.text.trim().isEmpty ? '📦' : iconController.text.trim(),
-        color: colorToHex(selectedColor),
-      );
-    }
+    await showCategoryEditor(context, ref, type: type, parentCategoryId: parentCategoryId, existing: existing);
   }
 
   Future<void> _confirmDelete(Category category) async {

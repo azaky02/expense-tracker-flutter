@@ -115,7 +115,9 @@ class _TransactionRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isExpense = item.transaction.type == TransactionType.expense;
+    final type = item.transaction.type;
+    final isTrust = type == TransactionType.trustIn || type == TransactionType.trustOut;
+    final negative = type == TransactionType.expense || type == TransactionType.trustOut;
     final theme = Theme.of(context);
 
     return GestureDetector(
@@ -161,6 +163,7 @@ class _TransactionRow extends ConsumerWidget {
                   Text(item.transaction.beneficiaryName ?? item.categoryName),
                   Text(
                     [
+                      if (isTrust) (type == TransactionType.trustIn ? 'transactions.trustIn' : 'transactions.trustOut').tr(),
                       DateFormat.yMd().format(item.transaction.date),
                       item.transaction.paymentMethodType == PaymentMethodType.cash
                           ? 'common.cash'.tr()
@@ -173,9 +176,11 @@ class _TransactionRow extends ConsumerWidget {
               ),
             ),
             Text(
-              '${isExpense ? '-' : '+'}${formatAmount(item.transaction.amount)}',
+              '${negative ? '-' : '+'}${formatAmount(item.transaction.amount)}',
               style: TextStyle(
-                color: isExpense ? theme.colorScheme.error : Colors.green,
+                color: isTrust
+                    ? Colors.amber.shade800
+                    : (negative ? theme.colorScheme.error : Colors.green),
                 fontWeight: FontWeight.bold,
               ),
             ),

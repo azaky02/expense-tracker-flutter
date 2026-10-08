@@ -51,7 +51,16 @@
     "attachInvoice": "Take a photo of the invoice or pick from gallery",
     "saveTransaction": "Save transaction",
     "quickNote": "Quick note",
-    "monthTotalForCategory": "{category} total this month: {amount}"
+    "monthTotalForCategory": "{category} total this month: {amount}",
+    "trust": "Amanat",
+    "trustIn": "Received from",
+    "trustOut": "Paid to",
+    "person": "Person",
+    "choosePerson": "Choose a person",
+    "chooseCategory": "Choose a category",
+    "searchOrAddPerson": "Search or type a new name",
+    "addPerson": "Add \"{name}\"",
+    "noPerson": "None"
   },
   "categories": {
     "food": "Food & Drink",
@@ -116,7 +125,8 @@
     "notifications": "Notifications",
     "appLock": "App lock",
     "backup": "Backup",
-    "accountSync": "Account & sync"
+    "accountSync": "Account & sync",
+    "trust": "Amanat (held money)"
   },
   "security": {
     "enterPin": "Enter your PIN",
@@ -182,5 +192,16 @@
       "unexpected": "Something went wrong. Try again.",
       "invalid_url": "Enter the server address."
     }
+  },
+  "trust": {
+    "title": "Amanat (held money)",
+    "empty": "No amanat yet. Add a transaction of type Amanat.",
+    "holding": "Held for them",
+    "owesMe": "Owes you",
+    "settled": "Settled",
+    "received": "Received",
+    "paid": "Paid out",
+    "totalHeld": "Total held for others",
+    "dashboardCard": "Amanat"
   }
 }

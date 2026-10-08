@@ -16,6 +16,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/transactions/presentation/add_transaction_screen.dart';
 import '../../features/transactions/presentation/edit_transaction_screen.dart';
 import '../../features/transactions/presentation/transactions_list_screen.dart';
+import '../../features/transactions/presentation/trust_screen.dart';
 import '../security/lock_provider.dart';
 import '../settings/settings_provider.dart';
 import 'scaffold_with_nav_bar.dart';
@@ -95,6 +96,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             cardId: int.parse(state.pathParameters['id']!),
           ),
         ),
+      ),
+      GoRoute(
+        path: '/trust',
+        builder: (context, state) => const TrustScreen(),
+      ),
+      GoRoute(
+        path: '/trust/:name',
+        builder: (context, state) => TrustPersonScreen(name: Uri.decodeComponent(state.pathParameters['name']!)),
       ),
       GoRoute(
         path: '/account',

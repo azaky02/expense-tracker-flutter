@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
-enum CategoryType { expense, income }
+/// `trust` is the single system category that carries amanat (money held for / paid to a person).
+enum CategoryType { expense, income, trust }
 
 enum CardType { visa, mastercard, meeza }
 
@@ -8,7 +9,9 @@ enum CardCategory { credit, debit }
 
 enum PaymentMethodType { cash, card }
 
-enum TransactionType { expense, income }
+/// trustIn = cash received from a person to hold for them; trustOut = cash paid out to a person.
+/// Neither counts as income or expense.
+enum TransactionType { expense, income, trustIn, trustOut }
 
 enum NotificationKind { dueDateReminder, budgetAlert, dailyReminder }
 

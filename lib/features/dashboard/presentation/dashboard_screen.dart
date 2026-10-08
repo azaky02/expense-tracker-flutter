@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/db/tables.dart';
 import '../../../core/settings/settings_provider.dart';
 import '../../../core/theme/app_semantic_colors.dart';
 import '../../../core/utils/color_utils.dart';
@@ -182,7 +183,9 @@ class _TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isExpense = item.transaction.type.name == 'expense';
+    final type = item.transaction.type;
+    final isTrust = type == TransactionType.trustIn || type == TransactionType.trustOut;
+    final negative = type == TransactionType.expense || type == TransactionType.trustOut;
     final semantic = Theme.of(context).extension<AppSemanticColors>()!;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -213,9 +216,9 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
           Text(
-            '${isExpense ? '-' : '+'}${formatAmount(item.transaction.amount)}',
+            '${negative ? '-' : '+'}${formatAmount(item.transaction.amount)}',
             style: TextStyle(
-              color: isExpense ? semantic.expense : semantic.income,
+              color: isTrust ? Colors.amber.shade800 : (negative ? semantic.expense : semantic.income),
               fontWeight: FontWeight.bold,
             ),
           ),

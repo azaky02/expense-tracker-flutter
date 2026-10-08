@@ -60,3 +60,15 @@ class BeneficiaryBreakdownItem {
   final String beneficiaryName;
   final double total;
 }
+
+/// What one person's amanat add up to: money received to hold, and money paid out to them.
+class TrustBalance {
+  const TrustBalance({required this.name, required this.received, required this.paid, required this.lastDate});
+  final String name;
+  final double received;
+  final double paid;
+  final DateTime lastDate;
+
+  /// > 0: you are holding this much for them. < 0: you paid out more than you received (they owe you).
+  double get balance => received - paid;
+}

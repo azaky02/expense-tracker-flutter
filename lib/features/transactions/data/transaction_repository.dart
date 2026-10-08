@@ -149,9 +149,9 @@ class TransactionRepository {
       for (final t in rows) {
         if (t.type == TransactionType.income) {
           income += t.amount;
-        } else {
+        } else if (t.type == TransactionType.expense) {
           expense += t.amount;
-        }
+        } // amanat (trustIn / trustOut) is neither
       }
       return MonthSummary(income: income, expense: expense);
     });
@@ -274,9 +274,9 @@ class TransactionRepository {
       for (final t in rows) {
         if (t.type == TransactionType.income) {
           income += t.amount;
-        } else {
+        } else if (t.type == TransactionType.expense) {
           expense += t.amount;
-        }
+        } // amanat (trustIn / trustOut) is neither
       }
       final monthKey = '${monthStart.year}-${monthStart.month.toString().padLeft(2, '0')}';
       results.add(MonthTotal(month: monthKey, expense: expense, income: income));
@@ -303,6 +303,39 @@ class TransactionRepository {
         .toList()
       ..sort((a, b) => b.total.compareTo(a.total));
     return list;
+  }
+
+  /// The one system category (type 'trust') every amanat transaction is filed under.
+  Future<int> trustCategoryId() async {
+    final row = await (_db.select(_db.categories)..where((c) => c.type.equalsValue(CategoryType.trust)))
+        .getSingle();
+    return row.id;
+  }
+
+  Stream<List<TrustBalance>> watchTrustBalances() {
+    final query = _db.select(_db.transactions)
+      ..where((t) => t.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]));
+    return query.watch().map((rows) {
+      final byName = <String, TrustBalance>{};
+      for (final t in rows) {
+        final name = t.beneficiaryName?.trim();
+        if (name == null || name.isEmpty) continue;
+        final old = byName[name];
+        final received = (old?.received ?? 0) + (t.type == TransactionType.trustIn ? t.amount : 0);
+        final paid = (old?.paid ?? 0) + (t.type == TransactionType.trustOut ? t.amount : 0);
+        final last = old != null && old.lastDate.isAfter(t.date) ? old.lastDate : t.date;
+        byName[name] = TrustBalance(name: name, received: received, paid: paid, lastDate: last);
+      }
+      return byName.values.toList()..sort((a, b) => b.lastDate.compareTo(a.lastDate));
+    });
+  }
+
+  Stream<List<TransactionWithDetails>> watchTrustTransactions(String name) {
+    final query = _baseQuery()
+      ..where(_db.transactions.beneficiaryName.equals(name) &
+          _db.transactions.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]))
+      ..orderBy([OrderingTerm.desc(_db.transactions.date), OrderingTerm.desc(_db.transactions.createdAt)]);
+    return query.watch().map((rows) => rows.map(_mapRow).toList());
   }
 
   Future<void> _upsertBeneficiary(String? name) async {

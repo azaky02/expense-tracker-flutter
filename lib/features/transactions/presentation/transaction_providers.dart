@@ -68,3 +68,15 @@ final beneficiaryBreakdownProvider =
     FutureProvider.family<List<BeneficiaryBreakdownItem>, (DateTime, DateTime)>(
   (ref, range) => ref.watch(transactionRepositoryProvider).getBeneficiaryBreakdown(range.$1, range.$2),
 );
+
+final trustBalancesProvider = StreamProvider<List<TrustBalance>>(
+  (ref) => ref.watch(transactionRepositoryProvider).watchTrustBalances(),
+);
+
+final trustTransactionsProvider = StreamProvider.family<List<TransactionWithDetails>, String>(
+  (ref, name) => ref.watch(transactionRepositoryProvider).watchTrustTransactions(name),
+);
+
+final trustCategoryIdProvider = FutureProvider<int>(
+  (ref) => ref.watch(transactionRepositoryProvider).trustCategoryId(),
+);

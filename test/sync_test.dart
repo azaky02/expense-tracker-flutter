@@ -19,6 +19,7 @@ late Process _server;
 Future<AppDatabase> _device() async {
   final db = AppDatabase.forTesting(NativeDatabase.memory());
   await seedIfNeeded(db);
+  await ensureTrustCategory(db);
   return db;
 }
 
@@ -131,7 +132,7 @@ void main() {
     expect(moved.beneficiaryName, 'Coach');
     expect(moved.date, DateTime(2026, 10, 1));
     expect(await b.select(b.banks).get(), hasLength(12), reason: 'seeded defaults are not duplicated');
-    expect((await b.select(b.categories).get()).where((c) => c.isDefault), hasLength(12));
+    expect((await b.select(b.categories).get()).where((c) => c.isDefault), hasLength(13));
     expect((await b.select(b.transactions).get()).every((t) => !t.dirty), isTrue,
         reason: 'applied rows are not mistaken for local edits');
 
@@ -158,6 +159,22 @@ void main() {
     expect(await a.select(a.syncTombstones).get(), isEmpty, reason: 'sent tombstones are cleared');
     await svcB.run();
     expect(await b.select(b.transactions).get(), hasLength(1));
+
+    // Amanat: a trust transaction travels with its person, and both devices share one trust category.
+    final trustCat = await (a.select(a.categories)..where((c) => c.type.equalsValue(CategoryType.trust))).getSingle();
+    await a.into(a.transactions).insert(TransactionsCompanion.insert(
+        amount: 500,
+        type: TransactionType.trustIn,
+        categoryId: trustCat.id,
+        paymentMethodType: PaymentMethodType.cash,
+        date: DateTime(2026, 10, 8),
+        beneficiaryName: const Value('Ahmed')));
+    await svcA.run();
+    await svcB.run();
+    final trustB = await (b.select(b.transactions)..where((x) => x.type.equalsValue(TransactionType.trustIn))).getSingle();
+    expect(trustB.beneficiaryName, 'Ahmed');
+    expect(trustB.amount, 500);
+    expect(await (b.select(b.categories)..where((c) => c.type.equalsValue(CategoryType.trust))).get(), hasLength(1));
 
     // Nothing left to do.
     final idle = await svcB.run();

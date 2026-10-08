@@ -172,6 +172,23 @@ describe('sync', () => {
   });
 });
 
+describe('amanat', () => {
+  it('accepts the trust category and trustIn/trustOut transactions', async () => {
+    const u = await newUser();
+    const r = await call('POST', '/api/sync', {
+      cursor: 0,
+      changes: {
+        categories: [{ id: 'seed-cat-trust', parentId: null, name: 'أمانات', icon: '🤝', color: '#0b6e63', type: 'trust', isDefault: true, updatedAt: iso() }],
+        transactions: [tx('a1', { type: 'trustIn', categoryId: 'seed-cat-trust', beneficiaryName: 'Ahmed' }), tx('a2', { type: 'trustOut', categoryId: 'seed-cat-trust', beneficiaryName: 'Ahmed' })],
+      },
+    }, u.token);
+    assert.equal(r.status, 200);
+    assert.equal(r.body.applied.transactions, 2);
+    const bad = await call('POST', '/api/sync', { cursor: 0, changes: { transactions: [tx('x', { type: 'loan' })] } }, u.token);
+    assert.equal(bad.status, 400);
+  });
+});
+
 describe('tombstones', () => {
   it('a bare delete marks a synced row deleted and ignores unknown rows', async () => {
     const u = await newUser();

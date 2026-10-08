@@ -31,7 +31,7 @@ export const ENTITIES: Entity[] = [
     cols: [
       t('parentId', 'parent_id', { nullable: true, max: 64 }),
       t('name', 'name', { max: 200 }), t('icon', 'icon', { max: 16 }), t('color', 'color', { max: 16 }),
-      t('type', 'type', { oneOf: ['expense', 'income'] }), col('isDefault', 'is_default', 'bool'),
+      t('type', 'type', { oneOf: ['expense', 'income', 'trust'] }), col('isDefault', 'is_default', 'bool'),
     ],
   },
   {
@@ -60,7 +60,7 @@ export const ENTITIES: Entity[] = [
     keys: [t('id', 'id', { max: 64 })],
     cols: [
       col('amount', 'amount', 'num'),
-      t('type', 'type', { oneOf: ['expense', 'income'] }),
+      t('type', 'type', { oneOf: ['expense', 'income', 'trustIn', 'trustOut'] }),
       t('categoryId', 'category_id', { max: 64 }),
       t('paymentMethodType', 'payment_method_type', { oneOf: ['cash', 'card'] }),
       t('cardId', 'card_id', { nullable: true, max: 64 }),

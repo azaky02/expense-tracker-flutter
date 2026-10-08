@@ -32,6 +32,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.handshake_outlined),
+            title: Text('settings.trust'.tr(context: context)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/trust'),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.category_outlined),
             title: Text('categories.manageCategories'.tr()),
             trailing: const Icon(Icons.chevron_right),

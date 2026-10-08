@@ -111,3 +111,23 @@ Future<void> seedIfNeeded(AppDatabase db) async {
 
   await db.into(db.meta).insert(MetaCompanion.insert(key: _seedFlagKey, value: 'true'));
 }
+
+
+/// The single system category amanat transactions are filed under. Idempotent; runs on every start
+/// so databases created before amanat existed get it too. Fixed sync id: it merges across devices.
+Future<void> ensureTrustCategory(AppDatabase db) async {
+  final existing = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-trust')))
+      .getSingleOrNull();
+  if (existing != null) return;
+  await db.into(db.categories).insert(
+        CategoriesCompanion.insert(
+          name: 'أمانات',
+          icon: '🤝',
+          color: colorToHex(AppColors.teal700),
+          type: CategoryType.trust,
+          isDefault: const Value(true),
+          syncId: const Value('seed-cat-trust'),
+        ),
+      );
+  await db.customStatement("UPDATE categories SET updated_at = 1 WHERE sync_id = 'seed-cat-trust'");
+}

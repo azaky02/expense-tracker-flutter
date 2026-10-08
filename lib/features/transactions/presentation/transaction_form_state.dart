@@ -36,6 +36,7 @@ class TransactionFormValues {
     String? attachmentUri,
     bool clearAttachment = false,
     String? beneficiaryName,
+    bool clearBeneficiary = false,
   }) {
     return TransactionFormValues(
       amount: amount ?? this.amount,
@@ -46,13 +47,16 @@ class TransactionFormValues {
       date: date ?? this.date,
       note: note ?? this.note,
       attachmentUri: clearAttachment ? null : (attachmentUri ?? this.attachmentUri),
-      beneficiaryName: beneficiaryName ?? this.beneficiaryName,
+      beneficiaryName: clearBeneficiary ? null : (beneficiaryName ?? this.beneficiaryName),
     );
   }
+
+  bool get isTrust => type == TransactionType.trustIn || type == TransactionType.trustOut;
 
   bool get isValid =>
       amount > 0 &&
       categoryId != 0 &&
+      (!isTrust || (beneficiaryName?.trim().isNotEmpty ?? false)) &&
       (paymentMethodType == PaymentMethodType.cash || cardId != null);
 
   TransactionInput toInput() => TransactionInput(
