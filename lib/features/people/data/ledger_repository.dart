@@ -189,10 +189,13 @@ class LedgerRepository {
     String? paymentMethod,
     /// false = keep it as my own record even if the person has an account (no notification).
     bool notifyOtherParty = true,
+    /// Signed out, nothing reaches the server, so the entry is shown as final until a sync says otherwise.
+    bool signedIn = true,
   }) async {
     final person = await (_db.select(_db.people)..where((p) => p.id.equals(personId))).getSingle();
     final id = newEntryId();
-    final shared = notifyOtherParty && person.email != null && person.email!.isNotEmpty;
+    final hasContact = (person.email?.isNotEmpty ?? false) || (person.phone?.isNotEmpty ?? false);
+    final shared = notifyOtherParty && hasContact;
     await _db.transaction(() async {
       await _db.into(_db.ledgerEntries).insert(LedgerEntriesCompanion.insert(
             entryId: id,
@@ -204,7 +207,7 @@ class LedgerRepository {
             description: Value(_blank(description)),
             // Without an account on the other side the entry is final right away; with one it waits
             // for their confirmation. The server decides; this is just what to show until it answers.
-            status: shared ? LedgerStatus.pending : LedgerStatus.confirmed,
+            status: shared && signedIn ? LedgerStatus.pending : LedgerStatus.confirmed,
             settlesEntryId: Value(settlesEntryId),
             paymentMethod: Value(paymentMethod),
             counterpartName: Value(person.name),
@@ -219,6 +222,7 @@ class LedgerRepository {
         'description': _blank(description),
         'personId': person.syncId,
         'counterpartEmail': shared ? person.email : null,
+        'counterpartPhone': shared ? person.phone : null,
         'counterpartName': person.name,
         'settlesEntryId': settlesEntryId,
         'paymentMethod': paymentMethod,

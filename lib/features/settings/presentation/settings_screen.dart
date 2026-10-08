@@ -69,8 +69,9 @@ class SettingsScreen extends ConsumerWidget {
             _Item(Icons.payments_outlined, 'settings.currency'.tr(), null, trailing: 'EGP'),
           ]),
           _Section('settings.sectionSecurity'.tr(), [
-            _Item(Icons.lock_outline, 'settings.appLock'.tr(), null, trailing: 'common.soon'.tr()),
-            _Item(Icons.backup_outlined, 'settings.backup'.tr(), null, trailing: 'common.soon'.tr()),
+            _Item(Icons.lock_outline, 'settings.appLock'.tr(), () => context.push('/security'),
+                trailing: (settings.appLockEnabled ? 'security.on' : 'security.off').tr()),
+            _Item(Icons.backup_outlined, 'settings.backup'.tr(), () => context.push('/backup')),
           ]),
           _Section('settings.sectionAbout'.tr(), [
             _Item(Icons.info_outline, 'settings.version'.tr(), null,

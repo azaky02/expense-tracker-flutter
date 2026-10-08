@@ -1,12 +1,25 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// True until the security gate (PIN/biometric) is built out — app starts unlocked.
-/// Re-locks on every AppLifecycleState.paused/inactive transition when app-lock is enabled
-/// (see AppLifecycleObserver below), no grace period.
+/// isUnlocked. Starts locked: the router only sends the user to /unlock when app lock is enabled,
+/// so with the lock off this has no effect. Re-locks whenever the app goes to the background.
 class LockNotifier extends Notifier<bool> {
   @override
-  bool build() => true; // isUnlocked
+  bool build() => false;
+
+  /// Set while the app itself opens the camera, gallery, file picker or share sheet, so coming
+  /// back from them does not throw the user out to the lock screen mid-task.
+  static bool suspended = false;
+
+  static Future<T> runWithoutLock<T>(Future<T> Function() action) async {
+    suspended = true;
+    try {
+      return await action();
+    } finally {
+      // The resume event arrives right after the external activity closes.
+      Future<void>.delayed(const Duration(seconds: 1), () => suspended = false);
+    }
+  }
 
   void unlock() => state = true;
   void lock() => state = false;
@@ -25,8 +38,8 @@ class AppLifecycleLockObserver extends WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) &&
-        isAppLockEnabled()) {
+    // `paused` only: `inactive` also fires for the notification shade and the biometric dialog.
+    if (state == AppLifecycleState.paused && isAppLockEnabled() && !LockNotifier.suspended) {
       onLock();
     }
   }

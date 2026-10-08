@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/db/tables.dart';
+import '../../../core/sync/sync_controller.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/ds_widgets.dart';
@@ -72,6 +73,7 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
           description: _description.text,
           paymentMethod: _paymentMethod,
           notifyOtherParty: !shared || _notify,
+          signedIn: ref.read(syncControllerProvider).signedIn,
         );
     if (mounted) context.pop();
   }
@@ -119,7 +121,7 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
       if (p.person.id == _personId) selected = p;
     }
     final direction = _direction ?? _defaultDirection(selected);
-    final shared = selected != null && (selected.person.email?.isNotEmpty ?? false);
+    final shared = selected != null && ((selected.person.email?.isNotEmpty ?? false) || (selected.person.phone?.isNotEmpty ?? false));
     final isSettlement = _kind == LedgerKind.settlement;
     final theme = Theme.of(context);
     final title = isSettlement && selected != null

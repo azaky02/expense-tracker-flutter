@@ -29,9 +29,8 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   Future<void> _maybeTryBiometrics() async {
     if (!ref.read(settingsProvider).biometricEnabled) return;
     try {
-      final ok = await _localAuth.authenticate(
-        localizedReason: 'security.unlockPrompt'.tr(),
-      );
+      final ok = await LockNotifier.runWithoutLock(
+          () => _localAuth.authenticate(localizedReason: 'security.unlockPrompt'.tr()));
       if (ok) ref.read(lockProvider.notifier).unlock();
     } catch (_) {
       // Ignore — user can still fall back to the PIN pad.

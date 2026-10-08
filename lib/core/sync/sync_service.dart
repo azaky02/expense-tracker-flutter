@@ -459,6 +459,7 @@ class SyncService {
     final cp = (e['counterparty'] as _Json?) ?? const {};
     final userId = cp['userId'] as String?;
     final email = (cp['email'] as String?)?.toLowerCase();
+    final phone = cp['phone'] as String?;
     final name = (cp['name'] as String?)?.trim();
     Person? person;
     if (e['personId'] != null) {
@@ -470,6 +471,9 @@ class SyncService {
     if (person == null && email != null) {
       person = await (_db.select(_db.people)..where((p) => p.email.lower().equals(email))..limit(1)).getSingleOrNull();
     }
+    if (person == null && phone != null) {
+      person = await (_db.select(_db.people)..where((p) => p.phone.equals(phone))..limit(1)).getSingleOrNull();
+    }
     if (person == null && userId == null && name != null && name.isNotEmpty) {
       person = await (_db.select(_db.people)..where((p) => p.name.equals(name))..limit(1)).getSingleOrNull();
     }
@@ -478,6 +482,7 @@ class SyncService {
       return _db.into(_db.people).insert(PeopleCompanion.insert(
             name: name,
             email: Value(email),
+            phone: Value(phone),
             linkedUserId: Value(userId),
             // Same id on every device of this user, so they converge on one person.
             syncId: Value(userId != null ? 'u-$userId' : null),

@@ -141,6 +141,40 @@ class SyncController extends Notifier<SyncState> with WidgetsBindingObserver {
     }
   }
 
+  /// Mobile sign-up, step 1: ask the server for a code (returned while it runs in OTP dev mode).
+  Future<({String phone, String? devCode, int expiresIn})> requestOtp({required String serverUrl, required String phone}) async {
+    final api = SyncApi(normalizeServerUrl(serverUrl.trim().isEmpty ? defaultServerUrl : serverUrl));
+    try {
+      return await api.requestOtp(phone);
+    } finally {
+      api.close();
+    }
+  }
+
+  /// Mobile sign-up, step 2: create the account with the code and start syncing.
+  Future<void> registerWithPhone({
+    required String serverUrl,
+    required String phone,
+    required String otp,
+    required String password,
+    String name = '',
+    String? email,
+    String? signupCode,
+  }) async {
+    final api = SyncApi(normalizeServerUrl(serverUrl.trim().isEmpty ? defaultServerUrl : serverUrl));
+    try {
+      final session = await api.registerWithPhone(
+          phone: phone, otp: otp, password: password, name: name.trim(), email: email, signupCode: signupCode);
+      await session.save();
+      await SyncService(_db, api).prepareForAccount(session.userId);
+      state = state.copyWith(loaded: true, session: session, status: SyncStatus.idle, clearError: true);
+      _watchLocalChanges();
+      unawaited(syncNow());
+    } finally {
+      api.close();
+    }
+  }
+
   Future<void> syncNow() async {
     final session = state.session;
     if (session == null || _running) return;

@@ -93,7 +93,9 @@ class PersonScreen extends ConsumerWidget {
             label: Text('people.newEntry'.tr()),
           ),
           Text(
-            person.linkedUserId != null || (person.email?.isNotEmpty ?? false) ? 'people.linked'.tr() : 'people.notLinked'.tr(),
+            person.linkedUserId != null || (person.email?.isNotEmpty ?? false) || (person.phone?.isNotEmpty ?? false)
+                ? 'people.linked'.tr()
+                : 'people.notLinked'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),

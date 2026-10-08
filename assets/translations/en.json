@@ -224,7 +224,18 @@
     "pinMismatch": "PINs don't match",
     "enableAppLock": "Enable app lock",
     "enableBiometrics": "Enable Face ID / Fingerprint",
-    "pinSetSuccess": "PIN set up successfully"
+    "pinSetSuccess": "PIN set up successfully",
+    "setupPinHint": "Choose 4 digits",
+    "enterCurrentPin": "Enter your current PIN",
+    "lockDisabled": "App lock turned off",
+    "pinChanged": "PIN changed",
+    "biometricsFailed": "Could not enable biometrics",
+    "intro": "The lock asks for your PIN or fingerprint every time you return to the app.",
+    "lockOnLeave": "Locks whenever you leave the app",
+    "changePin": "Change PIN",
+    "on": "On",
+    "off": "Off",
+    "forgotPinNote": "Forgot the PIN? Clear the app data from the phone settings, then restore a backup or sign in to your account."
   },
   "backup": {
     "description": "Export all your data (transactions, cards, categories) to a file, or restore it from a previous file. Attached receipt photos are not included.",
@@ -232,7 +243,20 @@
     "import": "Restore backup",
     "importWarningTitle": "Restore backup",
     "importWarningBody": "This will completely replace all current data. Continue?",
-    "importSuccess": "Restored successfully"
+    "importSuccess": "Restored successfully",
+    "choosePassword": "Backup password",
+    "enterPassword": "Backup password",
+    "passwordHint": "The backup is encrypted with this password. Without it the file cannot be restored.",
+    "confirmPassword": "Confirm password",
+    "passwordTooShort": "At least 6 characters",
+    "exportFailed": "Could not create the backup",
+    "restoreSummary": "Backup from {date}\n{transactions} transactions · {people} people\n\nAll data on this device will be replaced. Continue?",
+    "notes": "The file is encrypted (AES-256). Keep it somewhere safe (Drive, email). Receipt photos are not included. If you are signed in, the restored data is uploaded on the next sync.",
+    "error": {
+      "wrong_password": "Wrong password",
+      "not_a_backup": "This file is not a Masarefy backup",
+      "newer_version": "This backup comes from a newer app version. Update the app first."
+    }
   },
   "sync": {
     "title": "Account & sync",
@@ -276,7 +300,10 @@
       "session_expired": "Your session expired. Please sign in again.",
       "server_error": "The server had a problem. Try again later.",
       "unexpected": "Something went wrong. Try again.",
-      "invalid_url": "Enter the server address."
+      "invalid_url": "Enter the server address.",
+      "phone_taken": "This number is already registered. Sign in with it.",
+      "invalid_otp": "Wrong code.",
+      "otp_expired": "The code expired. Request a new one."
     },
     "offline": "Offline – changes are saved and will sync when you are back online",
     "failed": "Sync failed – tap to retry"
@@ -434,7 +461,18 @@
     "phone": "Phone (optional)",
     "passwordHint": "At least 8 characters",
     "acceptTerms": "By creating an account you accept the terms and privacy policy",
-    "advanced": "Advanced (server address)"
+    "advanced": "Advanced (server address)",
+    "phoneOrEmail": "Mobile number or email",
+    "mobile": "Mobile number",
+    "emailOptional": "Email (optional)",
+    "continue": "Continue",
+    "verifyTitle": "Verify your number",
+    "verifySent": "We sent a 6-digit code to",
+    "devCodeTitle": "Verification code (shown here until SMS is enabled)",
+    "useCode": "Use",
+    "resendIn": "Resend in {seconds}s",
+    "resend": "Resend code",
+    "verify": "Verify and create account"
   },
   "accounts": {
     "title": "Accounts",

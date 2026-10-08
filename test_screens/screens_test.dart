@@ -172,6 +172,8 @@ void main() {
       '16_reports': '/reports',
       '17_more': '/settings',
       '18_statement': '/people/1/statement',
+      '19_security': '/security',
+      '20_backup': '/backup',
     });
   });
 

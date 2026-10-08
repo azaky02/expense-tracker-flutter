@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/db/tables.dart';
+import '../../../core/security/lock_provider.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/attachments.dart';
 import '../../../core/utils/color_utils.dart';
@@ -94,7 +95,7 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picked = await ImagePicker().pickImage(source: source, imageQuality: 70);
+    final picked = await LockNotifier.runWithoutLock(() => ImagePicker().pickImage(source: source, imageQuality: 70));
     if (picked == null) return;
     if (_values.attachmentUri != null) await deleteAttachment(_values.attachmentUri);
     final persisted = await persistAttachment(picked.path);

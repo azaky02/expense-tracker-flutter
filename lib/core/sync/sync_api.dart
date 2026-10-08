@@ -137,15 +137,17 @@ class SyncApi {
     return SyncSession(
       serverUrl: serverUrl,
       userId: user['id'] as String,
-      email: user['email'] as String,
+      // Phone-only accounts have no e-mail: show the number instead.
+      email: (user['email'] as String?) ?? (user['phone'] as String?) ?? '',
       name: (user['name'] as String?) ?? '',
       accessToken: j['accessToken'] as String,
       refreshToken: j['refreshToken'] as String,
     );
   }
 
-  Future<SyncSession> login(String email, String password) async {
-    final s = _sessionFrom(await _send('POST', '/auth/login', {'email': email, 'password': password}));
+  /// [login] is an e-mail address or a mobile number.
+  Future<SyncSession> login(String login, String password) async {
+    final s = _sessionFrom(await _send('POST', '/auth/login', {'login': login, 'password': password}));
     _session = s;
     return s;
   }
@@ -156,6 +158,34 @@ class SyncApi {
       'password': password,
       'name': name,
       if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+      if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
+    }));
+    _session = s;
+    return s;
+  }
+
+  /// Step 1 of mobile sign-up. Returns the code itself while the server runs in OTP dev mode
+  /// (no SMS provider yet), otherwise null.
+  Future<({String phone, String? devCode, int expiresIn})> requestOtp(String phone) async {
+    final j = await _send('POST', '/auth/otp/request', {'phone': phone});
+    return (phone: j['phone'] as String, devCode: j['devCode'] as String?, expiresIn: (j['expiresIn'] as num).toInt());
+  }
+
+  /// Step 2 of mobile sign-up.
+  Future<SyncSession> registerWithPhone({
+    required String phone,
+    required String otp,
+    required String password,
+    String name = '',
+    String? email,
+    String? signupCode,
+  }) async {
+    final s = _sessionFrom(await _send('POST', '/auth/register', {
+      'phone': phone,
+      'otp': otp,
+      'password': password,
+      'name': name,
+      if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
       if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
     }));
     _session = s;

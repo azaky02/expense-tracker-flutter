@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -209,12 +212,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 16),
           Text('auth.welcomeBack'.tr(), textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
           Text('auth.signInSubtitle'.tr(), textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          FieldLabel('sync.email'.tr()),
+          FieldLabel('auth.phoneOrEmail'.tr()),
           TextField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
-            autofillHints: const [AutofillHints.email],
-            decoration: const InputDecoration(hintText: 'name@example.com'),
+            autofillHints: const [AutofillHints.telephoneNumber, AutofillHints.email],
+            decoration: const InputDecoration(hintText: '01xxxxxxxxx'),
           ),
           FieldLabel('sync.password'.tr()),
           TextField(
@@ -266,7 +269,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
-/// AUTH-03 register (mockup 3).
+/// AUTH-03 register (mockup 3) → AUTH-04 verify (mockup 4): name + mobile number + password, then
+/// the one-time code. With no SMS provider yet, the server returns the code and it is shown here
+/// temporarily so the flow can be tested end to end.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -276,37 +281,78 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _name = TextEditingController();
-  final _email = TextEditingController();
   final _phone = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
   final _code = TextEditingController();
+  final _otp = TextEditingController();
   final _server = TextEditingController(text: defaultServerUrl);
   bool _obscure = true;
   bool _accepted = false;
   bool _busy = false;
   String? _error;
 
+  // Step 2 state.
+  String? _verifiedPhone;
+  String? _devCode;
+  int _resendIn = 0;
+  Timer? _timer;
+
   @override
   void dispose() {
-    for (final c in [_name, _email, _phone, _password, _code, _server]) {
+    for (final c in [_name, _phone, _email, _password, _code, _otp, _server]) {
       c.dispose();
     }
+    _timer?.cancel();
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  void _startCountdown() {
+    _timer?.cancel();
+    setState(() => _resendIn = 45);
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted || _resendIn <= 1) {
+        t.cancel();
+        if (mounted) setState(() => _resendIn = 0);
+        return;
+      }
+      setState(() => _resendIn--);
+    });
+  }
+
+  Future<void> _requestCode() async {
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
-      await ref.read(syncControllerProvider.notifier).signIn(
+      final r = await ref.read(syncControllerProvider.notifier).requestOtp(serverUrl: _server.text, phone: _phone.text);
+      setState(() {
+        _verifiedPhone = r.phone;
+        _devCode = r.devCode;
+        _otp.clear();
+      });
+      _startCountdown();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = authErrorText(context, e.code));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _verify() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(syncControllerProvider.notifier).registerWithPhone(
             serverUrl: _server.text,
-            email: _email.text,
+            phone: _verifiedPhone!,
+            otp: _otp.text.trim(),
             password: _password.text,
-            register: true,
             name: _name.text,
-            phone: _phone.text,
+            email: _email.text,
             signupCode: _code.text,
           );
       await afterSignIn(ref, name: _name.text);
@@ -320,64 +366,151 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final ready = _accepted && _name.text.trim().isNotEmpty && _email.text.contains('@') && _password.text.length >= 8;
     return Scaffold(
-      appBar: AppBar(),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        children: [
-          const Center(child: AppLogo(size: 64)),
-          const SizedBox(height: 12),
-          Text('auth.createAccount'.tr(), textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
-          Text('auth.registerSubtitle'.tr(), textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          FieldLabel('auth.fullName'.tr()),
-          TextField(controller: _name, onChanged: (_) => setState(() {})),
-          FieldLabel('sync.email'.tr()),
-          TextField(controller: _email, keyboardType: TextInputType.emailAddress, onChanged: (_) => setState(() {})),
-          FieldLabel('auth.phone'.tr()),
-          TextField(controller: _phone, keyboardType: TextInputType.phone),
-          FieldLabel('sync.password'.tr()),
-          TextField(
-            controller: _password,
-            obscureText: _obscure,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              helperText: 'auth.passwordHint'.tr(),
-              suffixIcon: IconButton(
-                icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              ),
-            ),
-          ),
-          FieldLabel('sync.signupCode'.tr()),
-          TextField(controller: _code),
-          const SizedBox(height: 8),
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            value: _accepted,
-            onChanged: (v) => setState(() => _accepted = v ?? false),
-            title: Text('auth.acceptTerms'.tr(), style: theme.textTheme.bodySmall),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
-            ),
-          FilledButton(
-            onPressed: _busy || !ready ? null : _submit,
-            child: _busy
-                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                : Text('auth.createAccount'.tr()),
-          ),
-          _ServerField(controller: _server),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text('auth.haveAccount'.tr()),
-            TextButton(onPressed: () => context.pushReplacement('/login'), child: Text('auth.signIn'.tr())),
-          ]),
-        ],
+      appBar: AppBar(
+        leading: _verifiedPhone == null
+            ? null
+            : IconButton(icon: const BackButtonIcon(), onPressed: () => setState(() => _verifiedPhone = null)),
       ),
+      body: _verifiedPhone == null ? _form(context) : _verifyStep(context),
+    );
+  }
+
+  Widget _form(BuildContext context) {
+    final theme = Theme.of(context);
+    final digits = _phone.text.replaceAll(RegExp(r'\D'), '');
+    final ready = _accepted && _name.text.trim().isNotEmpty && digits.length >= 8 && _password.text.length >= 8;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      children: [
+        const Center(child: AppLogo(size: 64)),
+        const SizedBox(height: 12),
+        Text('auth.createAccount'.tr(), textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+        Text('auth.registerSubtitle'.tr(), textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        FieldLabel('auth.fullName'.tr()),
+        TextField(controller: _name, onChanged: (_) => setState(() {})),
+        FieldLabel('auth.mobile'.tr()),
+        TextField(
+          controller: _phone,
+          keyboardType: TextInputType.phone,
+          autofillHints: const [AutofillHints.telephoneNumber],
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(hintText: '01xxxxxxxxx'),
+        ),
+        FieldLabel('auth.emailOptional'.tr()),
+        TextField(controller: _email, keyboardType: TextInputType.emailAddress),
+        FieldLabel('sync.password'.tr()),
+        TextField(
+          controller: _password,
+          obscureText: _obscure,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            helperText: 'auth.passwordHint'.tr(),
+            suffixIcon: IconButton(
+              icon: Icon(_obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+          ),
+        ),
+        FieldLabel('sync.signupCode'.tr()),
+        TextField(controller: _code),
+        const SizedBox(height: 8),
+        CheckboxListTile(
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: _accepted,
+          onChanged: (v) => setState(() => _accepted = v ?? false),
+          title: Text('auth.acceptTerms'.tr(), style: theme.textTheme.bodySmall),
+        ),
+        if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_error!, style: TextStyle(color: theme.colorScheme.error))),
+        FilledButton(
+          onPressed: _busy || !ready ? null : _requestCode,
+          child: _busy
+              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Text('auth.continue'.tr()),
+        ),
+        _ServerField(controller: _server),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('auth.haveAccount'.tr()),
+          TextButton(onPressed: () => context.pushReplacement('/login'), child: Text('auth.signIn'.tr())),
+        ]),
+      ],
+    );
+  }
+
+  Widget _verifyStep(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+      children: [
+        Center(
+          child: Container(
+            width: 96,
+            height: 96,
+            decoration: BoxDecoration(color: theme.colorScheme.primaryContainer, shape: BoxShape.circle),
+            child: Icon(Icons.verified_user_rounded, size: 52, color: theme.colorScheme.primary),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text('auth.verifyTitle'.tr(), textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+        const SizedBox(height: 4),
+        Text('auth.verifySent'.tr(), textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+        Directionality(
+          textDirection: ui.TextDirection.ltr,
+          child: Text(_verifiedPhone!, textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
+        ),
+        if (_devCode != null) ...[
+          const SizedBox(height: 16),
+          AppCard(
+            color: DS.warning.withValues(alpha: 0.12),
+            child: Row(children: [
+              const Icon(Icons.info_outline, color: DS.warning),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('auth.devCodeTitle'.tr(), style: theme.textTheme.bodySmall),
+                  Directionality(
+                    textDirection: ui.TextDirection.ltr,
+                    child: Text(_devCode!, style: theme.textTheme.headlineSmall?.copyWith(letterSpacing: 6, fontWeight: FontWeight.w800)),
+                  ),
+                ]),
+              ),
+              TextButton(
+                onPressed: () => setState(() => _otp.text = _devCode!),
+                child: Text('auth.useCode'.tr()),
+              ),
+            ]),
+          ),
+        ],
+        const SizedBox(height: 20),
+        Directionality(
+          textDirection: ui.TextDirection.ltr,
+          child: TextField(
+            controller: _otp,
+            autofocus: true,
+            maxLength: 6,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            onChanged: (_) => setState(() {}),
+            style: theme.textTheme.headlineMedium?.copyWith(letterSpacing: 18, fontWeight: FontWeight.w700),
+            decoration: const InputDecoration(counterText: '', hintText: '••••••'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: _resendIn > 0
+              ? Text('auth.resendIn'.tr(namedArgs: {'seconds': '$_resendIn'}), style: TextStyle(color: theme.colorScheme.onSurfaceVariant))
+              : TextButton(onPressed: _busy ? null : _requestCode, child: Text('auth.resend'.tr())),
+        ),
+        if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: TextStyle(color: theme.colorScheme.error), textAlign: TextAlign.center)),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _busy || _otp.text.trim().length != 6 ? null : _verify,
+          child: _busy
+              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : Text('auth.verify'.tr()),
+        ),
+      ],
     );
   }
 }
