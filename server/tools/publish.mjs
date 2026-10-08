@@ -19,7 +19,7 @@ const out = path.resolve(process.argv[2] ?? path.join(root, '..', '..', 'Expense
 const keepEnv = fs.existsSync(path.join(out, '.env')) ? fs.readFileSync(path.join(out, '.env'), 'utf8') : null;
 
 for (const entry of fs.existsSync(out) ? fs.readdirSync(out) : []) {
-  if (entry === '.env' || entry === 'data') continue; // keep settings and runtime data
+  if (entry === '.env' || entry === 'data' || entry === 'public') continue; // keep settings and runtime data
   fs.rmSync(path.join(out, entry), { recursive: true, force: true });
 }
 fs.mkdirSync(path.join(out, 'data', 'logs'), { recursive: true });
