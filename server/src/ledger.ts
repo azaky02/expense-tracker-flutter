@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import type { Tx } from './db.ts';
+import { normalizePhone } from './phone.ts';
 
 /**
  * Shared Ledger. One server-side entry per financial event between two parties; each party sees it
@@ -27,6 +28,7 @@ export const ledgerOpSchema = z.discriminatedUnion('op', [
     description: z.string().max(2000).nullable().optional(),
     personId: z.string().max(64).nullable().optional(),
     counterpartEmail: z.string().trim().toLowerCase().email().max(200).nullable().optional(),
+    counterpartPhone: z.string().max(30).transform(normalizePhone).nullable().optional(),
     counterpartName: z.string().trim().max(200).nullable().optional(),
     settlesEntryId: entryId.nullable().optional(),
     paymentMethod: z.enum(['cash', 'bank', 'transfer', 'other']).nullable().optional(),
@@ -63,8 +65,18 @@ async function notify(tx: Tx, userId: string, type: string, entry: { id: string;
 }
 
 async function displayName(tx: Tx, userId: string): Promise<string> {
-  const u = (await tx.query('SELECT name, email FROM users WHERE id = $1', [userId])).rows[0];
-  return u ? (u.name || u.email) : '';
+  const u = (await tx.query('SELECT name, email, phone FROM users WHERE id = $1', [userId])).rows[0];
+  return u ? (u.name || u.email || u.phone || '') : '';
+}
+
+/** The registered user an entry is shared with: by e-mail first, otherwise by mobile number. */
+async function findCounterpart(tx: Tx, email?: string | null, phone?: string | null): Promise<{ id: string } | undefined> {
+  if (email) {
+    const u = (await tx.query('SELECT id FROM users WHERE lower(email) = $1', [email])).rows[0];
+    if (u) return u;
+  }
+  if (phone) return (await tx.query('SELECT id FROM users WHERE phone = $1', [phone])).rows[0];
+  return undefined;
 }
 
 /** Other registered users an op will touch – their locks are taken (in a fixed order) before any writes. */
@@ -72,8 +84,7 @@ export async function usersTouchedBy(tx: Tx, userId: string, ops: LedgerOp[]): P
   const ids = new Set<string>();
   for (const op of ops) {
     if (op.op === 'create') {
-      if (!op.counterpartEmail) continue;
-      const u = (await tx.query('SELECT id FROM users WHERE lower(email) = $1', [op.counterpartEmail])).rows[0];
+      const u = await findCounterpart(tx, op.counterpartEmail, op.counterpartPhone);
       if (u && u.id !== userId) ids.add(u.id);
     } else {
       const rows = (await tx.query('SELECT user_id FROM ledger_participants WHERE entry_id = $1 AND user_id IS NOT NULL', [op.id])).rows;
@@ -91,11 +102,8 @@ export async function applyOp(tx: Tx, userId: string, op: LedgerOp): Promise<OpR
       // Same request sent twice (double tap, retry after a timeout): return the original result.
       return existing.created_by === userId ? { ...base, ok: true, status: existing.status } : { ...base, ok: false, error: 'id_taken' };
     }
-    let other: { id: string } | undefined;
-    if (op.counterpartEmail) {
-      other = (await tx.query('SELECT id FROM users WHERE lower(email) = $1', [op.counterpartEmail])).rows[0];
-      if (other?.id === userId) return { ...base, ok: false, error: 'self_counterparty' };
-    }
+    const other = await findCounterpart(tx, op.counterpartEmail, op.counterpartPhone);
+    if (other?.id === userId) return { ...base, ok: false, error: 'self_counterparty' };
     if (op.settlesEntryId) {
       const ok = (await tx.query('SELECT 1 FROM ledger_participants WHERE entry_id = $1 AND user_id = $2', [op.settlesEntryId, userId])).rowCount;
       if (!ok) return { ...base, ok: false, error: 'settles_not_found' };
@@ -109,7 +117,7 @@ export async function applyOp(tx: Tx, userId: string, op: LedgerOp): Promise<OpR
     await tx.query(
       `INSERT INTO ledger_participants (entry_id, seat, role, user_id, person_id, display_name, direction)
        VALUES ($1, 1, 'CREATOR', $2, $3, NULL, $4), ($1, 2, 'COUNTERPARTY', $5, NULL, $6, $7)`,
-      [op.id, userId, op.personId ?? null, op.direction, other?.id ?? null, op.counterpartName ?? op.counterpartEmail ?? null, flip(op.direction)],
+      [op.id, userId, op.personId ?? null, op.direction, other?.id ?? null, op.counterpartName ?? op.counterpartEmail ?? op.counterpartPhone ?? null, flip(op.direction)],
     );
     await audit(tx, userId, op.id, 'CREATE', { kind: op.kind, amount: op.amount, currency: op.currency, direction: op.direction, shared: !!other });
     if (other) {
@@ -162,7 +170,8 @@ export async function ledgerFeed(tx: Tx, userId: string, cursor: number) {
   const rows = (
     await tx.query(
       `SELECT e.*, me.direction AS my_direction, me.person_id AS my_person_id, me.role AS my_role,
-              o.user_id AS other_user_id, o.display_name AS other_display_name, ou.name AS other_name, ou.email AS other_email
+              o.user_id AS other_user_id, o.display_name AS other_display_name, ou.name AS other_name, ou.email AS other_email,
+              ou.phone AS other_phone
          FROM ledger_entries e
          JOIN ledger_participants me ON me.entry_id = e.id AND me.user_id = $1
          LEFT JOIN ledger_participants o ON o.entry_id = e.id AND o.seat <> me.seat
@@ -194,8 +203,9 @@ export async function ledgerFeed(tx: Tx, userId: string, cursor: number) {
       personId: r.my_person_id,
       counterparty: {
         userId: r.other_user_id,
-        name: r.other_name || r.other_display_name || r.other_email || '',
+        name: r.other_name || r.other_display_name || r.other_email || r.other_phone || '',
         email: r.other_email,
+        phone: r.other_phone,
       },
       createdAt: (r.created_at as Date).toISOString(),
       updatedAt: (r.updated_at as Date).toISOString(),
@@ -246,7 +256,7 @@ export async function detachUserFromLedger(tx: Tx, userId: string) {
     [userId],
   );
   await tx.query(
-    `UPDATE ledger_participants p SET display_name = coalesce(nullif(u.name, ''), u.email), person_id = NULL
+    `UPDATE ledger_participants p SET display_name = coalesce(nullif(u.name, ''), u.email, u.phone), person_id = NULL
        FROM users u WHERE u.id = p.user_id AND p.user_id = $1`,
     [userId],
   );

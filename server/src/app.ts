@@ -6,25 +6,47 @@ import { config } from './config.ts';
 import { pool, withTx } from './db.ts';
 import { hashPassword, hashToken, newRefreshToken, rateLimit, requireAuth, signAccess, verifyPassword } from './auth.ts';
 import { pushSchema } from './entities.ts';
+import { createOtp, isValidPhone, normalizePhone, verifyOtp } from './phone.ts';
 import { exportAll, sync } from './sync.ts';
 import { applyOp, detachUserFromLedger, ledgerFeed, markNotificationsRead, notificationFeed, usersTouchedBy, type OpResult } from './ledger.ts';
 
-const credentials = z.object({
-  email: z.string().trim().toLowerCase().email().max(200),
-  password: z.string().min(8).max(200),
-});
-const registerSchema = credentials.extend({
-  name: z.string().trim().max(100).default(''),
-  phone: z.string().trim().max(30).optional(),
-  signupCode: z.string().max(100).optional(),
-});
+const phoneField = z
+  .string()
+  .max(30)
+  .transform(normalizePhone)
+  .refine(isValidPhone, 'invalid phone');
+
+/** Login with e-mail or mobile number (`login`); `email` is still accepted from older apps. */
+const loginSchema = z
+  .object({
+    login: z.string().trim().min(3).max(200).optional(),
+    email: z.string().trim().max(200).optional(),
+    password: z.string().min(8).max(200),
+  })
+  .refine((b) => !!(b.login || b.email), { message: 'login required', path: ['login'] });
+
+/** New accounts register with a mobile number + OTP; e-mail-only registration is kept for older apps. */
+const registerSchema = z
+  .object({
+    phone: phoneField.optional(),
+    otp: z.string().regex(/^\d{6}$/).optional(),
+    email: z.string().trim().toLowerCase().email().max(200).optional().or(z.literal('').transform(() => undefined)),
+    password: z.string().min(8).max(200),
+    name: z.string().trim().max(100).default(''),
+    signupCode: z.string().max(100).optional(),
+  })
+  .refine((b) => !!(b.phone || b.email), { message: 'phone or email required', path: ['phone'] })
+  .refine((b) => !b.phone || !!b.otp, { message: 'otp required', path: ['otp'] });
 
 interface UserRow {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   name: string;
   password_hash: string;
 }
+
+const USER_COLS = 'id, email, phone, name, password_hash';
 
 async function issueTokens(tx: import('./db.ts').Tx, user: UserRow, userAgent: string | undefined) {
   const refresh = newRefreshToken();
@@ -34,7 +56,7 @@ async function issueTokens(tx: import('./db.ts').Tx, user: UserRow, userAgent: s
     [crypto.randomUUID(), user.id, hashToken(refresh), String(config.refreshTtlDays), userAgent?.slice(0, 300) ?? null],
   );
   return {
-    user: { id: user.id, email: user.email, name: user.name },
+    user: { id: user.id, email: user.email, phone: user.phone, name: user.name },
     accessToken: signAccess(user.id),
     refreshToken: refresh,
     expiresIn: config.accessTtlSec,
@@ -78,7 +100,26 @@ export function createApp() {
   });
 
   const byIp = (req: Request) => `${req.ip}`;
-  const authLimiter = rateLimit(20, 15 * 60 * 1000, (req) => `${byIp(req)}|${String(req.body?.email ?? '').toLowerCase()}`);
+  const authLimiter = rateLimit(20, 15 * 60 * 1000, (req) => `${byIp(req)}|${String(req.body?.login ?? req.body?.email ?? req.body?.phone ?? '').toLowerCase()}`);
+  const otpLimiter = rateLimit(5, 15 * 60 * 1000, (req) => `${byIp(req)}|${String(req.body?.phone ?? '')}`);
+
+  /** Step 1 of mobile sign-up: send (in dev mode: return) a one-time code. */
+  api.post('/auth/otp/request', otpLimiter, async (req, res) => {
+    if (config.registration === 'closed') {
+      res.status(403).json({ error: 'registration_closed' });
+      return;
+    }
+    const { phone } = z.object({ phone: phoneField }).parse(req.body);
+    const result = await withTx(async (tx) => {
+      if ((await tx.query('SELECT 1 FROM users WHERE phone = $1', [phone])).rowCount) return null;
+      return createOtp(tx, phone, 'register');
+    });
+    if (!result) {
+      res.status(409).json({ error: 'phone_taken' });
+      return;
+    }
+    res.json({ sent: true, phone, ...result });
+  });
 
   api.post('/auth/register', authLimiter, async (req, res) => {
     if (config.registration === 'closed') {
@@ -92,25 +133,34 @@ export function createApp() {
     }
     const passwordHash = await hashPassword(body.password);
     const result = await withTx(async (tx) => {
-      const exists = await tx.query('SELECT 1 FROM users WHERE lower(email) = $1', [body.email]);
-      if (exists.rowCount) return null;
-      const user: UserRow = { id: crypto.randomUUID(), email: body.email, name: body.name, password_hash: passwordHash };
+      if (body.email && (await tx.query('SELECT 1 FROM users WHERE lower(email) = $1', [body.email])).rowCount) return 'email_taken';
+      if (body.phone) {
+        if ((await tx.query('SELECT 1 FROM users WHERE phone = $1', [body.phone])).rowCount) return 'phone_taken';
+        const otpError = await verifyOtp(tx, body.phone, 'register', body.otp!);
+        if (otpError) return otpError;
+      }
+      const user: UserRow = { id: crypto.randomUUID(), email: body.email ?? null, phone: body.phone ?? null, name: body.name, password_hash: passwordHash };
       await tx.query('INSERT INTO users (id, email, name, password_hash, phone, last_login_at) VALUES ($1,$2,$3,$4,$5, now())', [
-        user.id, user.email, user.name, user.password_hash, body.phone || null,
+        user.id, user.email, user.name, user.password_hash, user.phone,
       ]);
       return issueTokens(tx, user, req.header('user-agent'));
     });
-    if (!result) {
-      res.status(409).json({ error: 'email_taken' });
+    if (typeof result === 'string') {
+      res.status(result === 'email_taken' || result === 'phone_taken' ? 409 : 400).json({ error: result });
       return;
     }
     res.status(201).json(result);
   });
 
   api.post('/auth/login', authLimiter, async (req, res) => {
-    const body = credentials.parse(req.body);
+    const body = loginSchema.parse(req.body);
+    const login = (body.login ?? body.email)!.trim();
     const result = await withTx(async (tx) => {
-      const row = (await tx.query('SELECT id, email, name, password_hash FROM users WHERE lower(email) = $1', [body.email])).rows[0] as UserRow | undefined;
+      const row = (
+        login.includes('@')
+          ? await tx.query(`SELECT ${USER_COLS} FROM users WHERE lower(email) = $1`, [login.toLowerCase()])
+          : await tx.query(`SELECT ${USER_COLS} FROM users WHERE phone = $1`, [normalizePhone(login)])
+      ).rows[0] as UserRow | undefined;
       // Same work either way so response time does not reveal whether the email exists.
       const ok = row ? await verifyPassword(body.password, row.password_hash) : (await hashPassword(body.password), false);
       if (!row || !ok) return null;
@@ -135,7 +185,7 @@ export function createApp() {
         )
       ).rows[0];
       if (!row) return null;
-      const user = (await tx.query('SELECT id, email, name, password_hash FROM users WHERE id = $1', [row.user_id])).rows[0] as UserRow;
+      const user = (await tx.query(`SELECT ${USER_COLS} FROM users WHERE id = $1`, [row.user_id])).rows[0] as UserRow;
       return issueTokens(tx, user, req.header('user-agent'));
     });
     if (!result) {
@@ -155,7 +205,7 @@ export function createApp() {
 
   api.get('/me', requireAuth, async (req, res) => {
     const row = await withTx(async (tx) =>
-      (await tx.query('SELECT id, email, name, created_at FROM users WHERE id = $1', [req.userId])).rows[0],
+      (await tx.query('SELECT id, email, phone, name, created_at FROM users WHERE id = $1', [req.userId])).rows[0],
     );
     if (!row) {
       res.status(401).json({ error: 'unauthorized' });

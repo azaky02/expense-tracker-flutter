@@ -28,6 +28,8 @@ export const config = {
   migrationsDir: path.resolve(env.MIGRATIONS_DIR ?? 'migrations'),
   jwtSecret: env.JWT_ACCESS_SECRET ?? '',
   registration,
+  /** No SMS provider yet: return the OTP to the app so it can be shown on screen. */
+  otpDevMode: (env.OTP_DEV_MODE ?? 'on') === 'on',
   signupCode: env.SIGNUP_CODE ?? '',
   webDir: path.resolve(env.WEB_DIR ?? 'public'),
   corsOrigins: (env.CORS_ORIGIN ?? '').split(',').map((s) => s.trim()).filter(Boolean),
