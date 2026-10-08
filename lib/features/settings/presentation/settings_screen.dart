@@ -25,6 +25,13 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ListTile(
             contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.cloud_sync_outlined),
+            title: Text('settings.accountSync'.tr(context: context)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/account'),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.category_outlined),
             title: Text('categories.manageCategories'.tr()),
             trailing: const Icon(Icons.chevron_right),

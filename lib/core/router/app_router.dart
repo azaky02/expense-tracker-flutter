@@ -11,6 +11,7 @@ import '../../features/payment_methods/presentation/card_details_screen.dart';
 import '../../features/payment_methods/presentation/edit_card_screen.dart';
 import '../../features/payment_methods/presentation/payment_methods_screen.dart';
 import '../../features/reports/presentation/reports_screen.dart';
+import '../../features/settings/presentation/account_sync_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/transactions/presentation/add_transaction_screen.dart';
 import '../../features/transactions/presentation/edit_transaction_screen.dart';
@@ -94,6 +95,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             cardId: int.parse(state.pathParameters['id']!),
           ),
         ),
+      ),
+      GoRoute(
+        path: '/account',
+        builder: (context, state) => const AccountSyncScreen(),
       ),
       GoRoute(
         path: '/categories',

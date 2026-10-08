@@ -14,6 +14,17 @@ function clampTs(iso: string): string {
 
 /** Insert or update one record; last-writer-wins on updatedAt (older/equal writes are ignored). */
 async function upsert(tx: Tx, userId: string, e: Entity, r: Rec): Promise<boolean> {
+  const isTombstone = !!r.deletedAt && e.cols.some((c) => !c.nullable && r[c.api] === undefined);
+  if (isTombstone) {
+    // Only marks an existing row deleted; a delete for a row the server never saw is a no-op.
+    const keyWhere = e.keys.map((c, i) => `${c.db} = $${i + 3}`).join(' AND ');
+    const res = await tx.query(
+      `UPDATE ${e.table} SET deleted_at = $2, updated_at = $2, seq = nextval('change_seq')
+       WHERE user_id = $1 AND ${keyWhere} AND updated_at < $2`,
+      [userId, clampTs(r.deletedAt as string), ...e.keys.map((c) => r[c.api])],
+    );
+    return (res.rowCount ?? 0) > 0;
+  }
   const cols = [...e.keys, ...e.cols];
   const names = ['user_id', ...cols.map((c) => c.db), 'updated_at', 'deleted_at', 'seq'];
   const vals: unknown[] = [

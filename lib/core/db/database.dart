@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../security/secure_storage.dart';
+import '../sync/sync_schema.dart';
 import 'tables.dart';
 
 part 'database.g.dart';
@@ -21,13 +22,17 @@ part 'database.g.dart';
     NotificationPreferences,
     ScheduledNotifications,
     Meta,
+    SyncTombstones,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// For tests: run against any executor (e.g. an in-memory database).
+  AppDatabase.forTesting(super.executor);
+
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -42,6 +47,33 @@ class AppDatabase extends _$AppDatabase {
           await customStatement(
             'CREATE INDEX idx_transactions_card ON transactions(card_id);',
           );
+          await createSyncObjects(this);
+        },
+        onUpgrade: (Migrator m, int from, int to) async {
+          if (from < 2) {
+            // v2: sync support (see core/sync/sync_schema.dart).
+            await m.addColumn(banks, banks.syncId);
+            await m.addColumn(banks, banks.updatedAt);
+            await m.addColumn(banks, banks.dirty);
+            await m.addColumn(categories, categories.syncId);
+            await m.addColumn(categories, categories.updatedAt);
+            await m.addColumn(categories, categories.dirty);
+            await m.addColumn(cards, cards.syncId);
+            await m.addColumn(cards, cards.updatedAt);
+            await m.addColumn(cards, cards.dirty);
+            await m.addColumn(beneficiaries, beneficiaries.syncId);
+            await m.addColumn(beneficiaries, beneficiaries.updatedAt);
+            await m.addColumn(beneficiaries, beneficiaries.dirty);
+            await m.addColumn(transactions, transactions.syncId);
+            await m.addColumn(transactions, transactions.updatedAt);
+            await m.addColumn(transactions, transactions.dirty);
+            await m.addColumn(categoryBudgets, categoryBudgets.syncId);
+            await m.addColumn(categoryBudgets, categoryBudgets.updatedAt);
+            await m.addColumn(categoryBudgets, categoryBudgets.dirty);
+            await m.createTable(syncTombstones);
+            await backfillSyncIds(this);
+            await createSyncObjects(this);
+          }
         },
       );
 }

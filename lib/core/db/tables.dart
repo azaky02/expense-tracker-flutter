@@ -12,7 +12,28 @@ enum TransactionType { expense, income }
 
 enum NotificationKind { dueDateReminder, budgetAlert, dailyReminder }
 
-class Banks extends Table {
+
+/// Columns that make a table syncable. They are maintained entirely by SQLite triggers (see
+/// sync_schema.dart), so repositories never touch them: every local write stamps updated_at and
+/// sets dirty = 1, and deletes leave a row in sync_tombstones.
+mixin SyncColumns on Table {
+  /// Stable cross-device id (random hex, or 'seed-...' for the built-in defaults).
+  TextColumn get syncId => text().nullable()();
+  /// Unix seconds of the last local change, or of the remote version that was applied.
+  IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+  /// True while the row has local changes the server has not seen yet.
+  BoolColumn get dirty => boolean().withDefault(const Constant(false))();
+}
+
+/// Rows deleted locally that still have to be reported to the server.
+class SyncTombstones extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get entity => text()();
+  TextColumn get key => text()();
+  IntColumn get deletedAt => integer()();
+}
+
+class Banks extends Table with SyncColumns {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   TextColumn get logoUri => text().nullable()();
@@ -22,7 +43,7 @@ class Banks extends Table {
 /// Two-level hierarchy only: parentCategoryId NULL = main category, set = sub-category.
 /// "Only one level of nesting" and "transactions must pick a leaf" are enforced in the
 /// categories repository, not here — drift/SQLite can't express that declaratively.
-class Categories extends Table {
+class Categories extends Table with SyncColumns {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get parentCategoryId =>
       integer().nullable().references(Categories, #id)();
@@ -33,7 +54,7 @@ class Categories extends Table {
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
 }
 
-class Cards extends Table {
+class Cards extends Table with SyncColumns {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get bankId => integer().references(Banks, #id)();
   TextColumn get cardType => textEnum<CardType>()();
@@ -50,13 +71,13 @@ class Cards extends Table {
 }
 
 /// Fast autocomplete without scanning/DISTINCT-ing the whole transactions table.
-class Beneficiaries extends Table {
+class Beneficiaries extends Table with SyncColumns {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text().unique()();
   DateTimeColumn get lastUsedAt => dateTime()();
 }
 
-class Transactions extends Table {
+class Transactions extends Table with SyncColumns {
   IntColumn get id => integer().autoIncrement()();
   RealColumn get amount => real()();
   TextColumn get type => textEnum<TransactionType>()();
@@ -75,7 +96,7 @@ class Transactions extends Table {
 }
 
 /// Per-main-category monthly budget thresholds (optional budget-exceeded alerts).
-class CategoryBudgets extends Table {
+class CategoryBudgets extends Table with SyncColumns {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get categoryId =>
       integer().unique().references(Categories, #id)();

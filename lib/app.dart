@@ -7,6 +7,7 @@ import 'core/router/app_router.dart';
 import 'core/security/lock_provider.dart';
 import 'core/settings/settings_provider.dart';
 import 'core/settings/settings_state.dart';
+import 'core/sync/sync_controller.dart';
 import 'core/theme/app_theme.dart';
 
 class ExpenseTrackerApp extends ConsumerStatefulWidget {
@@ -52,6 +53,8 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
         home: Scaffold(body: Center(child: Text('Failed to open database: $error'))),
       ),
       data: (_) {
+        // Starts background sync (when signed in) for the whole app lifetime.
+        ref.watch(syncControllerProvider);
         final router = ref.watch(routerProvider);
         return MaterialApp.router(
           routerConfig: router,

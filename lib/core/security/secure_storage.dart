@@ -38,6 +38,13 @@ class SecureStorageService {
     return key;
   }
 
+  static const _syncSessionKey = 'sync-session';
+
+  /// The server login (address, user, access + refresh token) as one JSON blob.
+  Future<String?> readSyncSession() => _storage.read(key: _syncSessionKey);
+  Future<void> writeSyncSession(String json) => _storage.write(key: _syncSessionKey, value: json);
+  Future<void> clearSyncSession() => _storage.delete(key: _syncSessionKey);
+
   Future<bool> hasPinSet() async {
     return (await _storage.read(key: _pinHashKey)) != null;
   }

@@ -115,7 +115,8 @@
     "calendar": "Calendar",
     "notifications": "Notifications",
     "appLock": "App lock",
-    "backup": "Backup"
+    "backup": "Backup",
+    "accountSync": "Account & sync"
   },
   "security": {
     "enterPin": "Enter your PIN",
@@ -136,5 +137,50 @@
     "importWarningTitle": "Restore backup",
     "importWarningBody": "This will completely replace all current data. Continue?",
     "importSuccess": "Restored successfully"
+  },
+  "sync": {
+    "title": "Account & sync",
+    "serverUrl": "Server address",
+    "serverHint": "https://your-site.com",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name (optional)",
+    "signupCode": "Sign-up code (if required)",
+    "signIn": "Sign in",
+    "register": "Create account",
+    "haveAccount": "I already have an account",
+    "noAccount": "Create a new account",
+    "signedInAs": "Signed in as {email}",
+    "server": "Server",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "lastSync": "Last sync: {time}",
+    "neverSynced": "Not synced yet",
+    "synced": "Everything is up to date",
+    "skipped": "{count} records could not be applied (missing references)",
+    "insecure": "This address uses plain HTTP: your data is not encrypted in transit. Use only for testing.",
+    "signOut": "Sign out",
+    "signOutKeep": "Sign out (keep data on this device)",
+    "signOutWipe": "Sign out and wipe local data",
+    "signOutTitle": "Sign out",
+    "signOutBody": "Your data stays on the server. What about this device?",
+    "deleteAccount": "Delete account and server data",
+    "deleteTitle": "Delete account",
+    "deleteBody": "This permanently deletes your account and all data on the server. Data on this device is kept. Enter your password to confirm.",
+    "intro": "Sign in to keep your data on the server and sync between devices. The app keeps working offline.",
+    "errors": {
+      "network": "Cannot reach the server. Check the address and your connection.",
+      "tls": "Secure connection failed. Check the https address.",
+      "invalid_credentials": "Wrong email or password.",
+      "email_taken": "This email is already registered.",
+      "registration_closed": "Registration is closed on this server.",
+      "invalid_signup_code": "Wrong sign-up code.",
+      "validation_failed": "Check the email and use a password of at least 8 characters.",
+      "too_many_attempts": "Too many attempts. Try again in a few minutes.",
+      "session_expired": "Your session expired. Please sign in again.",
+      "server_error": "The server had a problem. Try again later.",
+      "unexpected": "Something went wrong. Try again.",
+      "invalid_url": "Enter the server address."
+    }
   }
 }

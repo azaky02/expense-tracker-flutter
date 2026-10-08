@@ -171,3 +171,17 @@ describe('sync', () => {
     assert.ok(left.rows[0].n >= 0);
   });
 });
+
+describe('tombstones', () => {
+  it('a bare delete marks a synced row deleted and ignores unknown rows', async () => {
+    const u = await newUser();
+    await call('POST', '/api/sync', { cursor: 0, changes: { transactions: [tx('t1', { updatedAt: iso(-5000) })] } }, u.token);
+    const r = await call('POST', '/api/sync', {
+      cursor: 0,
+      changes: { transactions: [{ id: 't1', updatedAt: iso(), deletedAt: iso() }, { id: 'never-synced', updatedAt: iso(), deletedAt: iso() }] },
+    }, u.token);
+    assert.equal(r.status, 200);
+    assert.equal(r.body.applied.transactions, 1);
+    assert.equal((await call('GET', '/api/export', undefined, u.token)).body.data.transactions.length, 0);
+  });
+});

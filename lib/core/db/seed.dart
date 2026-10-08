@@ -60,12 +60,18 @@ Future<void> seedIfNeeded(AppDatabase db) async {
   if (existing != null) return;
 
   await db.batch((batch) {
+    // Fixed sync ids: every device that seeds itself ends up with the *same* default rows,
+    // so syncing two devices does not duplicate banks/categories.
     batch.insertAll(
       db.banks,
-      _defaultBanks.map((name) => BanksCompanion.insert(name: name)),
+      [
+        for (var i = 0; i < _defaultBanks.length; i++)
+          BanksCompanion.insert(name: _defaultBanks[i], syncId: Value('seed-bank-$i')),
+      ],
     );
   });
 
+  var categorySeq = 0; // matches the row id order, see backfillSyncIds()
   for (final category in _defaultCategories) {
     final parentId = await db.into(db.categories).insert(
           CategoriesCompanion.insert(
@@ -74,6 +80,7 @@ Future<void> seedIfNeeded(AppDatabase db) async {
             color: colorToHex(category.color),
             type: category.type,
             isDefault: const Value(true),
+            syncId: Value('seed-cat-${categorySeq++}'),
           ),
         );
 
@@ -83,6 +90,7 @@ Future<void> seedIfNeeded(AppDatabase db) async {
           db.categories,
           category.children.map(
             (child) => CategoriesCompanion.insert(
+              syncId: Value('seed-cat-${categorySeq++}'),
               parentCategoryId: Value(parentId),
               name: child.$1,
               icon: child.$2,
@@ -95,6 +103,11 @@ Future<void> seedIfNeeded(AppDatabase db) async {
       });
     }
   }
+
+  // Defaults count as "oldest possible" versions: they still sync (so the server knows them), but
+  // a rename made on another device always wins over a freshly seeded copy.
+  await db.customStatement("UPDATE banks SET updated_at = 1 WHERE sync_id LIKE 'seed-%'");
+  await db.customStatement("UPDATE categories SET updated_at = 1 WHERE sync_id LIKE 'seed-%'");
 
   await db.into(db.meta).insert(MetaCompanion.insert(key: _seedFlagKey, value: 'true'));
 }

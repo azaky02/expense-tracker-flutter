@@ -108,13 +108,19 @@ function fieldSchema(c: Col): z.ZodType {
   return c.nullable ? s.nullable().optional() : s;
 }
 
+/** A full record, or a bare tombstone (keys + updatedAt + deletedAt) for rows deleted before they ever synced. */
 export function recordSchema(e: Entity) {
-  const shape: Record<string, z.ZodType> = {
+  const full: Record<string, z.ZodType> = {
     updatedAt: isoTs,
     deletedAt: isoTs.nullable().optional(),
   };
-  for (const c of [...e.keys, ...e.cols]) shape[c.api] = fieldSchema(c);
-  return z.object(shape);
+  const tomb: Record<string, z.ZodType> = { updatedAt: isoTs, deletedAt: isoTs };
+  for (const c of e.keys) {
+    full[c.api] = fieldSchema(c);
+    tomb[c.api] = fieldSchema(c);
+  }
+  for (const c of e.cols) full[c.api] = fieldSchema(c);
+  return z.union([z.object(full), z.object(tomb)]);
 }
 
 export const MAX_RECORDS_PER_ENTITY = 2000;
