@@ -186,10 +186,13 @@ class LedgerRepository {
     required DateTime date,
     String? description,
     String? settlesEntryId,
+    String? paymentMethod,
+    /// false = keep it as my own record even if the person has an account (no notification).
+    bool notifyOtherParty = true,
   }) async {
     final person = await (_db.select(_db.people)..where((p) => p.id.equals(personId))).getSingle();
     final id = newEntryId();
-    final shared = person.email != null && person.email!.isNotEmpty;
+    final shared = notifyOtherParty && person.email != null && person.email!.isNotEmpty;
     await _db.transaction(() async {
       await _db.into(_db.ledgerEntries).insert(LedgerEntriesCompanion.insert(
             entryId: id,
@@ -203,6 +206,7 @@ class LedgerRepository {
             // for their confirmation. The server decides; this is just what to show until it answers.
             status: shared ? LedgerStatus.pending : LedgerStatus.confirmed,
             settlesEntryId: Value(settlesEntryId),
+            paymentMethod: Value(paymentMethod),
             counterpartName: Value(person.name),
             queued: const Value(true),
           ));
@@ -214,9 +218,10 @@ class LedgerRepository {
         'date': _ymd(date),
         'description': _blank(description),
         'personId': person.syncId,
-        'counterpartEmail': person.email,
+        'counterpartEmail': shared ? person.email : null,
         'counterpartName': person.name,
         'settlesEntryId': settlesEntryId,
+        'paymentMethod': paymentMethod,
       });
     });
     return id;

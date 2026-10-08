@@ -30,3 +30,6 @@ alter table categories add constraint categories_type_check
   check (type in ('expense','income','trust','transfer'));
 
 alter table users add column phone text;
+
+-- Settlement screen: how the money was handed over (cash / bank / transfer / other).
+alter table ledger_entries add column payment_method text check (payment_method in ('cash','bank','transfer','other'));

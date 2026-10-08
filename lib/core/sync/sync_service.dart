@@ -517,6 +517,7 @@ class SyncService {
           : Value(_enum(LedgerStatus.values, (e['status'] as String).toLowerCase(), LedgerStatus.pending)),
       rejectReason: Value(e['rejectReason'] as String?),
       settlesEntryId: Value(e['settlesEntryId'] as String?),
+      paymentMethod: Value(e['paymentMethod'] as String?),
       createdByMe: Value(e['createdByMe'] == true),
       counterpartUserId: Value(cp['userId'] as String?),
       counterpartName: Value(cp['name'] as String?),

@@ -11,7 +11,13 @@
     "egp": "EGP",
     "today": "Today",
     "all": "All",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "loadError": "Could not load data.",
+    "ok": "OK",
+    "retry": "Retry",
+    "soon": "Coming soon",
+    "viewAll": "View all",
+    "yesterday": "Yesterday"
   },
   "nav": {
     "home": "Home",
@@ -35,7 +41,16 @@
     "recentTransactions": "Recent transactions",
     "dueSoonAlert": "{cardName} due in {days} days",
     "reports": "Reports",
-    "outstanding": "Balances with people"
+    "outstanding": "Balances with people",
+    "accounts": "Accounts",
+    "expenses": "Expenses",
+    "netFlow": "Net cash flow",
+    "noSpending": "No expenses this month.",
+    "noTransactions": "No transactions yet",
+    "pendingConfirmations": "{count} transactions are waiting for your confirmation",
+    "people": "Balances with people",
+    "spendingThisMonth": "Spending this month",
+    "totalBalance": "Total balance"
   },
   "transactions": {
     "addTitle": "Add new transaction",
@@ -63,7 +78,38 @@
     "chooseCategory": "Choose a category",
     "searchOrAddPerson": "Search or type a new name",
     "addPerson": "Add \"{name}\"",
-    "noPerson": "None"
+    "noPerson": "None",
+    "account": "Account",
+    "allAccounts": "All accounts",
+    "allCategories": "All categories",
+    "allPeople": "Everyone",
+    "amountRange": "Amount",
+    "applyFilters": "Apply filters",
+    "camera": "Camera",
+    "gallery": "Gallery",
+    "clearFilters": "Clear filters",
+    "filters": "Filters",
+    "from": "From",
+    "to": "To",
+    "fromAccount": "From account",
+    "toAccount": "To account",
+    "hasAttachment": "With attachments only",
+    "noResults": "No results",
+    "notesHint": "e.g. groceries at Carrefour",
+    "period": "Period",
+    "reset": "Reset",
+    "searchHint": "Search transactions",
+    "type": "Type",
+    "transferTitle": "Transfer: {from} → {to}",
+    "addExpense": "Add expense",
+    "addIncome": "Add income",
+    "addTransfer": "Transfer between accounts",
+    "tab": {
+      "all": "All",
+      "income": "Income",
+      "expense": "Expense",
+      "transfer": "Transfer"
+    }
   },
   "categories": {
     "food": "Food & Drink",
@@ -106,12 +152,34 @@
     "byPaymentMethod": "Expenses by payment method",
     "monthOverMonth": "Month over month",
     "byBeneficiary": "By beneficiary",
-    "exportPdf": "Export PDF"
+    "exportPdf": "Export PDF",
+    "title": "Reports",
+    "totalExpenses": "Total expenses",
+    "vsLastMonth": "vs last month",
+    "byCategory": "Expenses by category",
+    "incomeVsExpenses": "Income vs expenses",
+    "byAccount": "Expenses by account",
+    "people": "Balances with people"
   },
   "budgets": {
     "title": "Category budget",
     "monthlyLimit": "Monthly limit",
-    "enable": "Enable alert"
+    "enable": "Enable alert",
+    "screenTitle": "Budgets",
+    "add": "Add budget",
+    "edit": "Edit budget",
+    "empty": "No budgets yet",
+    "emptyHint": "Set a monthly limit per category and we'll warn you at 80% and 100%.",
+    "status": {
+      "warning": "Reached 80% of the budget",
+      "reached": "Limit reached",
+      "over": "Over budget"
+    },
+    "alert": {
+      "warning": "{category} budget: {percent}% used",
+      "reached": "{category} budget: limit reached ({percent}%)",
+      "over": "{category} budget: over the limit ({percent}%)"
+    }
   },
   "dates": {
     "year": "Year",
@@ -129,7 +197,22 @@
     "appLock": "App lock",
     "backup": "Backup",
     "accountSync": "Account & sync",
-    "cards": "Cards & payment methods"
+    "cards": "Cards & payment methods",
+    "currency": "Currency",
+    "noName": "Add your name",
+    "notSignedIn": "Not signed in – data stays on this device",
+    "sectionAbout": "About",
+    "sectionAccount": "Account",
+    "sectionManage": "Manage",
+    "sectionPreferences": "Preferences",
+    "sectionSecurity": "Security & backup",
+    "theme": "Appearance",
+    "version": "Version",
+    "themeMode": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "security": {
     "enterPin": "Enter your PIN",
@@ -194,7 +277,9 @@
       "server_error": "The server had a problem. Try again later.",
       "unexpected": "Something went wrong. Try again.",
       "invalid_url": "Enter the server address."
-    }
+    },
+    "offline": "Offline – changes are saved and will sync when you are back online",
+    "failed": "Sync failed – tap to retry"
   },
   "trust": {
     "title": "Amanat (held money)",
@@ -211,7 +296,14 @@
     "expense": "Expense",
     "income": "Income",
     "ledger": "Transaction with a person",
-    "settlement": "Settlement"
+    "settlement": "Settlement",
+    "title": "Add a new entry",
+    "expenseHint": "Record an expense",
+    "incomeHint": "Record income",
+    "transfer": "Transfer",
+    "transferHint": "Move money between your accounts",
+    "ledgerHint": "Money received from or given to someone",
+    "settlementHint": "Pay back part or all of a balance"
   },
   "people": {
     "title": "People",
@@ -236,7 +328,15 @@
     "totalReceivable": "Owed to me",
     "totalPayable": "I owe",
     "linked": "Entries with them are shared and need their confirmation.",
-    "notLinked": "No account: entries are final on your side."
+    "notLinked": "No account: entries are final on your side.",
+    "currentBalance": "Current balance",
+    "emptyTitle": "No people yet",
+    "latest": "Latest transactions",
+    "noEntries": "No transactions with this person",
+    "search": "Search people",
+    "sectionAll": "Everyone",
+    "sectionIOwe": "I owe them",
+    "sectionOwesMe": "They owe me"
   },
   "ledger": {
     "kind": {
@@ -269,7 +369,23 @@
     "createdByOther": "Recorded by {name}",
     "rejectedBecause": "Rejected: {reason}",
     "sharedHint": "If {name} has an account, the entry reaches them and needs their confirmation.",
-    "localHint": "{name} has no email: the entry is final on your side."
+    "localHint": "{name} has no email: the entry is final on your side.",
+    "descriptionHint": "e.g. loan for…",
+    "notifyOther": "Notify the other party",
+    "payInFull": "Pay the full balance",
+    "paymentMethod": "Payment method",
+    "settlementWith": "Settlement with {name}",
+    "settlementAmount": "Settlement amount",
+    "saveSettlement": "Record settlement",
+    "receivedFrom": "Received from {name}",
+    "gaveTo": "Paid to {name}",
+    "privateHint": "Recorded for you only; {name} will not be notified.",
+    "pay": {
+      "cash": "Cash",
+      "bank": "Bank",
+      "transfer": "Transfer",
+      "other": "Other"
+    }
   },
   "statement": {
     "title": "Statement – {name}",
@@ -295,5 +411,53 @@
     "CONFIRMED": "{name} confirmed the transaction of {amount}",
     "REJECTED": "{name} rejected the transaction of {amount}",
     "CANCELLED": "{name} cancelled the transaction of {amount}"
+  },
+  "app": {
+    "name": "Masarefy"
+  },
+  "welcome": {
+    "tagline": "Your expenses and accounts in one place",
+    "start": "Get started",
+    "offlineNote": "Works without an account and offline. An account syncs your data and lets you share transactions with others."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "welcomeBack": "Welcome back",
+    "signInSubtitle": "Sign in to your account",
+    "forgotPassword": "Forgot password?",
+    "forgotPasswordBody": "Password reset by email is coming soon. For now, contact the app administrator.",
+    "noAccount": "Don't have an account?",
+    "createAccount": "Create account",
+    "haveAccount": "Already have an account?",
+    "registerSubtitle": "Start managing your money",
+    "fullName": "Full name",
+    "phone": "Phone (optional)",
+    "passwordHint": "At least 8 characters",
+    "acceptTerms": "By creating an account you accept the terms and privacy policy",
+    "advanced": "Advanced (server address)"
+  },
+  "accounts": {
+    "title": "Accounts",
+    "add": "Add account",
+    "edit": "Edit account",
+    "choose": "Choose an account",
+    "currentBalance": "Current balance",
+    "name": "Account name",
+    "nameHint": "e.g. CIB or Vodafone Cash",
+    "noTransactions": "No transactions on this account",
+    "none": "No account",
+    "opening": "Opening balance",
+    "total": "Total money",
+    "archive": "Archive account",
+    "unarchive": "Unarchive",
+    "type": {
+      "cash": "Cash",
+      "bank": "Bank account",
+      "creditCard": "Credit card",
+      "debitCard": "Debit card",
+      "wallet": "E-wallet",
+      "savings": "Savings",
+      "other": "Other"
+    }
   }
 }

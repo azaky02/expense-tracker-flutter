@@ -73,10 +73,17 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock, size: 40),
-              const SizedBox(height: 16),
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, shape: BoxShape.circle),
+                child: Icon(Icons.verified_user_rounded, size: 52, color: Theme.of(context).colorScheme.primary),
+              ),
+              const SizedBox(height: 20),
               Text('security.enterPin'.tr(), style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 16),
+              const SizedBox(height: 6),
+              Text('security.unlockPrompt'.tr(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 20),
               if (_wrongPin)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -87,16 +94,21 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(_pinLength, (i) {
                   final filled = i < _pin.length;
+                  final scheme = Theme.of(context).colorScheme;
                   return Container(
-                    margin: const EdgeInsets.all(6),
-                    width: 14,
-                    height: 14,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: 52,
+                    height: 56,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: filled
-                          ? Theme.of(context).colorScheme.secondary
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
+                      color: scheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _wrongPin ? scheme.error : (i == _pin.length ? scheme.primary : scheme.outline),
+                        width: i == _pin.length ? 1.6 : 1,
+                      ),
                     ),
+                    child: filled ? Icon(Icons.circle, size: 14, color: scheme.onSurface) : null,
                   );
                 }),
               ),
@@ -146,7 +158,8 @@ class _PadKey extends StatelessWidget {
       height: 64,
       child: TextButton(
         onPressed: onTap,
-        child: Text(label, style: Theme.of(context).textTheme.titleLarge),
+        style: TextButton.styleFrom(shape: const CircleBorder()),
+        child: Text(label, style: Theme.of(context).textTheme.headlineSmall),
       ),
     );
   }

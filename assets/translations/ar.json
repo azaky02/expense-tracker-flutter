@@ -11,11 +11,17 @@
     "egp": "ج.م",
     "today": "اليوم",
     "all": "الكل",
-    "loading": "جاري التحميل..."
+    "loading": "جاري التحميل...",
+    "loadError": "تعذّر تحميل البيانات.",
+    "ok": "تمام",
+    "retry": "إعادة المحاولة",
+    "soon": "قريبًا",
+    "viewAll": "عرض الكل",
+    "yesterday": "أمس"
   },
   "nav": {
     "home": "الرئيسية",
-    "transactions": "المعاملات",
+    "transactions": "الحركات",
     "cards": "البطاقات",
     "settings": "الإعدادات",
     "people": "الأشخاص",
@@ -35,7 +41,16 @@
     "recentTransactions": "آخر المعاملات",
     "dueSoonAlert": "بعد {days} أيام تنبيه استحقاق {cardName}",
     "reports": "التقارير",
-    "outstanding": "الأرصدة مع الأشخاص"
+    "outstanding": "الأرصدة مع الأشخاص",
+    "accounts": "الحسابات",
+    "expenses": "المصروفات",
+    "netFlow": "صافي التدفق",
+    "noSpending": "لا توجد مصروفات في هذا الشهر.",
+    "noTransactions": "لسه ما سجّلتش حركات",
+    "pendingConfirmations": "عندك {count} معاملات بانتظار تأكيدك",
+    "people": "المعاملات مع الأشخاص",
+    "spendingThisMonth": "المصروفات هذا الشهر",
+    "totalBalance": "إجمالي الرصيد"
   },
   "transactions": {
     "addTitle": "إضافة معاملة جديدة",
@@ -63,7 +78,38 @@
     "chooseCategory": "اختر الفئة",
     "searchOrAddPerson": "ابحث أو اكتب اسمًا جديدًا",
     "addPerson": "إضافة «{name}»",
-    "noPerson": "بدون"
+    "noPerson": "بدون",
+    "account": "الحساب",
+    "allAccounts": "جميع الحسابات",
+    "allCategories": "جميع التصنيفات",
+    "allPeople": "جميع الأشخاص",
+    "amountRange": "المبلغ",
+    "applyFilters": "تطبيق الفلاتر",
+    "camera": "الكاميرا",
+    "gallery": "المعرض",
+    "clearFilters": "مسح الفلاتر",
+    "filters": "الفلاتر",
+    "from": "من",
+    "to": "إلى",
+    "fromAccount": "من حساب",
+    "toAccount": "إلى حساب",
+    "hasAttachment": "بها مرفقات فقط",
+    "noResults": "لا توجد نتائج",
+    "notesHint": "مثال: مشتريات من كارفور",
+    "period": "الفترة",
+    "reset": "إعادة تعيين",
+    "searchHint": "ابحث في المعاملات",
+    "type": "نوع الحركة",
+    "transferTitle": "تحويل: {from} ← {to}",
+    "addExpense": "تسجيل مصروف",
+    "addIncome": "تسجيل دخل",
+    "addTransfer": "تحويل بين الحسابات",
+    "tab": {
+      "all": "الكل",
+      "income": "دخل",
+      "expense": "مصروف",
+      "transfer": "تحويل"
+    }
   },
   "categories": {
     "food": "أكل و شرب",
@@ -106,12 +152,34 @@
     "byPaymentMethod": "توزيع المصروفات حسب طريقة الدفع",
     "monthOverMonth": "مقارنة شهر بشهر",
     "byBeneficiary": "حسب المستفيد",
-    "exportPdf": "تصدير PDF"
+    "exportPdf": "تصدير PDF",
+    "title": "التقارير",
+    "totalExpenses": "إجمالي المصروفات",
+    "vsLastMonth": "مقارنة بالشهر السابق",
+    "byCategory": "المصروفات حسب التصنيف",
+    "incomeVsExpenses": "الدخل مقابل المصروفات",
+    "byAccount": "المصروفات حسب الحساب",
+    "people": "الأرصدة مع الأشخاص"
   },
   "budgets": {
     "title": "ميزانية الفئة",
     "monthlyLimit": "الحد الشهري",
-    "enable": "تفعيل التنبيه"
+    "enable": "تفعيل التنبيه",
+    "screenTitle": "الميزانيات",
+    "add": "إضافة ميزانية",
+    "edit": "تعديل الميزانية",
+    "empty": "لا توجد ميزانيات",
+    "emptyHint": "حدد حدًا شهريًا لكل تصنيف وهننبهك عند 80% و100%.",
+    "status": {
+      "warning": "وصلت 80% من الميزانية",
+      "reached": "وصلت للحد",
+      "over": "تجاوزت الميزانية"
+    },
+    "alert": {
+      "warning": "ميزانية {category}: وصلت {percent}%",
+      "reached": "ميزانية {category}: وصلت للحد ({percent}%)",
+      "over": "ميزانية {category}: تجاوزت الحد ({percent}%)"
+    }
   },
   "dates": {
     "year": "السنة",
@@ -129,7 +197,22 @@
     "appLock": "قفل التطبيق",
     "backup": "نسخة احتياطية",
     "accountSync": "الحساب والمزامنة",
-    "cards": "البطاقات وطرق الدفع"
+    "cards": "البطاقات وطرق الدفع",
+    "currency": "العملة",
+    "noName": "ضيف اسمك",
+    "notSignedIn": "غير مسجّل – بياناتك على الجهاز فقط",
+    "sectionAbout": "عن التطبيق",
+    "sectionAccount": "الحساب",
+    "sectionManage": "الإدارة",
+    "sectionPreferences": "التفضيلات",
+    "sectionSecurity": "الأمان والنسخ الاحتياطي",
+    "theme": "المظهر",
+    "version": "الإصدار",
+    "themeMode": {
+      "system": "حسب الجهاز",
+      "light": "فاتح",
+      "dark": "داكن"
+    }
   },
   "security": {
     "enterPin": "أدخل رمز PIN",
@@ -194,7 +277,9 @@
       "server_error": "السيرفر فيه مشكلة. جرّب بعد شوية.",
       "unexpected": "حصل خطأ. جرّب تاني.",
       "invalid_url": "اكتب عنوان السيرفر."
-    }
+    },
+    "offline": "غير متصل – التغييرات محفوظة وهتتزامن لما النت يرجع",
+    "failed": "فشلت المزامنة – اضغط لإعادة المحاولة"
   },
   "trust": {
     "title": "الأمانات",
@@ -211,7 +296,14 @@
     "expense": "مصروف",
     "income": "دخل",
     "ledger": "معاملة مع شخص",
-    "settlement": "سداد"
+    "settlement": "سداد",
+    "title": "إضافة حركة جديدة",
+    "expenseHint": "تسجيل مصروف جديد",
+    "incomeHint": "تسجيل دخل جديد",
+    "transfer": "تحويل",
+    "transferHint": "تحويل بين حساباتك",
+    "ledgerHint": "استلام أو دفع مبلغ مع شخص",
+    "settlementHint": "سداد جزء أو كل المبلغ"
   },
   "people": {
     "title": "الأشخاص",
@@ -236,7 +328,15 @@
     "totalReceivable": "إجمالي ليّ",
     "totalPayable": "إجمالي عليّ",
     "linked": "المعاملات معاه مشتركة ولازم يأكدها.",
-    "notLinked": "من غير حساب: المعاملات بتتسجل عندك نهائية."
+    "notLinked": "من غير حساب: المعاملات بتتسجل عندك نهائية.",
+    "currentBalance": "الرصيد الحالي",
+    "emptyTitle": "لا يوجد أشخاص بعد",
+    "latest": "آخر المعاملات",
+    "noEntries": "لا توجد معاملات مع هذا الشخص",
+    "search": "ابحث عن شخص",
+    "sectionAll": "كل الأشخاص",
+    "sectionIOwe": "لهم أموال عندي",
+    "sectionOwesMe": "لي أموال عندهم"
   },
   "ledger": {
     "kind": {
@@ -269,7 +369,23 @@
     "createdByOther": "سجّلها {name}",
     "rejectedBecause": "سبب الرفض: {reason}",
     "sharedHint": "{name} ممكن يكون عنده حساب: لو عنده، المعاملة هتوصله ولازم يأكدها.",
-    "localHint": "{name} من غير بريد: المعاملة بتتسجل عندك نهائية."
+    "localHint": "{name} من غير بريد: المعاملة بتتسجل عندك نهائية.",
+    "descriptionHint": "مثال: سلفة لشراء…",
+    "notifyOther": "إرسال إشعار للطرف الآخر",
+    "payInFull": "سداد المبلغ بالكامل",
+    "paymentMethod": "طريقة الدفع",
+    "settlementWith": "تسوية مع {name}",
+    "settlementAmount": "مبلغ السداد",
+    "saveSettlement": "تسجيل السداد",
+    "receivedFrom": "استلام من {name}",
+    "gaveTo": "دفع إلى {name}",
+    "privateHint": "هتتسجل عندك بس ومش هتوصل لـ {name}.",
+    "pay": {
+      "cash": "كاش",
+      "bank": "بنك",
+      "transfer": "تحويل",
+      "other": "أخرى"
+    }
   },
   "statement": {
     "title": "كشف حساب {name}",
@@ -295,5 +411,53 @@
     "CONFIRMED": "{name} أكّد المعاملة بقيمة {amount}",
     "REJECTED": "{name} رفض المعاملة بقيمة {amount}",
     "CANCELLED": "{name} ألغى المعاملة بقيمة {amount}"
+  },
+  "app": {
+    "name": "مصروفي"
+  },
+  "welcome": {
+    "tagline": "إدارة مصروفاتك وحساباتك في مكان واحد",
+    "start": "ابدأ الآن",
+    "offlineNote": "التطبيق بيشتغل من غير حساب ومن غير إنترنت. الحساب بيزامن بياناتك ويخليك تشارك معاملات مع غيرك."
+  },
+  "auth": {
+    "signIn": "تسجيل الدخول",
+    "welcomeBack": "مرحبًا بك مرة أخرى",
+    "signInSubtitle": "سجّل الدخول إلى حسابك",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "forgotPasswordBody": "استعادة كلمة المرور بالبريد هتتاح قريبًا. لحد دلوقتي تواصل مع مدير التطبيق.",
+    "noAccount": "ليس لديك حساب؟",
+    "createAccount": "إنشاء حساب جديد",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "registerSubtitle": "ابدأ رحلتك في إدارة أموالك",
+    "fullName": "الاسم الكامل",
+    "phone": "رقم الهاتف (اختياري)",
+    "passwordHint": "8 حروف على الأقل",
+    "acceptTerms": "بإنشاء الحساب أنت توافق على الشروط والأحكام وسياسة الخصوصية",
+    "advanced": "إعدادات متقدمة (عنوان السيرفر)"
+  },
+  "accounts": {
+    "title": "الحسابات",
+    "add": "إضافة حساب جديد",
+    "edit": "تعديل الحساب",
+    "choose": "اختر الحساب",
+    "currentBalance": "الرصيد الحالي",
+    "name": "اسم الحساب",
+    "nameHint": "مثال: CIB أو فودافون كاش",
+    "noTransactions": "لا توجد حركات على هذا الحساب",
+    "none": "بدون حساب",
+    "opening": "الرصيد الافتتاحي",
+    "total": "إجمالي الأموال",
+    "archive": "أرشفة الحساب",
+    "unarchive": "إلغاء الأرشفة",
+    "type": {
+      "cash": "كاش",
+      "bank": "حساب بنكي",
+      "creditCard": "بطاقة ائتمان",
+      "debitCard": "بطاقة خصم",
+      "wallet": "محفظة إلكترونية",
+      "savings": "ادخار",
+      "other": "أخرى"
+    }
   }
 }

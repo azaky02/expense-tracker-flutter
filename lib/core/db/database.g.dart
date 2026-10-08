@@ -6260,6 +6260,17 @@ class $LedgerEntriesTable extends LedgerEntries
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _paymentMethodMeta = const VerificationMeta(
+    'paymentMethod',
+  );
+  @override
+  late final GeneratedColumn<String> paymentMethod = GeneratedColumn<String>(
+    'payment_method',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdByMeMeta = const VerificationMeta(
     'createdByMe',
   );
@@ -6337,6 +6348,7 @@ class $LedgerEntriesTable extends LedgerEntries
     status,
     rejectReason,
     settlesEntryId,
+    paymentMethod,
     createdByMe,
     counterpartUserId,
     counterpartName,
@@ -6418,6 +6430,15 @@ class $LedgerEntriesTable extends LedgerEntries
         settlesEntryId.isAcceptableOrUnknown(
           data['settles_entry_id']!,
           _settlesEntryIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('payment_method')) {
+      context.handle(
+        _paymentMethodMeta,
+        paymentMethod.isAcceptableOrUnknown(
+          data['payment_method']!,
+          _paymentMethodMeta,
         ),
       );
     }
@@ -6523,6 +6544,10 @@ class $LedgerEntriesTable extends LedgerEntries
         DriftSqlType.string,
         data['${effectivePrefix}settles_entry_id'],
       ),
+      paymentMethod: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payment_method'],
+      ),
       createdByMe: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}created_by_me'],
@@ -6574,6 +6599,9 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
   final LedgerStatus status;
   final String? rejectReason;
   final String? settlesEntryId;
+
+  /// cash / bank / transfer / other (settlements).
+  final String? paymentMethod;
   final bool createdByMe;
   final String? counterpartUserId;
   final String? counterpartName;
@@ -6592,6 +6620,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
     required this.status,
     this.rejectReason,
     this.settlesEntryId,
+    this.paymentMethod,
     required this.createdByMe,
     this.counterpartUserId,
     this.counterpartName,
@@ -6633,6 +6662,9 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
     if (!nullToAbsent || settlesEntryId != null) {
       map['settles_entry_id'] = Variable<String>(settlesEntryId);
     }
+    if (!nullToAbsent || paymentMethod != null) {
+      map['payment_method'] = Variable<String>(paymentMethod);
+    }
     map['created_by_me'] = Variable<bool>(createdByMe);
     if (!nullToAbsent || counterpartUserId != null) {
       map['counterpart_user_id'] = Variable<String>(counterpartUserId);
@@ -6667,6 +6699,9 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
       settlesEntryId: settlesEntryId == null && nullToAbsent
           ? const Value.absent()
           : Value(settlesEntryId),
+      paymentMethod: paymentMethod == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paymentMethod),
       createdByMe: Value(createdByMe),
       counterpartUserId: counterpartUserId == null && nullToAbsent
           ? const Value.absent()
@@ -6703,6 +6738,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
       ),
       rejectReason: serializer.fromJson<String?>(json['rejectReason']),
       settlesEntryId: serializer.fromJson<String?>(json['settlesEntryId']),
+      paymentMethod: serializer.fromJson<String?>(json['paymentMethod']),
       createdByMe: serializer.fromJson<bool>(json['createdByMe']),
       counterpartUserId: serializer.fromJson<String?>(
         json['counterpartUserId'],
@@ -6734,6 +6770,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
       ),
       'rejectReason': serializer.toJson<String?>(rejectReason),
       'settlesEntryId': serializer.toJson<String?>(settlesEntryId),
+      'paymentMethod': serializer.toJson<String?>(paymentMethod),
       'createdByMe': serializer.toJson<bool>(createdByMe),
       'counterpartUserId': serializer.toJson<String?>(counterpartUserId),
       'counterpartName': serializer.toJson<String?>(counterpartName),
@@ -6755,6 +6792,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
     LedgerStatus? status,
     Value<String?> rejectReason = const Value.absent(),
     Value<String?> settlesEntryId = const Value.absent(),
+    Value<String?> paymentMethod = const Value.absent(),
     bool? createdByMe,
     Value<String?> counterpartUserId = const Value.absent(),
     Value<String?> counterpartName = const Value.absent(),
@@ -6775,6 +6813,9 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
     settlesEntryId: settlesEntryId.present
         ? settlesEntryId.value
         : this.settlesEntryId,
+    paymentMethod: paymentMethod.present
+        ? paymentMethod.value
+        : this.paymentMethod,
     createdByMe: createdByMe ?? this.createdByMe,
     counterpartUserId: counterpartUserId.present
         ? counterpartUserId.value
@@ -6805,6 +6846,9 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
       settlesEntryId: data.settlesEntryId.present
           ? data.settlesEntryId.value
           : this.settlesEntryId,
+      paymentMethod: data.paymentMethod.present
+          ? data.paymentMethod.value
+          : this.paymentMethod,
       createdByMe: data.createdByMe.present
           ? data.createdByMe.value
           : this.createdByMe,
@@ -6834,6 +6878,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
           ..write('status: $status, ')
           ..write('rejectReason: $rejectReason, ')
           ..write('settlesEntryId: $settlesEntryId, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('createdByMe: $createdByMe, ')
           ..write('counterpartUserId: $counterpartUserId, ')
           ..write('counterpartName: $counterpartName, ')
@@ -6857,6 +6902,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
     status,
     rejectReason,
     settlesEntryId,
+    paymentMethod,
     createdByMe,
     counterpartUserId,
     counterpartName,
@@ -6879,6 +6925,7 @@ class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
           other.status == this.status &&
           other.rejectReason == this.rejectReason &&
           other.settlesEntryId == this.settlesEntryId &&
+          other.paymentMethod == this.paymentMethod &&
           other.createdByMe == this.createdByMe &&
           other.counterpartUserId == this.counterpartUserId &&
           other.counterpartName == this.counterpartName &&
@@ -6899,6 +6946,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
   final Value<LedgerStatus> status;
   final Value<String?> rejectReason;
   final Value<String?> settlesEntryId;
+  final Value<String?> paymentMethod;
   final Value<bool> createdByMe;
   final Value<String?> counterpartUserId;
   final Value<String?> counterpartName;
@@ -6917,6 +6965,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     this.status = const Value.absent(),
     this.rejectReason = const Value.absent(),
     this.settlesEntryId = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
     this.createdByMe = const Value.absent(),
     this.counterpartUserId = const Value.absent(),
     this.counterpartName = const Value.absent(),
@@ -6936,6 +6985,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     required LedgerStatus status,
     this.rejectReason = const Value.absent(),
     this.settlesEntryId = const Value.absent(),
+    this.paymentMethod = const Value.absent(),
     this.createdByMe = const Value.absent(),
     this.counterpartUserId = const Value.absent(),
     this.counterpartName = const Value.absent(),
@@ -6960,6 +7010,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     Expression<String>? status,
     Expression<String>? rejectReason,
     Expression<String>? settlesEntryId,
+    Expression<String>? paymentMethod,
     Expression<bool>? createdByMe,
     Expression<String>? counterpartUserId,
     Expression<String>? counterpartName,
@@ -6979,6 +7030,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
       if (status != null) 'status': status,
       if (rejectReason != null) 'reject_reason': rejectReason,
       if (settlesEntryId != null) 'settles_entry_id': settlesEntryId,
+      if (paymentMethod != null) 'payment_method': paymentMethod,
       if (createdByMe != null) 'created_by_me': createdByMe,
       if (counterpartUserId != null) 'counterpart_user_id': counterpartUserId,
       if (counterpartName != null) 'counterpart_name': counterpartName,
@@ -7000,6 +7052,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     Value<LedgerStatus>? status,
     Value<String?>? rejectReason,
     Value<String?>? settlesEntryId,
+    Value<String?>? paymentMethod,
     Value<bool>? createdByMe,
     Value<String?>? counterpartUserId,
     Value<String?>? counterpartName,
@@ -7019,6 +7072,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
       status: status ?? this.status,
       rejectReason: rejectReason ?? this.rejectReason,
       settlesEntryId: settlesEntryId ?? this.settlesEntryId,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
       createdByMe: createdByMe ?? this.createdByMe,
       counterpartUserId: counterpartUserId ?? this.counterpartUserId,
       counterpartName: counterpartName ?? this.counterpartName,
@@ -7072,6 +7126,9 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
     if (settlesEntryId.present) {
       map['settles_entry_id'] = Variable<String>(settlesEntryId.value);
     }
+    if (paymentMethod.present) {
+      map['payment_method'] = Variable<String>(paymentMethod.value);
+    }
     if (createdByMe.present) {
       map['created_by_me'] = Variable<bool>(createdByMe.value);
     }
@@ -7105,6 +7162,7 @@ class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
           ..write('status: $status, ')
           ..write('rejectReason: $rejectReason, ')
           ..write('settlesEntryId: $settlesEntryId, ')
+          ..write('paymentMethod: $paymentMethod, ')
           ..write('createdByMe: $createdByMe, ')
           ..write('counterpartUserId: $counterpartUserId, ')
           ..write('counterpartName: $counterpartName, ')
@@ -12880,6 +12938,7 @@ typedef $$LedgerEntriesTableCreateCompanionBuilder =
       required LedgerStatus status,
       Value<String?> rejectReason,
       Value<String?> settlesEntryId,
+      Value<String?> paymentMethod,
       Value<bool> createdByMe,
       Value<String?> counterpartUserId,
       Value<String?> counterpartName,
@@ -12900,6 +12959,7 @@ typedef $$LedgerEntriesTableUpdateCompanionBuilder =
       Value<LedgerStatus> status,
       Value<String?> rejectReason,
       Value<String?> settlesEntryId,
+      Value<String?> paymentMethod,
       Value<bool> createdByMe,
       Value<String?> counterpartUserId,
       Value<String?> counterpartName,
@@ -12997,6 +13057,11 @@ class $$LedgerEntriesTableFilterComposer
 
   ColumnFilters<String> get settlesEntryId => $composableBuilder(
     column: $table.settlesEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -13113,6 +13178,11 @@ class $$LedgerEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get createdByMe => $composableBuilder(
     column: $table.createdByMe,
     builder: (column) => ColumnOrderings(column),
@@ -13210,6 +13280,11 @@ class $$LedgerEntriesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get paymentMethod => $composableBuilder(
+    column: $table.paymentMethod,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get createdByMe => $composableBuilder(
     column: $table.createdByMe,
     builder: (column) => column,
@@ -13295,6 +13370,7 @@ class $$LedgerEntriesTableTableManager
                 Value<LedgerStatus> status = const Value.absent(),
                 Value<String?> rejectReason = const Value.absent(),
                 Value<String?> settlesEntryId = const Value.absent(),
+                Value<String?> paymentMethod = const Value.absent(),
                 Value<bool> createdByMe = const Value.absent(),
                 Value<String?> counterpartUserId = const Value.absent(),
                 Value<String?> counterpartName = const Value.absent(),
@@ -13313,6 +13389,7 @@ class $$LedgerEntriesTableTableManager
                 status: status,
                 rejectReason: rejectReason,
                 settlesEntryId: settlesEntryId,
+                paymentMethod: paymentMethod,
                 createdByMe: createdByMe,
                 counterpartUserId: counterpartUserId,
                 counterpartName: counterpartName,
@@ -13333,6 +13410,7 @@ class $$LedgerEntriesTableTableManager
                 required LedgerStatus status,
                 Value<String?> rejectReason = const Value.absent(),
                 Value<String?> settlesEntryId = const Value.absent(),
+                Value<String?> paymentMethod = const Value.absent(),
                 Value<bool> createdByMe = const Value.absent(),
                 Value<String?> counterpartUserId = const Value.absent(),
                 Value<String?> counterpartName = const Value.absent(),
@@ -13351,6 +13429,7 @@ class $$LedgerEntriesTableTableManager
                 status: status,
                 rejectReason: rejectReason,
                 settlesEntryId: settlesEntryId,
+                paymentMethod: paymentMethod,
                 createdByMe: createdByMe,
                 counterpartUserId: counterpartUserId,
                 counterpartName: counterpartName,

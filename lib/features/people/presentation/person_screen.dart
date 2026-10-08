@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/db/database.dart' hide Card;
 import '../../../core/db/tables.dart';
+import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/currency.dart';
+import '../../../core/widgets/ds_widgets.dart';
 import '../data/ledger_repository.dart';
 import 'people_providers.dart';
 import 'people_screen.dart';
@@ -16,12 +18,14 @@ String directionLabel(BuildContext context, LedgerDirection d) =>
     (d == LedgerDirection.gave ? 'ledger.gave' : 'ledger.received').tr(context: context);
 
 Color statusColor(BuildContext context, LedgerStatus s) => switch (s) {
-      LedgerStatus.confirmed => Colors.green.shade700,
-      LedgerStatus.pending => Colors.amber.shade800,
+      LedgerStatus.confirmed => DS.success,
+      LedgerStatus.pending => DS.warning,
       LedgerStatus.rejected => Theme.of(context).colorScheme.error,
       LedgerStatus.cancelled => Theme.of(context).colorScheme.onSurfaceVariant,
     };
 
+/// Person details (PPL-02, mockup 11): current balance, settle / statement / new entry, latest
+/// transactions with their status.
 class PersonScreen extends ConsumerWidget {
   const PersonScreen({super.key, required this.personId});
   final int personId;
@@ -33,138 +37,135 @@ class PersonScreen extends ConsumerWidget {
     final balance = PersonBalance.of(entries);
     final theme = Theme.of(context);
     if (person == null) return Scaffold(appBar: AppBar());
+    final net = balance.net;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(person.name),
-        actions: [
-          IconButton(
-            onPressed: () => context.push('/people/$personId/edit'),
-            icon: const Icon(Icons.edit_outlined),
-          ),
-        ],
+        actions: [IconButton(onPressed: () => context.push('/people/$personId/edit'), icon: const Icon(Icons.more_vert))],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _BalanceRow(label: 'people.heOwesMe'.tr(context: context), amount: balance.heOwesMe, color: Colors.green.shade700),
-                  _BalanceRow(label: 'people.iOweHim'.tr(context: context), amount: balance.iOweHim, color: theme.colorScheme.error),
-                  const Divider(),
-                  _BalanceRow(
-                    label: 'people.net'.tr(context: context),
-                    amount: balance.net,
-                    color: netColor(context, balance.net),
-                    bold: true,
-                    signed: true,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    person.linkedUserId != null || (person.email?.isNotEmpty ?? false)
-                        ? 'people.linked'.tr(context: context)
-                        : 'people.notLinked'.tr(context: context),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
+          Center(child: PersonAvatar(name: person.name, color: DS.primary, size: 72, linked: person.linkedUserId != null)),
+          const SizedBox(height: 8),
+          Text(person.name, textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+          const SizedBox(height: 12),
+          AppCard(
+            child: Column(children: [
+              Text('people.currentBalance'.tr(), style: theme.textTheme.bodySmall),
+              const SizedBox(height: 4),
+              AmountText(net.abs(), size: 30, weight: FontWeight.w800, color: netColor(context, net)),
+              Text(netLabel(context, net), style: theme.textTheme.titleSmall?.copyWith(color: netColor(context, net))),
+              if (balance.heOwesMe > 0 && balance.iOweHim > 0) ...[
+                const Divider(height: 24),
+                Row(children: [
+                  Expanded(child: _Mini('people.heOwesMe'.tr(), balance.heOwesMe, DS.success)),
+                  Expanded(child: _Mini('people.iOweHim'.tr(), balance.iOweHim, theme.colorScheme.error)),
+                ]),
+              ],
+              if (balance.pendingCount > 0) ...[
+                const SizedBox(height: 8),
+                StatusPill('people.pending'.tr(namedArgs: {'count': '${balance.pendingCount}'}), color: DS.warning, icon: Icons.schedule),
+              ],
+            ]),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => context.push('/people/$personId/statement'),
-                  icon: const Icon(Icons.receipt_long_outlined),
-                  label: Text('people.statement'.tr(context: context)),
-                ),
+          Row(children: [
+            Expanded(
+              child: FilledButton(
+                onPressed: () => context.push('/ledger/new?personId=$personId&kind=settlement'),
+                child: Text('people.settlement'.tr()),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.tonalIcon(
-                  onPressed: () => context.push('/ledger/new?personId=$personId'),
-                  icon: const Icon(Icons.add),
-                  label: Text('people.newEntry'.tr(context: context)),
-                ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => context.push('/people/$personId/statement'),
+                child: Text('people.statement'.tr()),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => context.push('/ledger/new?personId=$personId&kind=settlement'),
-                  icon: const Icon(Icons.payments_outlined),
-                  label: Text('people.settlement'.tr(context: context)),
-                ),
-              ),
-            ],
+            ),
+          ]),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => context.push('/ledger/new?personId=$personId'),
+            icon: const Icon(Icons.add_circle_outline),
+            label: Text('people.newEntry'.tr()),
           ),
-          const SizedBox(height: 16),
-          for (final e in entries) _EntryTile(entry: e),
+          Text(
+            person.linkedUserId != null || (person.email?.isNotEmpty ?? false) ? 'people.linked'.tr() : 'people.notLinked'.tr(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
+          SectionHeader('people.latest'.tr()),
+          if (entries.isEmpty)
+            AppCard(child: EmptyState(icon: Icons.handshake_outlined, title: 'people.noEntries'.tr()))
+          else
+            AppCard(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Column(children: [for (final e in entries) _EntryTile(entry: e, personName: person.name)]),
+            ),
         ],
       ),
     );
   }
 }
 
-class _BalanceRow extends StatelessWidget {
-  const _BalanceRow({required this.label, required this.amount, required this.color, this.bold = false, this.signed = false});
+class _Mini extends StatelessWidget {
+  const _Mini(this.label, this.amount, this.color);
   final String label;
   final double amount;
   final Color color;
-  final bool bold;
-  final bool signed;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontWeight: bold ? FontWeight.bold : null)),
-          Text(
-            '${signed && amount < 0 ? '-' : ''}${formatAmount(amount.abs())}',
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: bold ? 18 : 15),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Column(children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        AmountText(amount, size: 14, color: color),
+      ]);
 }
 
+/// Money in (received) shows as +green, money out (gave) as -red, like the mockups.
 class _EntryTile extends ConsumerWidget {
-  const _EntryTile({required this.entry});
+  const _EntryTile({required this.entry, required this.personName});
   final LedgerEntry entry;
+  final String personName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final inbound = entry.direction == LedgerDirection.received;
+    final color = inbound ? DS.success : theme.colorScheme.error;
     final faded = entry.status == LedgerStatus.rejected || entry.status == LedgerStatus.cancelled;
-    return Card(
-      child: ListTile(
-        onTap: () => showEntrySheet(context, ref, entry),
-        leading: Icon(
-          entry.direction == LedgerDirection.gave ? Icons.north_east : Icons.south_west,
-          color: entry.direction == LedgerDirection.gave ? Colors.green.shade700 : theme.colorScheme.error,
-        ),
-        title: Text('${kindLabel(context, entry.kind)} · ${directionLabel(context, entry.direction)}'),
-        subtitle: Text([
-          DateFormat.yMd().format(entry.date),
-          statusLabel(context, entry.status),
-          if (entry.queued) 'ledger.queued'.tr(context: context),
-          if (entry.description != null) entry.description!,
-        ].join(' · ')),
-        trailing: Text(
-          formatAmount(entry.amount),
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            decoration: faded ? TextDecoration.lineThrough : null,
-            color: statusColor(context, entry.status),
+    final title = entry.kind == LedgerKind.settlement
+        ? kindLabel(context, entry.kind)
+        : (inbound ? 'ledger.receivedFrom' : 'ledger.gaveTo').tr(namedArgs: {'name': personName});
+    return InkWell(
+      onTap: () => showEntrySheet(context, ref, entry),
+      borderRadius: BorderRadius.circular(DS.radius),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        child: Row(children: [
+          IconBubble(icon: inbound ? Icons.south_west : Icons.north_east, color: color, size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: theme.textTheme.titleSmall),
+              Text(
+                [DateFormat.yMMMd(context.locale.languageCode).format(entry.date), if (entry.description != null) entry.description!].join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall,
+              ),
+            ]),
           ),
-        ),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Opacity(opacity: faded ? 0.45 : 1, child: AmountText(inbound ? entry.amount : -entry.amount, size: 14, color: color, signed: true)),
+            if (entry.status != LedgerStatus.confirmed || entry.queued)
+              StatusPill(
+                entry.queued && entry.status == LedgerStatus.confirmed ? 'ledger.queued'.tr() : statusLabel(context, entry.status),
+                color: entry.queued && entry.status == LedgerStatus.confirmed ? theme.colorScheme.onSurfaceVariant : statusColor(context, entry.status),
+              ),
+          ]),
+        ]),
       ),
     );
   }

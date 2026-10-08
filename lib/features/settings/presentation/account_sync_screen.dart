@@ -3,9 +3,11 @@ import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/sync/sync_api.dart';
 import '../../../core/sync/sync_controller.dart';
+import '../../../core/widgets/ds_widgets.dart';
 
 class AccountSyncScreen extends ConsumerStatefulWidget {
   const AccountSyncScreen({super.key});
@@ -15,53 +17,11 @@ class AccountSyncScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
-  final _server = TextEditingController();
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  final _name = TextEditingController();
-  final _code = TextEditingController();
-  bool _register = false;
-  bool _busy = false;
   String? _error;
-
-  @override
-  void dispose() {
-    for (final c in [_server, _email, _password, _name, _code]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
 
   String _message(BuildContext context, String code) {
     final key = 'sync.errors.$code';
     return key.trExists(context: context) ? key.tr(context: context) : 'sync.errors.unexpected'.tr(context: context);
-  }
-
-  Future<void> _submit() async {
-    final ctx = context;
-    if (_server.text.trim().isEmpty) {
-      setState(() => _error = _message(ctx, 'invalid_url'));
-      return;
-    }
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      await ref.read(syncControllerProvider.notifier).signIn(
-            serverUrl: _server.text,
-            email: _email.text,
-            password: _password.text,
-            register: _register,
-            name: _name.text,
-            signupCode: _code.text,
-          );
-      _password.clear();
-    } on ApiException catch (e) {
-      if (mounted) setState(() => _error = _message(context, e.code));
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
   }
 
   Future<void> _confirmSignOut() async {
@@ -140,61 +100,17 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
     );
   }
 
+  /// Signed out: sign-in / registration live on their own screens now (UI/UX AUTH-02/03).
   List<Widget> _signedOut(BuildContext context, SyncState sync, ThemeData theme) {
-    final expired = sync.errorCode == 'session_expired';
-    final insecure = _server.text.trim().toLowerCase().startsWith('http://');
     return [
-      Text('sync.intro'.tr(context: context), style: theme.textTheme.bodyMedium),
-      const SizedBox(height: 16),
-      TextField(
-        controller: _server,
-        keyboardType: TextInputType.url,
-        textDirection: ui.TextDirection.ltr,
-        onChanged: (_) => setState(() {}),
-        decoration: InputDecoration(labelText: 'sync.serverUrl'.tr(context: context), hintText: 'sync.serverHint'.tr(context: context)),
+      EmptyState(
+        icon: Icons.cloud_sync_outlined,
+        title: sync.errorCode == 'session_expired' ? _message(context, 'session_expired') : 'sync.title'.tr(context: context),
+        message: 'sync.intro'.tr(context: context),
+        actionLabel: 'auth.signIn'.tr(context: context),
+        onAction: () => context.push('/login'),
       ),
-      if (insecure)
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Text('sync.insecure'.tr(context: context), style: TextStyle(color: theme.colorScheme.error, fontSize: 12)),
-        ),
-      const SizedBox(height: 12),
-      TextField(
-        controller: _email,
-        keyboardType: TextInputType.emailAddress,
-        textDirection: ui.TextDirection.ltr,
-        autofillHints: const [AutofillHints.email],
-        decoration: InputDecoration(labelText: 'sync.email'.tr(context: context)),
-      ),
-      const SizedBox(height: 12),
-      TextField(
-        controller: _password,
-        obscureText: true,
-        autofillHints: const [AutofillHints.password],
-        decoration: InputDecoration(labelText: 'sync.password'.tr(context: context)),
-      ),
-      if (_register) ...[
-        const SizedBox(height: 12),
-        TextField(controller: _name, decoration: InputDecoration(labelText: 'sync.name'.tr(context: context))),
-        const SizedBox(height: 12),
-        TextField(controller: _code, decoration: InputDecoration(labelText: 'sync.signupCode'.tr(context: context))),
-      ],
-      if (_error != null || expired)
-        Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Text(_error ?? _message(context, 'session_expired'), style: TextStyle(color: theme.colorScheme.error)),
-        ),
-      const SizedBox(height: 16),
-      FilledButton(
-        onPressed: _busy ? null : _submit,
-        child: _busy
-            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-            : Text((_register ? 'sync.register' : 'sync.signIn').tr(context: context)),
-      ),
-      TextButton(
-        onPressed: _busy ? null : () => setState(() => _register = !_register),
-        child: Text((_register ? 'sync.haveAccount' : 'sync.noAccount').tr(context: context)),
-      ),
+      TextButton(onPressed: () => context.push('/register'), child: Text('auth.createAccount'.tr(context: context))),
     ];
   }
 

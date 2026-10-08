@@ -6,6 +6,9 @@ import 'package:http/http.dart' as http;
 
 import '../security/secure_storage.dart';
 
+/// The app's own server (SmarterASP). Override at build time with --dart-define=SERVER_URL=...
+const defaultServerUrl = String.fromEnvironment('SERVER_URL', defaultValue: 'https://azamrzakygmai-001-site1.ctempurl.com');
+
 /// Server login kept in the OS keystore (never in plain preferences).
 class SyncSession {
   const SyncSession({
@@ -147,11 +150,12 @@ class SyncApi {
     return s;
   }
 
-  Future<SyncSession> register(String email, String password, String name, String? signupCode) async {
+  Future<SyncSession> register(String email, String password, String name, String? signupCode, {String? phone}) async {
     final s = _sessionFrom(await _send('POST', '/auth/register', {
       'email': email,
       'password': password,
       'name': name,
+      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
       if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
     }));
     _session = s;

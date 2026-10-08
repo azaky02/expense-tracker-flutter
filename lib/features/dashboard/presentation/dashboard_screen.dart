@@ -308,7 +308,7 @@ class _AlertTile extends StatelessWidget {
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 10),
         Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
-        Icon(Icons.chevron_left, color: color, size: 18),
+        Icon(Icons.arrow_forward_ios, color: color, size: 14),
       ]),
     );
   }

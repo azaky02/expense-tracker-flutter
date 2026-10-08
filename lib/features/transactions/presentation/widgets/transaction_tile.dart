@@ -105,13 +105,13 @@ class MonthSelector extends StatelessWidget {
       children: [
         IconButton(
           visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.chevron_right, color: color),
+          icon: Icon(Icons.arrow_back_ios, size: 16, color: color),
           onPressed: () => onChanged(DateTime(month.year, month.month - 1)),
         ),
         Text(label, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: color)),
         IconButton(
           visualDensity: VisualDensity.compact,
-          icon: Icon(Icons.chevron_left, color: isCurrent ? color.withValues(alpha: 0.3) : color),
+          icon: Icon(Icons.arrow_forward_ios, size: 16, color: isCurrent ? color.withValues(alpha: 0.3) : color),
           onPressed: isCurrent ? null : () => onChanged(DateTime(month.year, month.month + 1)),
         ),
       ],

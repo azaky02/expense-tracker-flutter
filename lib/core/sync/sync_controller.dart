@@ -117,13 +117,14 @@ class SyncController extends Notifier<SyncState> with WidgetsBindingObserver {
     required String password,
     bool register = false,
     String name = '',
+    String? phone,
     String? signupCode,
   }) async {
-    final url = normalizeServerUrl(serverUrl);
+    final url = normalizeServerUrl(serverUrl.trim().isEmpty ? defaultServerUrl : serverUrl);
     final api = SyncApi(url);
     try {
       final session = register
-          ? await api.register(email.trim(), password, name.trim(), signupCode)
+          ? await api.register(email.trim(), password, name.trim(), signupCode, phone: phone)
           : await api.login(email.trim(), password);
       await session.save();
       await SyncService(_db, api).prepareForAccount(session.userId);

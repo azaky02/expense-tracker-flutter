@@ -187,6 +187,8 @@ class LedgerEntries extends Table {
   TextColumn get status => textEnum<LedgerStatus>()();
   TextColumn get rejectReason => text().nullable()();
   TextColumn get settlesEntryId => text().nullable()();
+  /// cash / bank / transfer / other (settlements).
+  TextColumn get paymentMethod => text().nullable()();
   BoolColumn get createdByMe => boolean().withDefault(const Constant(true))();
   TextColumn get counterpartUserId => text().nullable()();
   TextColumn get counterpartName => text().nullable()();

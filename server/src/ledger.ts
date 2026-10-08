@@ -29,6 +29,7 @@ export const ledgerOpSchema = z.discriminatedUnion('op', [
     counterpartEmail: z.string().trim().toLowerCase().email().max(200).nullable().optional(),
     counterpartName: z.string().trim().max(200).nullable().optional(),
     settlesEntryId: entryId.nullable().optional(),
+    paymentMethod: z.enum(['cash', 'bank', 'transfer', 'other']).nullable().optional(),
   }),
   z.object({ op: z.literal('confirm'), id: entryId }),
   z.object({ op: z.literal('reject'), id: entryId, reason: z.string().max(500).nullable().optional() }),
@@ -101,9 +102,9 @@ export async function applyOp(tx: Tx, userId: string, op: LedgerOp): Promise<OpR
     }
     const status = other ? 'PENDING' : 'CONFIRMED';
     await tx.query(
-      `INSERT INTO ledger_entries (id, kind, amount, currency, entry_date, description, status, settles_entry_id, created_by, confirmed_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, CASE WHEN $7 = 'CONFIRMED' THEN now() END)`,
-      [op.id, op.kind, op.amount, op.currency, op.date, op.description ?? null, status, op.settlesEntryId ?? null, userId],
+      `INSERT INTO ledger_entries (id, kind, amount, currency, entry_date, description, status, settles_entry_id, created_by, confirmed_at, payment_method)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, CASE WHEN $7 = 'CONFIRMED' THEN now() END, $10)`,
+      [op.id, op.kind, op.amount, op.currency, op.date, op.description ?? null, status, op.settlesEntryId ?? null, userId, op.paymentMethod ?? null],
     );
     await tx.query(
       `INSERT INTO ledger_participants (entry_id, seat, role, user_id, person_id, display_name, direction)
@@ -187,6 +188,7 @@ export async function ledgerFeed(tx: Tx, userId: string, cursor: number) {
       status: r.status,
       rejectReason: r.reject_reason,
       settlesEntryId: r.settles_entry_id,
+      paymentMethod: r.payment_method,
       createdByMe: r.my_role === 'CREATOR',
       direction: r.my_direction,
       personId: r.my_person_id,

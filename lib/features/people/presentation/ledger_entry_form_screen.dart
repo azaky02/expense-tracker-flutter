@@ -4,12 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/db/tables.dart';
+import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/widgets/ds_widgets.dart';
 import '../data/ledger_repository.dart';
 import 'people_providers.dart';
+import 'people_screen.dart';
 import 'person_screen.dart';
 
-/// New shared transaction (or settlement) with a person.
+const _paymentMethods = ['cash', 'bank', 'transfer', 'other'];
+
+/// Shared transaction (PPL-03, mockup 12) or settlement (PPL-05, mockup 13) with a person.
 class LedgerEntryFormScreen extends ConsumerStatefulWidget {
   const LedgerEntryFormScreen({super.key, this.personId, this.settlement = false});
   final int? personId;
@@ -26,6 +31,8 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
   final _amount = TextEditingController();
   final _description = TextEditingController();
   DateTime _date = todayDateOnly();
+  String _paymentMethod = 'cash';
+  bool _notify = true;
   bool _saving = false;
 
   @override
@@ -42,16 +49,17 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
     super.dispose();
   }
 
-  double get _amountValue => double.tryParse(_amount.text.trim()) ?? 0;
+  double get _amountValue => double.tryParse(_amount.text.trim().replaceAll(',', '')) ?? 0;
 
-  /// For a settlement the natural direction is "pay down what is owed".
+  /// A settlement pays down what is owed: if I owe them I give, if they owe me I receive.
   LedgerDirection _defaultDirection(PersonWithBalance? p) {
-    if (_kind == LedgerKind.settlement && p != null && p.balance.net > 0) return LedgerDirection.received;
-    if (_kind == LedgerKind.settlement) return LedgerDirection.gave;
+    if (_kind == LedgerKind.settlement) {
+      return p != null && p.balance.net > 0 ? LedgerDirection.received : LedgerDirection.gave;
+    }
     return LedgerDirection.received;
   }
 
-  Future<void> _save(LedgerDirection direction) async {
+  Future<void> _save(LedgerDirection direction, bool shared) async {
     final personId = _personId;
     if (personId == null || _amountValue <= 0) return;
     setState(() => _saving = true);
@@ -62,6 +70,8 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
           amount: _amountValue,
           date: _date,
           description: _description.text,
+          paymentMethod: _paymentMethod,
+          notifyOtherParty: !shared || _notify,
         );
     if (mounted) context.pop();
   }
@@ -69,27 +79,24 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
   Future<void> _pickPerson(List<PersonWithBalance> people) async {
     final id = await showModalBottomSheet<int>(
       context: context,
-      showDragHandle: true,
       isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
-          child: ListView(
-            shrinkWrap: true,
-            children: [
+          child: ListView(shrinkWrap: true, children: [
+            ListTile(
+              leading: const IconBubble(icon: Icons.person_add_alt_1_outlined, color: DS.primary, size: 38),
+              title: Text('people.add'.tr(context: ctx)),
+              onTap: () => Navigator.pop(ctx, -1),
+            ),
+            for (final p in people)
               ListTile(
-                leading: const Icon(Icons.person_add_alt_1_outlined),
-                title: Text('people.add'.tr(context: ctx)),
-                onTap: () => Navigator.pop(ctx, -1),
+                leading: PersonAvatar(name: p.person.name, color: netColor(ctx, p.balance.net), size: 38),
+                title: Text(p.person.name),
+                trailing: AmountText(p.balance.net.abs(), size: 13, color: netColor(ctx, p.balance.net)),
+                onTap: () => Navigator.pop(ctx, p.person.id),
               ),
-              for (final p in people)
-                ListTile(
-                  leading: const Icon(Icons.person_outline),
-                  title: Text(p.person.name),
-                  onTap: () => Navigator.pop(ctx, p.person.id),
-                ),
-            ],
-          ),
+          ]),
         ),
       ),
     );
@@ -112,99 +119,100 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
       if (p.person.id == _personId) selected = p;
     }
     final direction = _direction ?? _defaultDirection(selected);
-    final theme = Theme.of(context);
     final shared = selected != null && (selected.person.email?.isNotEmpty ?? false);
+    final isSettlement = _kind == LedgerKind.settlement;
+    final theme = Theme.of(context);
+    final title = isSettlement && selected != null
+        ? 'ledger.settlementWith'.tr(namedArgs: {'name': selected.person.name})
+        : (isSettlement ? 'ledger.settlementTitle' : 'ledger.newTitle').tr();
 
     return Scaffold(
-      appBar: AppBar(title: Text((widget.settlement ? 'ledger.settlementTitle' : 'ledger.newTitle').tr(context: context))),
+      appBar: AppBar(title: Text(title)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
-          Text('ledger.person'.tr(context: context), style: theme.textTheme.labelLarge),
-          const SizedBox(height: 4),
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => _pickPerson(people),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
-              child: Row(children: [
-                Expanded(child: Text(selected?.person.name ?? 'ledger.choosePerson'.tr(context: context))),
-                const Icon(Icons.arrow_drop_down),
+          if (isSettlement && selected != null)
+            AppCard(
+              color: theme.colorScheme.primaryContainer,
+              child: Column(children: [
+                Text('people.currentBalance'.tr(), style: theme.textTheme.bodySmall),
+                AmountText(selected.balance.net.abs(), size: 26, weight: FontWeight.w800, color: netColor(context, selected.balance.net)),
+                Text(netLabel(context, selected.balance.net), style: TextStyle(color: netColor(context, selected.balance.net))),
               ]),
             ),
+          FieldLabel('ledger.person'.tr()),
+          PickerField(
+            text: selected?.person.name ?? 'ledger.choosePerson'.tr(),
+            placeholder: selected == null,
+            leading: selected == null ? null : PersonAvatar(name: selected.person.name, color: DS.primary, size: 28),
+            onTap: () => _pickPerson(people),
           ),
-          if (selected != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                (shared ? 'ledger.sharedHint' : 'ledger.localHint').tr(namedArgs: {'name': selected.person.name}, context: context),
-                style: theme.textTheme.bodySmall,
+          if (!isSettlement) ...[
+            FieldLabel('ledger.kindLabel'.tr()),
+            SegmentedButton<LedgerDirection>(
+              segments: [
+                ButtonSegment(value: LedgerDirection.received, label: Text('ledger.received'.tr()), icon: const Icon(Icons.south_west)),
+                ButtonSegment(value: LedgerDirection.gave, label: Text('ledger.gave'.tr()), icon: const Icon(Icons.north_east)),
+              ],
+              selected: {direction},
+              onSelectionChanged: (s) => setState(() => _direction = s.first),
+            ),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, children: [
+              for (final k in [LedgerKind.loan, LedgerKind.advance, LedgerKind.other])
+                ChoiceChip(label: Text(kindLabel(context, k)), selected: _kind == k, onSelected: (_) => setState(() => _kind = k)),
+            ]),
+          ],
+          FieldLabel((isSettlement ? 'ledger.settlementAmount' : 'transactions.amount').tr()),
+          AmountField(controller: _amount, onChanged: (_) => setState(() {})),
+          if (isSettlement && selected != null && selected.balance.net != 0)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: TextButton(
+                onPressed: () => setState(() => _amount.text = selected!.balance.net.abs().toStringAsFixed(2)),
+                child: Text('ledger.payInFull'.tr()),
               ),
             ),
-          const SizedBox(height: 16),
-          Text('ledger.kindLabel'.tr(context: context), style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: [
-              for (final k in LedgerKind.values)
-                ChoiceChip(
-                  label: Text(kindLabel(context, k)),
-                  selected: _kind == k,
-                  onSelected: (_) => setState(() {
-                    _kind = k;
-                    _direction = null;
-                  }),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text('ledger.direction'.tr(context: context), style: theme.textTheme.labelLarge),
-          const SizedBox(height: 8),
-          SegmentedButton<LedgerDirection>(
-            segments: [
-              ButtonSegment(value: LedgerDirection.received, label: Text('ledger.received'.tr(context: context)), icon: const Icon(Icons.south_west)),
-              ButtonSegment(value: LedgerDirection.gave, label: Text('ledger.gave'.tr(context: context)), icon: const Icon(Icons.north_east)),
-            ],
-            selected: {direction},
-            onSelectionChanged: (s) => setState(() => _direction = s.first),
-          ),
-          const SizedBox(height: 16),
-          Text('transactions.amount'.tr(context: context), style: theme.textTheme.labelLarge),
-          TextField(
-            controller: _amount,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineSmall,
-            decoration: const InputDecoration(hintText: '0.00'),
-            onChanged: (_) => setState(() {}),
-          ),
-          const SizedBox(height: 16),
-          Text('transactions.date'.tr(context: context), style: theme.textTheme.labelLarge),
-          const SizedBox(height: 4),
-          InkWell(
-            borderRadius: BorderRadius.circular(12),
+          FieldLabel('transactions.date'.tr()),
+          PickerField(
+            text: DateFormat.yMMMMd(context.locale.languageCode).format(_date),
+            trailingIcon: Icons.calendar_today_outlined,
             onTap: () async {
               final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2000), lastDate: DateTime(2100));
               if (d != null) setState(() => _date = d);
             },
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
-              child: Row(children: [Expanded(child: Text(DateFormat.yMMMd().format(_date))), const Icon(Icons.calendar_today, size: 18)]),
+          ),
+          FieldLabel('ledger.paymentMethod'.tr()),
+          AppCard(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: RadioGroup<String>(
+              groupValue: _paymentMethod,
+              onChanged: (v) => setState(() => _paymentMethod = v ?? 'cash'),
+              child: Column(children: [
+                for (final m in _paymentMethods) RadioListTile<String>(value: m, dense: true, title: Text('ledger.pay.$m'.tr())),
+              ]),
             ),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _description,
-            maxLines: 2,
-            decoration: InputDecoration(labelText: '${'ledger.description'.tr(context: context)} (${'common.optional'.tr(context: context)})'),
-          ),
-          const SizedBox(height: 24),
+          FieldLabel('ledger.description'.tr()),
+          TextField(controller: _description, maxLines: 2, decoration: InputDecoration(hintText: 'ledger.descriptionHint'.tr())),
+          if (shared)
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _notify,
+              onChanged: (v) => setState(() => _notify = v),
+              title: Text('ledger.notifyOther'.tr()),
+              subtitle: Text((_notify ? 'ledger.sharedHint' : 'ledger.privateHint').tr(namedArgs: {'name': selected.person.name}),
+                  style: theme.textTheme.bodySmall),
+            )
+          else if (selected != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('ledger.localHint'.tr(namedArgs: {'name': selected.person.name}), style: theme.textTheme.bodySmall),
+            ),
+          const SizedBox(height: 20),
           FilledButton(
-            onPressed: _saving || _personId == null || _amountValue <= 0 ? null : () => _save(direction),
-            child: Text('ledger.save'.tr(context: context)),
+            onPressed: _saving || _personId == null || _amountValue <= 0 ? null : () => _save(direction, shared),
+            child: Text((isSettlement ? 'ledger.saveSettlement' : 'ledger.save').tr()),
           ),
         ],
       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
+import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/budgets/presentation/budgets_screen.dart';
 import '../../features/categories/presentation/category_management_screen.dart';
 import '../../features/transactions/presentation/transaction_filters_screen.dart';
@@ -14,7 +15,6 @@ import '../../features/people/presentation/person_screen.dart';
 import '../../features/people/presentation/statement_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/lock/presentation/unlock_screen.dart';
-import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/payment_methods/presentation/add_card_screen.dart';
 import '../../features/payment_methods/presentation/card_details_screen.dart';
 import '../../features/payment_methods/presentation/edit_card_screen.dart';
@@ -49,7 +49,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final settings = ref.read(settingsProvider);
       final isUnlocked = ref.read(lockProvider);
-      final goingToOnboarding = state.matchedLocation == '/onboarding';
+      // Welcome, sign-in and registration are all reachable before onboarding is complete.
+      final goingToOnboarding = const {'/onboarding', '/login', '/register'}.contains(state.matchedLocation);
       final goingToUnlock = state.matchedLocation == '/unlock';
 
       if (!settings.hasOnboarded) {
@@ -58,11 +59,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (settings.appLockEnabled && !isUnlocked) {
         return goingToUnlock ? null : '/unlock';
       }
-      if (goingToOnboarding || goingToUnlock) return '/home';
+      // Login/register stay reachable later (e.g. from More); only the welcome page is one-time.
+      if (state.matchedLocation == '/onboarding' || goingToUnlock) return '/home';
       return null;
     },
     routes: [
-      GoRoute(path: '/onboarding', builder: (context, state) => const OnboardingScreen()),
+      GoRoute(path: '/onboarding', builder: (context, state) => const WelcomeScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/unlock', builder: (context, state) => const UnlockScreen()),
       GoRoute(
         path: '/reports',

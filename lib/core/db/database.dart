@@ -94,6 +94,7 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(accounts);
             await m.addColumn(transactions, transactions.accountId);
             await m.addColumn(transactions, transactions.toAccountId);
+            await m.addColumn(ledgerEntries, ledgerEntries.paymentMethod);
             // The change trigger must now also watch the new account columns.
             await customStatement('DROP TRIGGER IF EXISTS sync_au_transactions');
             await createSyncObjects(this);
