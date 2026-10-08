@@ -39,28 +39,35 @@ export async function withTx<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
 export async function migrate() {
   const c = await pool.connect();
   try {
-    await c.query(`CREATE SCHEMA IF NOT EXISTS "${config.schema}"`);
-    await c.query('SELECT pg_advisory_lock(7731001)');
-    await c.query(`SET search_path TO "${config.schema}"`);
+    // Hosts like SmarterASP put PgBouncer (transaction pooling) in front of Postgres, where session
+    // state (SET, session advisory locks) does not survive between statements: do everything in one
+    // transaction instead. A failing migration rolls back the whole batch.
+    try {
+      await c.query(`CREATE SCHEMA IF NOT EXISTS "${config.schema}"`);
+    } catch (e) {
+      console.warn(`could not create schema "${config.schema}" (${(e as Error).message}); assuming it exists`);
+    }
+    await c.query('BEGIN');
+    await c.query(`SET LOCAL search_path TO "${config.schema}"`);
+    await c.query('SELECT pg_advisory_xact_lock(7731001)');
     await c.query('CREATE TABLE IF NOT EXISTS schema_migrations (name text primary key, applied_at timestamptz not null default now())');
     const done = new Set((await c.query('SELECT name FROM schema_migrations')).rows.map((r) => r.name as string));
     const files = fs.readdirSync(config.migrationsDir).filter((f) => f.endsWith('.sql')).sort();
     for (const f of files) {
       if (done.has(f)) continue;
-      const sql = fs.readFileSync(path.join(config.migrationsDir, f), 'utf8');
-      await c.query('BEGIN');
       try {
-        await c.query(sql);
+        await c.query(fs.readFileSync(path.join(config.migrationsDir, f), 'utf8'));
         await c.query('INSERT INTO schema_migrations (name) VALUES ($1)', [f]);
-        await c.query('COMMIT');
         console.log(`migration applied: ${f}`);
       } catch (e) {
-        await c.query('ROLLBACK');
         throw new Error(`migration ${f} failed: ${(e as Error).message}`);
       }
     }
+    await c.query('COMMIT');
+  } catch (e) {
+    await c.query('ROLLBACK').catch(() => {});
+    throw e;
   } finally {
-    await c.query('SELECT pg_advisory_unlock(7731001)').catch(() => {});
     c.release();
   }
 }
