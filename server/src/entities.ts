@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ledgerOpSchema } from './ledger.ts';
 
 export type Kind = 'text' | 'int' | 'num' | 'bool' | 'date' | 'ts';
 export interface Col {
@@ -71,6 +72,17 @@ export const ENTITIES: Entity[] = [
     ],
   },
   {
+    name: 'people', table: 'people',
+    keys: [t('id', 'id', { max: 64 })],
+    cols: [
+      t('name', 'name', { max: 200 }),
+      t('phone', 'phone', { nullable: true, max: 50 }),
+      t('email', 'email', { nullable: true, max: 200 }),
+      t('notes', 'notes', { nullable: true, max: 2000 }),
+      t('linkedUserId', 'linked_user_id', { nullable: true, max: 64 }),
+    ],
+  },
+  {
     name: 'categoryBudgets', table: 'category_budgets',
     keys: [t('categoryId', 'category_id', { max: 64 })],
     cols: [col('monthlyLimit', 'monthly_limit', 'num'), col('isEnabled', 'is_enabled', 'bool')],
@@ -127,6 +139,10 @@ export const MAX_RECORDS_PER_ENTITY = 2000;
 
 export const pushSchema = z.object({
   cursor: z.number().int().min(0).default(0),
+  ledgerCursor: z.number().int().min(0).default(0),
+  notificationCursor: z.number().int().min(0).default(0),
+  ledgerOps: z.array(ledgerOpSchema).max(500).default([]),
+  readNotifications: z.array(z.string().uuid()).max(1000).default([]),
   changes: z
     .object(Object.fromEntries(ENTITIES.map((e) => [e.name, z.array(recordSchema(e)).max(MAX_RECORDS_PER_ENTITY).optional()])))
     .default({}),

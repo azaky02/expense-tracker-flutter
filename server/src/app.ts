@@ -7,6 +7,7 @@ import { pool, withTx } from './db.ts';
 import { hashPassword, hashToken, newRefreshToken, rateLimit, requireAuth, signAccess, verifyPassword } from './auth.ts';
 import { pushSchema } from './entities.ts';
 import { exportAll, sync } from './sync.ts';
+import { applyOp, detachUserFromLedger, ledgerFeed, markNotificationsRead, notificationFeed, usersTouchedBy, type OpResult } from './ledger.ts';
 
 const credentials = z.object({
   email: z.string().trim().toLowerCase().email().max(200),
@@ -168,6 +169,7 @@ export function createApp() {
     const done = await withTx(async (tx) => {
       const row = (await tx.query('SELECT password_hash FROM users WHERE id = $1', [req.userId])).rows[0];
       if (!row || !(await verifyPassword(password, row.password_hash))) return false;
+      await detachUserFromLedger(tx, req.userId!);
       await tx.query('DELETE FROM users WHERE id = $1', [req.userId]);
       return true;
     });
@@ -176,7 +178,28 @@ export function createApp() {
 
   api.post('/sync', requireAuth, async (req, res) => {
     const body = pushSchema.parse(req.body);
-    const result = await withTx((tx) => sync(tx, req.userId!, body.cursor, body.changes as never));
+    const me = req.userId!;
+    const result = await withTx(async (tx) => {
+      // Lock every user this request writes for, always in the same order (no deadlocks), so a
+      // feed cursor can never skip a row that commits late.
+      const others = await usersTouchedBy(tx, me, body.ledgerOps);
+      for (const id of [me, ...others].sort()) {
+        await tx.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 77))', [id]);
+      }
+      const personal = await sync(tx, me, body.cursor, body.changes as never);
+      const ledgerResults: OpResult[] = [];
+      for (const op of body.ledgerOps) ledgerResults.push(await applyOp(tx, me, op));
+      await markNotificationsRead(tx, me, body.readNotifications);
+      const ledger = await ledgerFeed(tx, me, body.ledgerCursor);
+      const notifications = await notificationFeed(tx, me, body.notificationCursor);
+      return {
+        ...personal,
+        hasMore: personal.hasMore || ledger.hasMore || notifications.hasMore,
+        ledgerResults,
+        ledger,
+        notifications,
+      };
+    });
     res.json(result);
   });
 

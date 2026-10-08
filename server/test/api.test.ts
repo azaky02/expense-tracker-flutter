@@ -88,7 +88,7 @@ describe('sync', () => {
       },
     }, u.token);
     assert.equal(push.status, 200);
-    assert.deepEqual(push.body.applied, { banks: 0, categories: 1, cards: 0, beneficiaries: 1, transactions: 2, categoryBudgets: 0 });
+    assert.deepEqual(push.body.applied, { banks: 0, categories: 1, cards: 0, beneficiaries: 1, transactions: 2, people: 0, categoryBudgets: 0 });
     assert.deepEqual(push.body.changes, {}, 'own writes are not echoed');
     assert.ok(push.body.cursor > 0);
 
