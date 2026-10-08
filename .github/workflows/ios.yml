@@ -1,0 +1,46 @@
+# Builds an unsigned iOS app (.ipa) on a macOS runner. Install it with Sideloadly or AltStore
+# using your own Apple ID (they sign it on the way to the phone). Started by hand:
+#   GitHub → Actions → "iOS build" → Run workflow   (or: gh workflow run ios.yml)
+name: iOS build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+
+      - name: Release code (date + time)
+        run: |
+          echo "STAMP=$(TZ=Africa/Cairo date +%Y%m%d%H%M)" >> "$GITHUB_ENV"
+          echo "CODE=$(TZ=Africa/Cairo date +%y%m%d%H)" >> "$GITHUB_ENV"
+          echo "NAME=$(grep -E '^version:' pubspec.yaml | sed -E 's/version: *([0-9]+\.[0-9]+\.[0-9]+).*/\1/')" >> "$GITHUB_ENV"
+
+      - run: flutter pub get
+
+      - name: Build (no code signing)
+        run: |
+          flutter build ios --release --no-codesign \
+            --build-name="$NAME" --build-number="$CODE" \
+            --dart-define=RELEASE_CODE="$STAMP" --dart-define=APP_VERSION="$NAME"
+
+      - name: Package .ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qry "Masarefy_${STAMP}_ios_unsigned.ipa" Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Masarefy_${{ env.STAMP }}_ios
+          path: Masarefy_*_ios_unsigned.ipa
+          retention-days: 30
