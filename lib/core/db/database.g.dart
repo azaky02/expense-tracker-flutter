@@ -4807,6 +4807,2459 @@ class SyncTombstonesCompanion extends UpdateCompanion<SyncTombstone> {
   }
 }
 
+class $PeopleTable extends People with TableInfo<$PeopleTable, Person> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $PeopleTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _syncIdMeta = const VerificationMeta('syncId');
+  @override
+  late final GeneratedColumn<String> syncId = GeneratedColumn<String>(
+    'sync_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _dirtyMeta = const VerificationMeta('dirty');
+  @override
+  late final GeneratedColumn<bool> dirty = GeneratedColumn<bool>(
+    'dirty',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("dirty" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _phoneMeta = const VerificationMeta('phone');
+  @override
+  late final GeneratedColumn<String> phone = GeneratedColumn<String>(
+    'phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _linkedUserIdMeta = const VerificationMeta(
+    'linkedUserId',
+  );
+  @override
+  late final GeneratedColumn<String> linkedUserId = GeneratedColumn<String>(
+    'linked_user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    syncId,
+    updatedAt,
+    dirty,
+    id,
+    name,
+    phone,
+    email,
+    notes,
+    linkedUserId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'people';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Person> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('sync_id')) {
+      context.handle(
+        _syncIdMeta,
+        syncId.isAcceptableOrUnknown(data['sync_id']!, _syncIdMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('dirty')) {
+      context.handle(
+        _dirtyMeta,
+        dirty.isAcceptableOrUnknown(data['dirty']!, _dirtyMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('phone')) {
+      context.handle(
+        _phoneMeta,
+        phone.isAcceptableOrUnknown(data['phone']!, _phoneMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+        _notesMeta,
+        notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
+      );
+    }
+    if (data.containsKey('linked_user_id')) {
+      context.handle(
+        _linkedUserIdMeta,
+        linkedUserId.isAcceptableOrUnknown(
+          data['linked_user_id']!,
+          _linkedUserIdMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Person map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Person(
+      syncId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sync_id'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      dirty: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}dirty'],
+      )!,
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      phone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      notes: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notes'],
+      ),
+      linkedUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}linked_user_id'],
+      ),
+    );
+  }
+
+  @override
+  $PeopleTable createAlias(String alias) {
+    return $PeopleTable(attachedDatabase, alias);
+  }
+}
+
+class Person extends DataClass implements Insertable<Person> {
+  /// Stable cross-device id (random hex, or 'seed-...' for the built-in defaults).
+  final String? syncId;
+
+  /// Unix seconds of the last local change, or of the remote version that was applied.
+  final int updatedAt;
+
+  /// True while the row has local changes the server has not seen yet.
+  final bool dirty;
+  final int id;
+  final String name;
+  final String? phone;
+
+  /// If this e-mail belongs to an account on the server, entries with this person are shared with
+  /// them and need their confirmation.
+  final String? email;
+  final String? notes;
+
+  /// Server user id once an entry has shown this person has an account.
+  final String? linkedUserId;
+  const Person({
+    this.syncId,
+    required this.updatedAt,
+    required this.dirty,
+    required this.id,
+    required this.name,
+    this.phone,
+    this.email,
+    this.notes,
+    this.linkedUserId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (!nullToAbsent || syncId != null) {
+      map['sync_id'] = Variable<String>(syncId);
+    }
+    map['updated_at'] = Variable<int>(updatedAt);
+    map['dirty'] = Variable<bool>(dirty);
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    if (!nullToAbsent || phone != null) {
+      map['phone'] = Variable<String>(phone);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    if (!nullToAbsent || linkedUserId != null) {
+      map['linked_user_id'] = Variable<String>(linkedUserId);
+    }
+    return map;
+  }
+
+  PeopleCompanion toCompanion(bool nullToAbsent) {
+    return PeopleCompanion(
+      syncId: syncId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(syncId),
+      updatedAt: Value(updatedAt),
+      dirty: Value(dirty),
+      id: Value(id),
+      name: Value(name),
+      phone: phone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phone),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      notes: notes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(notes),
+      linkedUserId: linkedUserId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(linkedUserId),
+    );
+  }
+
+  factory Person.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Person(
+      syncId: serializer.fromJson<String?>(json['syncId']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      dirty: serializer.fromJson<bool>(json['dirty']),
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      phone: serializer.fromJson<String?>(json['phone']),
+      email: serializer.fromJson<String?>(json['email']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      linkedUserId: serializer.fromJson<String?>(json['linkedUserId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'syncId': serializer.toJson<String?>(syncId),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+      'dirty': serializer.toJson<bool>(dirty),
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'phone': serializer.toJson<String?>(phone),
+      'email': serializer.toJson<String?>(email),
+      'notes': serializer.toJson<String?>(notes),
+      'linkedUserId': serializer.toJson<String?>(linkedUserId),
+    };
+  }
+
+  Person copyWith({
+    Value<String?> syncId = const Value.absent(),
+    int? updatedAt,
+    bool? dirty,
+    int? id,
+    String? name,
+    Value<String?> phone = const Value.absent(),
+    Value<String?> email = const Value.absent(),
+    Value<String?> notes = const Value.absent(),
+    Value<String?> linkedUserId = const Value.absent(),
+  }) => Person(
+    syncId: syncId.present ? syncId.value : this.syncId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    dirty: dirty ?? this.dirty,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    phone: phone.present ? phone.value : this.phone,
+    email: email.present ? email.value : this.email,
+    notes: notes.present ? notes.value : this.notes,
+    linkedUserId: linkedUserId.present ? linkedUserId.value : this.linkedUserId,
+  );
+  Person copyWithCompanion(PeopleCompanion data) {
+    return Person(
+      syncId: data.syncId.present ? data.syncId.value : this.syncId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      dirty: data.dirty.present ? data.dirty.value : this.dirty,
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      phone: data.phone.present ? data.phone.value : this.phone,
+      email: data.email.present ? data.email.value : this.email,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      linkedUserId: data.linkedUserId.present
+          ? data.linkedUserId.value
+          : this.linkedUserId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Person(')
+          ..write('syncId: $syncId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('notes: $notes, ')
+          ..write('linkedUserId: $linkedUserId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    syncId,
+    updatedAt,
+    dirty,
+    id,
+    name,
+    phone,
+    email,
+    notes,
+    linkedUserId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Person &&
+          other.syncId == this.syncId &&
+          other.updatedAt == this.updatedAt &&
+          other.dirty == this.dirty &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.phone == this.phone &&
+          other.email == this.email &&
+          other.notes == this.notes &&
+          other.linkedUserId == this.linkedUserId);
+}
+
+class PeopleCompanion extends UpdateCompanion<Person> {
+  final Value<String?> syncId;
+  final Value<int> updatedAt;
+  final Value<bool> dirty;
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String?> phone;
+  final Value<String?> email;
+  final Value<String?> notes;
+  final Value<String?> linkedUserId;
+  const PeopleCompanion({
+    this.syncId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.linkedUserId = const Value.absent(),
+  });
+  PeopleCompanion.insert({
+    this.syncId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.dirty = const Value.absent(),
+    this.id = const Value.absent(),
+    required String name,
+    this.phone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.linkedUserId = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<Person> custom({
+    Expression<String>? syncId,
+    Expression<int>? updatedAt,
+    Expression<bool>? dirty,
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? phone,
+    Expression<String>? email,
+    Expression<String>? notes,
+    Expression<String>? linkedUserId,
+  }) {
+    return RawValuesInsertable({
+      if (syncId != null) 'sync_id': syncId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (dirty != null) 'dirty': dirty,
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (phone != null) 'phone': phone,
+      if (email != null) 'email': email,
+      if (notes != null) 'notes': notes,
+      if (linkedUserId != null) 'linked_user_id': linkedUserId,
+    });
+  }
+
+  PeopleCompanion copyWith({
+    Value<String?>? syncId,
+    Value<int>? updatedAt,
+    Value<bool>? dirty,
+    Value<int>? id,
+    Value<String>? name,
+    Value<String?>? phone,
+    Value<String?>? email,
+    Value<String?>? notes,
+    Value<String?>? linkedUserId,
+  }) {
+    return PeopleCompanion(
+      syncId: syncId ?? this.syncId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      dirty: dirty ?? this.dirty,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      notes: notes ?? this.notes,
+      linkedUserId: linkedUserId ?? this.linkedUserId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (syncId.present) {
+      map['sync_id'] = Variable<String>(syncId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (dirty.present) {
+      map['dirty'] = Variable<bool>(dirty.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (phone.present) {
+      map['phone'] = Variable<String>(phone.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (linkedUserId.present) {
+      map['linked_user_id'] = Variable<String>(linkedUserId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('PeopleCompanion(')
+          ..write('syncId: $syncId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('dirty: $dirty, ')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('phone: $phone, ')
+          ..write('email: $email, ')
+          ..write('notes: $notes, ')
+          ..write('linkedUserId: $linkedUserId')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LedgerEntriesTable extends LedgerEntries
+    with TableInfo<$LedgerEntriesTable, LedgerEntry> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LedgerEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _personIdMeta = const VerificationMeta(
+    'personId',
+  );
+  @override
+  late final GeneratedColumn<int> personId = GeneratedColumn<int>(
+    'person_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES people (id)',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LedgerKind, String> kind =
+      GeneratedColumn<String>(
+        'kind',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LedgerKind>($LedgerEntriesTable.$converterkind);
+  @override
+  late final GeneratedColumnWithTypeConverter<LedgerDirection, String>
+  direction = GeneratedColumn<String>(
+    'direction',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  ).withConverter<LedgerDirection>($LedgerEntriesTable.$converterdirection);
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('EGP'),
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _descriptionMeta = const VerificationMeta(
+    'description',
+  );
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+    'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<LedgerStatus, String> status =
+      GeneratedColumn<String>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<LedgerStatus>($LedgerEntriesTable.$converterstatus);
+  static const VerificationMeta _rejectReasonMeta = const VerificationMeta(
+    'rejectReason',
+  );
+  @override
+  late final GeneratedColumn<String> rejectReason = GeneratedColumn<String>(
+    'reject_reason',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _settlesEntryIdMeta = const VerificationMeta(
+    'settlesEntryId',
+  );
+  @override
+  late final GeneratedColumn<String> settlesEntryId = GeneratedColumn<String>(
+    'settles_entry_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdByMeMeta = const VerificationMeta(
+    'createdByMe',
+  );
+  @override
+  late final GeneratedColumn<bool> createdByMe = GeneratedColumn<bool>(
+    'created_by_me',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("created_by_me" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _counterpartUserIdMeta = const VerificationMeta(
+    'counterpartUserId',
+  );
+  @override
+  late final GeneratedColumn<String> counterpartUserId =
+      GeneratedColumn<String>(
+        'counterpart_user_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _counterpartNameMeta = const VerificationMeta(
+    'counterpartName',
+  );
+  @override
+  late final GeneratedColumn<String> counterpartName = GeneratedColumn<String>(
+    'counterpart_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _queuedMeta = const VerificationMeta('queued');
+  @override
+  late final GeneratedColumn<bool> queued = GeneratedColumn<bool>(
+    'queued',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("queued" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    entryId,
+    personId,
+    kind,
+    direction,
+    amount,
+    currency,
+    date,
+    description,
+    status,
+    rejectReason,
+    settlesEntryId,
+    createdByMe,
+    counterpartUserId,
+    counterpartName,
+    queued,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ledger_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LedgerEntry> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('person_id')) {
+      context.handle(
+        _personIdMeta,
+        personId.isAcceptableOrUnknown(data['person_id']!, _personIdMeta),
+      );
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('date')) {
+      context.handle(
+        _dateMeta,
+        date.isAcceptableOrUnknown(data['date']!, _dateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+        _descriptionMeta,
+        description.isAcceptableOrUnknown(
+          data['description']!,
+          _descriptionMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reject_reason')) {
+      context.handle(
+        _rejectReasonMeta,
+        rejectReason.isAcceptableOrUnknown(
+          data['reject_reason']!,
+          _rejectReasonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('settles_entry_id')) {
+      context.handle(
+        _settlesEntryIdMeta,
+        settlesEntryId.isAcceptableOrUnknown(
+          data['settles_entry_id']!,
+          _settlesEntryIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_by_me')) {
+      context.handle(
+        _createdByMeMeta,
+        createdByMe.isAcceptableOrUnknown(
+          data['created_by_me']!,
+          _createdByMeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('counterpart_user_id')) {
+      context.handle(
+        _counterpartUserIdMeta,
+        counterpartUserId.isAcceptableOrUnknown(
+          data['counterpart_user_id']!,
+          _counterpartUserIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('counterpart_name')) {
+      context.handle(
+        _counterpartNameMeta,
+        counterpartName.isAcceptableOrUnknown(
+          data['counterpart_name']!,
+          _counterpartNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('queued')) {
+      context.handle(
+        _queuedMeta,
+        queued.isAcceptableOrUnknown(data['queued']!, _queuedMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LedgerEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LedgerEntry(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      personId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}person_id'],
+      ),
+      kind: $LedgerEntriesTable.$converterkind.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}kind'],
+        )!,
+      ),
+      direction: $LedgerEntriesTable.$converterdirection.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}direction'],
+        )!,
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      date: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}date'],
+      )!,
+      description: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}description'],
+      ),
+      status: $LedgerEntriesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      rejectReason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reject_reason'],
+      ),
+      settlesEntryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}settles_entry_id'],
+      ),
+      createdByMe: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}created_by_me'],
+      )!,
+      counterpartUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}counterpart_user_id'],
+      ),
+      counterpartName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}counterpart_name'],
+      ),
+      queued: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}queued'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LedgerEntriesTable createAlias(String alias) {
+    return $LedgerEntriesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<LedgerKind, String, String> $converterkind =
+      const EnumNameConverter<LedgerKind>(LedgerKind.values);
+  static JsonTypeConverter2<LedgerDirection, String, String>
+  $converterdirection = const EnumNameConverter<LedgerDirection>(
+    LedgerDirection.values,
+  );
+  static JsonTypeConverter2<LedgerStatus, String, String> $converterstatus =
+      const EnumNameConverter<LedgerStatus>(LedgerStatus.values);
+}
+
+class LedgerEntry extends DataClass implements Insertable<LedgerEntry> {
+  final int id;
+  final String entryId;
+  final int? personId;
+  final LedgerKind kind;
+  final LedgerDirection direction;
+  final double amount;
+  final String currency;
+  final DateTime date;
+  final String? description;
+  final LedgerStatus status;
+  final String? rejectReason;
+  final String? settlesEntryId;
+  final bool createdByMe;
+  final String? counterpartUserId;
+  final String? counterpartName;
+  final bool queued;
+  final DateTime createdAt;
+  const LedgerEntry({
+    required this.id,
+    required this.entryId,
+    this.personId,
+    required this.kind,
+    required this.direction,
+    required this.amount,
+    required this.currency,
+    required this.date,
+    this.description,
+    required this.status,
+    this.rejectReason,
+    this.settlesEntryId,
+    required this.createdByMe,
+    this.counterpartUserId,
+    this.counterpartName,
+    required this.queued,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['entry_id'] = Variable<String>(entryId);
+    if (!nullToAbsent || personId != null) {
+      map['person_id'] = Variable<int>(personId);
+    }
+    {
+      map['kind'] = Variable<String>(
+        $LedgerEntriesTable.$converterkind.toSql(kind),
+      );
+    }
+    {
+      map['direction'] = Variable<String>(
+        $LedgerEntriesTable.$converterdirection.toSql(direction),
+      );
+    }
+    map['amount'] = Variable<double>(amount);
+    map['currency'] = Variable<String>(currency);
+    map['date'] = Variable<DateTime>(date);
+    if (!nullToAbsent || description != null) {
+      map['description'] = Variable<String>(description);
+    }
+    {
+      map['status'] = Variable<String>(
+        $LedgerEntriesTable.$converterstatus.toSql(status),
+      );
+    }
+    if (!nullToAbsent || rejectReason != null) {
+      map['reject_reason'] = Variable<String>(rejectReason);
+    }
+    if (!nullToAbsent || settlesEntryId != null) {
+      map['settles_entry_id'] = Variable<String>(settlesEntryId);
+    }
+    map['created_by_me'] = Variable<bool>(createdByMe);
+    if (!nullToAbsent || counterpartUserId != null) {
+      map['counterpart_user_id'] = Variable<String>(counterpartUserId);
+    }
+    if (!nullToAbsent || counterpartName != null) {
+      map['counterpart_name'] = Variable<String>(counterpartName);
+    }
+    map['queued'] = Variable<bool>(queued);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  LedgerEntriesCompanion toCompanion(bool nullToAbsent) {
+    return LedgerEntriesCompanion(
+      id: Value(id),
+      entryId: Value(entryId),
+      personId: personId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(personId),
+      kind: Value(kind),
+      direction: Value(direction),
+      amount: Value(amount),
+      currency: Value(currency),
+      date: Value(date),
+      description: description == null && nullToAbsent
+          ? const Value.absent()
+          : Value(description),
+      status: Value(status),
+      rejectReason: rejectReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rejectReason),
+      settlesEntryId: settlesEntryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(settlesEntryId),
+      createdByMe: Value(createdByMe),
+      counterpartUserId: counterpartUserId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(counterpartUserId),
+      counterpartName: counterpartName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(counterpartName),
+      queued: Value(queued),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory LedgerEntry.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LedgerEntry(
+      id: serializer.fromJson<int>(json['id']),
+      entryId: serializer.fromJson<String>(json['entryId']),
+      personId: serializer.fromJson<int?>(json['personId']),
+      kind: $LedgerEntriesTable.$converterkind.fromJson(
+        serializer.fromJson<String>(json['kind']),
+      ),
+      direction: $LedgerEntriesTable.$converterdirection.fromJson(
+        serializer.fromJson<String>(json['direction']),
+      ),
+      amount: serializer.fromJson<double>(json['amount']),
+      currency: serializer.fromJson<String>(json['currency']),
+      date: serializer.fromJson<DateTime>(json['date']),
+      description: serializer.fromJson<String?>(json['description']),
+      status: $LedgerEntriesTable.$converterstatus.fromJson(
+        serializer.fromJson<String>(json['status']),
+      ),
+      rejectReason: serializer.fromJson<String?>(json['rejectReason']),
+      settlesEntryId: serializer.fromJson<String?>(json['settlesEntryId']),
+      createdByMe: serializer.fromJson<bool>(json['createdByMe']),
+      counterpartUserId: serializer.fromJson<String?>(
+        json['counterpartUserId'],
+      ),
+      counterpartName: serializer.fromJson<String?>(json['counterpartName']),
+      queued: serializer.fromJson<bool>(json['queued']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'entryId': serializer.toJson<String>(entryId),
+      'personId': serializer.toJson<int?>(personId),
+      'kind': serializer.toJson<String>(
+        $LedgerEntriesTable.$converterkind.toJson(kind),
+      ),
+      'direction': serializer.toJson<String>(
+        $LedgerEntriesTable.$converterdirection.toJson(direction),
+      ),
+      'amount': serializer.toJson<double>(amount),
+      'currency': serializer.toJson<String>(currency),
+      'date': serializer.toJson<DateTime>(date),
+      'description': serializer.toJson<String?>(description),
+      'status': serializer.toJson<String>(
+        $LedgerEntriesTable.$converterstatus.toJson(status),
+      ),
+      'rejectReason': serializer.toJson<String?>(rejectReason),
+      'settlesEntryId': serializer.toJson<String?>(settlesEntryId),
+      'createdByMe': serializer.toJson<bool>(createdByMe),
+      'counterpartUserId': serializer.toJson<String?>(counterpartUserId),
+      'counterpartName': serializer.toJson<String?>(counterpartName),
+      'queued': serializer.toJson<bool>(queued),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  LedgerEntry copyWith({
+    int? id,
+    String? entryId,
+    Value<int?> personId = const Value.absent(),
+    LedgerKind? kind,
+    LedgerDirection? direction,
+    double? amount,
+    String? currency,
+    DateTime? date,
+    Value<String?> description = const Value.absent(),
+    LedgerStatus? status,
+    Value<String?> rejectReason = const Value.absent(),
+    Value<String?> settlesEntryId = const Value.absent(),
+    bool? createdByMe,
+    Value<String?> counterpartUserId = const Value.absent(),
+    Value<String?> counterpartName = const Value.absent(),
+    bool? queued,
+    DateTime? createdAt,
+  }) => LedgerEntry(
+    id: id ?? this.id,
+    entryId: entryId ?? this.entryId,
+    personId: personId.present ? personId.value : this.personId,
+    kind: kind ?? this.kind,
+    direction: direction ?? this.direction,
+    amount: amount ?? this.amount,
+    currency: currency ?? this.currency,
+    date: date ?? this.date,
+    description: description.present ? description.value : this.description,
+    status: status ?? this.status,
+    rejectReason: rejectReason.present ? rejectReason.value : this.rejectReason,
+    settlesEntryId: settlesEntryId.present
+        ? settlesEntryId.value
+        : this.settlesEntryId,
+    createdByMe: createdByMe ?? this.createdByMe,
+    counterpartUserId: counterpartUserId.present
+        ? counterpartUserId.value
+        : this.counterpartUserId,
+    counterpartName: counterpartName.present
+        ? counterpartName.value
+        : this.counterpartName,
+    queued: queued ?? this.queued,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  LedgerEntry copyWithCompanion(LedgerEntriesCompanion data) {
+    return LedgerEntry(
+      id: data.id.present ? data.id.value : this.id,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      personId: data.personId.present ? data.personId.value : this.personId,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      direction: data.direction.present ? data.direction.value : this.direction,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      date: data.date.present ? data.date.value : this.date,
+      description: data.description.present
+          ? data.description.value
+          : this.description,
+      status: data.status.present ? data.status.value : this.status,
+      rejectReason: data.rejectReason.present
+          ? data.rejectReason.value
+          : this.rejectReason,
+      settlesEntryId: data.settlesEntryId.present
+          ? data.settlesEntryId.value
+          : this.settlesEntryId,
+      createdByMe: data.createdByMe.present
+          ? data.createdByMe.value
+          : this.createdByMe,
+      counterpartUserId: data.counterpartUserId.present
+          ? data.counterpartUserId.value
+          : this.counterpartUserId,
+      counterpartName: data.counterpartName.present
+          ? data.counterpartName.value
+          : this.counterpartName,
+      queued: data.queued.present ? data.queued.value : this.queued,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LedgerEntry(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('personId: $personId, ')
+          ..write('kind: $kind, ')
+          ..write('direction: $direction, ')
+          ..write('amount: $amount, ')
+          ..write('currency: $currency, ')
+          ..write('date: $date, ')
+          ..write('description: $description, ')
+          ..write('status: $status, ')
+          ..write('rejectReason: $rejectReason, ')
+          ..write('settlesEntryId: $settlesEntryId, ')
+          ..write('createdByMe: $createdByMe, ')
+          ..write('counterpartUserId: $counterpartUserId, ')
+          ..write('counterpartName: $counterpartName, ')
+          ..write('queued: $queued, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    entryId,
+    personId,
+    kind,
+    direction,
+    amount,
+    currency,
+    date,
+    description,
+    status,
+    rejectReason,
+    settlesEntryId,
+    createdByMe,
+    counterpartUserId,
+    counterpartName,
+    queued,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LedgerEntry &&
+          other.id == this.id &&
+          other.entryId == this.entryId &&
+          other.personId == this.personId &&
+          other.kind == this.kind &&
+          other.direction == this.direction &&
+          other.amount == this.amount &&
+          other.currency == this.currency &&
+          other.date == this.date &&
+          other.description == this.description &&
+          other.status == this.status &&
+          other.rejectReason == this.rejectReason &&
+          other.settlesEntryId == this.settlesEntryId &&
+          other.createdByMe == this.createdByMe &&
+          other.counterpartUserId == this.counterpartUserId &&
+          other.counterpartName == this.counterpartName &&
+          other.queued == this.queued &&
+          other.createdAt == this.createdAt);
+}
+
+class LedgerEntriesCompanion extends UpdateCompanion<LedgerEntry> {
+  final Value<int> id;
+  final Value<String> entryId;
+  final Value<int?> personId;
+  final Value<LedgerKind> kind;
+  final Value<LedgerDirection> direction;
+  final Value<double> amount;
+  final Value<String> currency;
+  final Value<DateTime> date;
+  final Value<String?> description;
+  final Value<LedgerStatus> status;
+  final Value<String?> rejectReason;
+  final Value<String?> settlesEntryId;
+  final Value<bool> createdByMe;
+  final Value<String?> counterpartUserId;
+  final Value<String?> counterpartName;
+  final Value<bool> queued;
+  final Value<DateTime> createdAt;
+  const LedgerEntriesCompanion({
+    this.id = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.personId = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.direction = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.date = const Value.absent(),
+    this.description = const Value.absent(),
+    this.status = const Value.absent(),
+    this.rejectReason = const Value.absent(),
+    this.settlesEntryId = const Value.absent(),
+    this.createdByMe = const Value.absent(),
+    this.counterpartUserId = const Value.absent(),
+    this.counterpartName = const Value.absent(),
+    this.queued = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  LedgerEntriesCompanion.insert({
+    this.id = const Value.absent(),
+    required String entryId,
+    this.personId = const Value.absent(),
+    required LedgerKind kind,
+    required LedgerDirection direction,
+    required double amount,
+    this.currency = const Value.absent(),
+    required DateTime date,
+    this.description = const Value.absent(),
+    required LedgerStatus status,
+    this.rejectReason = const Value.absent(),
+    this.settlesEntryId = const Value.absent(),
+    this.createdByMe = const Value.absent(),
+    this.counterpartUserId = const Value.absent(),
+    this.counterpartName = const Value.absent(),
+    this.queued = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : entryId = Value(entryId),
+       kind = Value(kind),
+       direction = Value(direction),
+       amount = Value(amount),
+       date = Value(date),
+       status = Value(status);
+  static Insertable<LedgerEntry> custom({
+    Expression<int>? id,
+    Expression<String>? entryId,
+    Expression<int>? personId,
+    Expression<String>? kind,
+    Expression<String>? direction,
+    Expression<double>? amount,
+    Expression<String>? currency,
+    Expression<DateTime>? date,
+    Expression<String>? description,
+    Expression<String>? status,
+    Expression<String>? rejectReason,
+    Expression<String>? settlesEntryId,
+    Expression<bool>? createdByMe,
+    Expression<String>? counterpartUserId,
+    Expression<String>? counterpartName,
+    Expression<bool>? queued,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entryId != null) 'entry_id': entryId,
+      if (personId != null) 'person_id': personId,
+      if (kind != null) 'kind': kind,
+      if (direction != null) 'direction': direction,
+      if (amount != null) 'amount': amount,
+      if (currency != null) 'currency': currency,
+      if (date != null) 'date': date,
+      if (description != null) 'description': description,
+      if (status != null) 'status': status,
+      if (rejectReason != null) 'reject_reason': rejectReason,
+      if (settlesEntryId != null) 'settles_entry_id': settlesEntryId,
+      if (createdByMe != null) 'created_by_me': createdByMe,
+      if (counterpartUserId != null) 'counterpart_user_id': counterpartUserId,
+      if (counterpartName != null) 'counterpart_name': counterpartName,
+      if (queued != null) 'queued': queued,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  LedgerEntriesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? entryId,
+    Value<int?>? personId,
+    Value<LedgerKind>? kind,
+    Value<LedgerDirection>? direction,
+    Value<double>? amount,
+    Value<String>? currency,
+    Value<DateTime>? date,
+    Value<String?>? description,
+    Value<LedgerStatus>? status,
+    Value<String?>? rejectReason,
+    Value<String?>? settlesEntryId,
+    Value<bool>? createdByMe,
+    Value<String?>? counterpartUserId,
+    Value<String?>? counterpartName,
+    Value<bool>? queued,
+    Value<DateTime>? createdAt,
+  }) {
+    return LedgerEntriesCompanion(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      personId: personId ?? this.personId,
+      kind: kind ?? this.kind,
+      direction: direction ?? this.direction,
+      amount: amount ?? this.amount,
+      currency: currency ?? this.currency,
+      date: date ?? this.date,
+      description: description ?? this.description,
+      status: status ?? this.status,
+      rejectReason: rejectReason ?? this.rejectReason,
+      settlesEntryId: settlesEntryId ?? this.settlesEntryId,
+      createdByMe: createdByMe ?? this.createdByMe,
+      counterpartUserId: counterpartUserId ?? this.counterpartUserId,
+      counterpartName: counterpartName ?? this.counterpartName,
+      queued: queued ?? this.queued,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (personId.present) {
+      map['person_id'] = Variable<int>(personId.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(
+        $LedgerEntriesTable.$converterkind.toSql(kind.value),
+      );
+    }
+    if (direction.present) {
+      map['direction'] = Variable<String>(
+        $LedgerEntriesTable.$converterdirection.toSql(direction.value),
+      );
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(
+        $LedgerEntriesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (rejectReason.present) {
+      map['reject_reason'] = Variable<String>(rejectReason.value);
+    }
+    if (settlesEntryId.present) {
+      map['settles_entry_id'] = Variable<String>(settlesEntryId.value);
+    }
+    if (createdByMe.present) {
+      map['created_by_me'] = Variable<bool>(createdByMe.value);
+    }
+    if (counterpartUserId.present) {
+      map['counterpart_user_id'] = Variable<String>(counterpartUserId.value);
+    }
+    if (counterpartName.present) {
+      map['counterpart_name'] = Variable<String>(counterpartName.value);
+    }
+    if (queued.present) {
+      map['queued'] = Variable<bool>(queued.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LedgerEntriesCompanion(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('personId: $personId, ')
+          ..write('kind: $kind, ')
+          ..write('direction: $direction, ')
+          ..write('amount: $amount, ')
+          ..write('currency: $currency, ')
+          ..write('date: $date, ')
+          ..write('description: $description, ')
+          ..write('status: $status, ')
+          ..write('rejectReason: $rejectReason, ')
+          ..write('settlesEntryId: $settlesEntryId, ')
+          ..write('createdByMe: $createdByMe, ')
+          ..write('counterpartUserId: $counterpartUserId, ')
+          ..write('counterpartName: $counterpartName, ')
+          ..write('queued: $queued, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LedgerOutboxTable extends LedgerOutbox
+    with TableInfo<$LedgerOutboxTable, LedgerOutboxItem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LedgerOutboxTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _opMeta = const VerificationMeta('op');
+  @override
+  late final GeneratedColumn<String> op = GeneratedColumn<String>(
+    'op',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payloadMeta = const VerificationMeta(
+    'payload',
+  );
+  @override
+  late final GeneratedColumn<String> payload = GeneratedColumn<String>(
+    'payload',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, entryId, op, payload, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'ledger_outbox';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LedgerOutboxItem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entryIdMeta);
+    }
+    if (data.containsKey('op')) {
+      context.handle(_opMeta, op.isAcceptableOrUnknown(data['op']!, _opMeta));
+    } else if (isInserting) {
+      context.missing(_opMeta);
+    }
+    if (data.containsKey('payload')) {
+      context.handle(
+        _payloadMeta,
+        payload.isAcceptableOrUnknown(data['payload']!, _payloadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LedgerOutboxItem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LedgerOutboxItem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      )!,
+      op: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}op'],
+      )!,
+      payload: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $LedgerOutboxTable createAlias(String alias) {
+    return $LedgerOutboxTable(attachedDatabase, alias);
+  }
+}
+
+class LedgerOutboxItem extends DataClass
+    implements Insertable<LedgerOutboxItem> {
+  final int id;
+  final String entryId;
+  final String op;
+  final String payload;
+  final DateTime createdAt;
+  const LedgerOutboxItem({
+    required this.id,
+    required this.entryId,
+    required this.op,
+    required this.payload,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['entry_id'] = Variable<String>(entryId);
+    map['op'] = Variable<String>(op);
+    map['payload'] = Variable<String>(payload);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  LedgerOutboxCompanion toCompanion(bool nullToAbsent) {
+    return LedgerOutboxCompanion(
+      id: Value(id),
+      entryId: Value(entryId),
+      op: Value(op),
+      payload: Value(payload),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory LedgerOutboxItem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LedgerOutboxItem(
+      id: serializer.fromJson<int>(json['id']),
+      entryId: serializer.fromJson<String>(json['entryId']),
+      op: serializer.fromJson<String>(json['op']),
+      payload: serializer.fromJson<String>(json['payload']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'entryId': serializer.toJson<String>(entryId),
+      'op': serializer.toJson<String>(op),
+      'payload': serializer.toJson<String>(payload),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  LedgerOutboxItem copyWith({
+    int? id,
+    String? entryId,
+    String? op,
+    String? payload,
+    DateTime? createdAt,
+  }) => LedgerOutboxItem(
+    id: id ?? this.id,
+    entryId: entryId ?? this.entryId,
+    op: op ?? this.op,
+    payload: payload ?? this.payload,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  LedgerOutboxItem copyWithCompanion(LedgerOutboxCompanion data) {
+    return LedgerOutboxItem(
+      id: data.id.present ? data.id.value : this.id,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      op: data.op.present ? data.op.value : this.op,
+      payload: data.payload.present ? data.payload.value : this.payload,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LedgerOutboxItem(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('op: $op, ')
+          ..write('payload: $payload, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, entryId, op, payload, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LedgerOutboxItem &&
+          other.id == this.id &&
+          other.entryId == this.entryId &&
+          other.op == this.op &&
+          other.payload == this.payload &&
+          other.createdAt == this.createdAt);
+}
+
+class LedgerOutboxCompanion extends UpdateCompanion<LedgerOutboxItem> {
+  final Value<int> id;
+  final Value<String> entryId;
+  final Value<String> op;
+  final Value<String> payload;
+  final Value<DateTime> createdAt;
+  const LedgerOutboxCompanion({
+    this.id = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.op = const Value.absent(),
+    this.payload = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  LedgerOutboxCompanion.insert({
+    this.id = const Value.absent(),
+    required String entryId,
+    required String op,
+    required String payload,
+    this.createdAt = const Value.absent(),
+  }) : entryId = Value(entryId),
+       op = Value(op),
+       payload = Value(payload);
+  static Insertable<LedgerOutboxItem> custom({
+    Expression<int>? id,
+    Expression<String>? entryId,
+    Expression<String>? op,
+    Expression<String>? payload,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entryId != null) 'entry_id': entryId,
+      if (op != null) 'op': op,
+      if (payload != null) 'payload': payload,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  LedgerOutboxCompanion copyWith({
+    Value<int>? id,
+    Value<String>? entryId,
+    Value<String>? op,
+    Value<String>? payload,
+    Value<DateTime>? createdAt,
+  }) {
+    return LedgerOutboxCompanion(
+      id: id ?? this.id,
+      entryId: entryId ?? this.entryId,
+      op: op ?? this.op,
+      payload: payload ?? this.payload,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (op.present) {
+      map['op'] = Variable<String>(op.value);
+    }
+    if (payload.present) {
+      map['payload'] = Variable<String>(payload.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LedgerOutboxCompanion(')
+          ..write('id: $id, ')
+          ..write('entryId: $entryId, ')
+          ..write('op: $op, ')
+          ..write('payload: $payload, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AppNotificationsTable extends AppNotifications
+    with TableInfo<$AppNotificationsTable, AppNotification> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppNotificationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _entryIdMeta = const VerificationMeta(
+    'entryId',
+  );
+  @override
+  late final GeneratedColumn<String> entryId = GeneratedColumn<String>(
+    'entry_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _actorNameMeta = const VerificationMeta(
+    'actorName',
+  );
+  @override
+  late final GeneratedColumn<String> actorName = GeneratedColumn<String>(
+    'actor_name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _readAtMeta = const VerificationMeta('readAt');
+  @override
+  late final GeneratedColumn<DateTime> readAt = GeneratedColumn<DateTime>(
+    'read_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _readPendingMeta = const VerificationMeta(
+    'readPending',
+  );
+  @override
+  late final GeneratedColumn<bool> readPending = GeneratedColumn<bool>(
+    'read_pending',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("read_pending" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    type,
+    entryId,
+    actorName,
+    amount,
+    currency,
+    createdAt,
+    readAt,
+    readPending,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_notifications';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppNotification> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('entry_id')) {
+      context.handle(
+        _entryIdMeta,
+        entryId.isAcceptableOrUnknown(data['entry_id']!, _entryIdMeta),
+      );
+    }
+    if (data.containsKey('actor_name')) {
+      context.handle(
+        _actorNameMeta,
+        actorName.isAcceptableOrUnknown(data['actor_name']!, _actorNameMeta),
+      );
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('read_at')) {
+      context.handle(
+        _readAtMeta,
+        readAt.isAcceptableOrUnknown(data['read_at']!, _readAtMeta),
+      );
+    }
+    if (data.containsKey('read_pending')) {
+      context.handle(
+        _readPendingMeta,
+        readPending.isAcceptableOrUnknown(
+          data['read_pending']!,
+          _readPendingMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppNotification map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppNotification(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      entryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entry_id'],
+      ),
+      actorName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}actor_name'],
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      readAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}read_at'],
+      ),
+      readPending: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}read_pending'],
+      )!,
+    );
+  }
+
+  @override
+  $AppNotificationsTable createAlias(String alias) {
+    return $AppNotificationsTable(attachedDatabase, alias);
+  }
+}
+
+class AppNotification extends DataClass implements Insertable<AppNotification> {
+  final String id;
+  final String type;
+  final String? entryId;
+  final String? actorName;
+  final double? amount;
+  final String? currency;
+  final DateTime createdAt;
+  final DateTime? readAt;
+
+  /// Read here, not yet reported to the server.
+  final bool readPending;
+  const AppNotification({
+    required this.id,
+    required this.type,
+    this.entryId,
+    this.actorName,
+    this.amount,
+    this.currency,
+    required this.createdAt,
+    this.readAt,
+    required this.readPending,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || entryId != null) {
+      map['entry_id'] = Variable<String>(entryId);
+    }
+    if (!nullToAbsent || actorName != null) {
+      map['actor_name'] = Variable<String>(actorName);
+    }
+    if (!nullToAbsent || amount != null) {
+      map['amount'] = Variable<double>(amount);
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || readAt != null) {
+      map['read_at'] = Variable<DateTime>(readAt);
+    }
+    map['read_pending'] = Variable<bool>(readPending);
+    return map;
+  }
+
+  AppNotificationsCompanion toCompanion(bool nullToAbsent) {
+    return AppNotificationsCompanion(
+      id: Value(id),
+      type: Value(type),
+      entryId: entryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(entryId),
+      actorName: actorName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(actorName),
+      amount: amount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(amount),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
+      createdAt: Value(createdAt),
+      readAt: readAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(readAt),
+      readPending: Value(readPending),
+    );
+  }
+
+  factory AppNotification.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppNotification(
+      id: serializer.fromJson<String>(json['id']),
+      type: serializer.fromJson<String>(json['type']),
+      entryId: serializer.fromJson<String?>(json['entryId']),
+      actorName: serializer.fromJson<String?>(json['actorName']),
+      amount: serializer.fromJson<double?>(json['amount']),
+      currency: serializer.fromJson<String?>(json['currency']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      readAt: serializer.fromJson<DateTime?>(json['readAt']),
+      readPending: serializer.fromJson<bool>(json['readPending']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'type': serializer.toJson<String>(type),
+      'entryId': serializer.toJson<String?>(entryId),
+      'actorName': serializer.toJson<String?>(actorName),
+      'amount': serializer.toJson<double?>(amount),
+      'currency': serializer.toJson<String?>(currency),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'readAt': serializer.toJson<DateTime?>(readAt),
+      'readPending': serializer.toJson<bool>(readPending),
+    };
+  }
+
+  AppNotification copyWith({
+    String? id,
+    String? type,
+    Value<String?> entryId = const Value.absent(),
+    Value<String?> actorName = const Value.absent(),
+    Value<double?> amount = const Value.absent(),
+    Value<String?> currency = const Value.absent(),
+    DateTime? createdAt,
+    Value<DateTime?> readAt = const Value.absent(),
+    bool? readPending,
+  }) => AppNotification(
+    id: id ?? this.id,
+    type: type ?? this.type,
+    entryId: entryId.present ? entryId.value : this.entryId,
+    actorName: actorName.present ? actorName.value : this.actorName,
+    amount: amount.present ? amount.value : this.amount,
+    currency: currency.present ? currency.value : this.currency,
+    createdAt: createdAt ?? this.createdAt,
+    readAt: readAt.present ? readAt.value : this.readAt,
+    readPending: readPending ?? this.readPending,
+  );
+  AppNotification copyWithCompanion(AppNotificationsCompanion data) {
+    return AppNotification(
+      id: data.id.present ? data.id.value : this.id,
+      type: data.type.present ? data.type.value : this.type,
+      entryId: data.entryId.present ? data.entryId.value : this.entryId,
+      actorName: data.actorName.present ? data.actorName.value : this.actorName,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      readAt: data.readAt.present ? data.readAt.value : this.readAt,
+      readPending: data.readPending.present
+          ? data.readPending.value
+          : this.readPending,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppNotification(')
+          ..write('id: $id, ')
+          ..write('type: $type, ')
+          ..write('entryId: $entryId, ')
+          ..write('actorName: $actorName, ')
+          ..write('amount: $amount, ')
+          ..write('currency: $currency, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('readPending: $readPending')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    type,
+    entryId,
+    actorName,
+    amount,
+    currency,
+    createdAt,
+    readAt,
+    readPending,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppNotification &&
+          other.id == this.id &&
+          other.type == this.type &&
+          other.entryId == this.entryId &&
+          other.actorName == this.actorName &&
+          other.amount == this.amount &&
+          other.currency == this.currency &&
+          other.createdAt == this.createdAt &&
+          other.readAt == this.readAt &&
+          other.readPending == this.readPending);
+}
+
+class AppNotificationsCompanion extends UpdateCompanion<AppNotification> {
+  final Value<String> id;
+  final Value<String> type;
+  final Value<String?> entryId;
+  final Value<String?> actorName;
+  final Value<double?> amount;
+  final Value<String?> currency;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> readAt;
+  final Value<bool> readPending;
+  final Value<int> rowid;
+  const AppNotificationsCompanion({
+    this.id = const Value.absent(),
+    this.type = const Value.absent(),
+    this.entryId = const Value.absent(),
+    this.actorName = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.readAt = const Value.absent(),
+    this.readPending = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AppNotificationsCompanion.insert({
+    required String id,
+    required String type,
+    this.entryId = const Value.absent(),
+    this.actorName = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.currency = const Value.absent(),
+    required DateTime createdAt,
+    this.readAt = const Value.absent(),
+    this.readPending = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       type = Value(type),
+       createdAt = Value(createdAt);
+  static Insertable<AppNotification> custom({
+    Expression<String>? id,
+    Expression<String>? type,
+    Expression<String>? entryId,
+    Expression<String>? actorName,
+    Expression<double>? amount,
+    Expression<String>? currency,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? readAt,
+    Expression<bool>? readPending,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (type != null) 'type': type,
+      if (entryId != null) 'entry_id': entryId,
+      if (actorName != null) 'actor_name': actorName,
+      if (amount != null) 'amount': amount,
+      if (currency != null) 'currency': currency,
+      if (createdAt != null) 'created_at': createdAt,
+      if (readAt != null) 'read_at': readAt,
+      if (readPending != null) 'read_pending': readPending,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AppNotificationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? type,
+    Value<String?>? entryId,
+    Value<String?>? actorName,
+    Value<double?>? amount,
+    Value<String?>? currency,
+    Value<DateTime>? createdAt,
+    Value<DateTime?>? readAt,
+    Value<bool>? readPending,
+    Value<int>? rowid,
+  }) {
+    return AppNotificationsCompanion(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      entryId: entryId ?? this.entryId,
+      actorName: actorName ?? this.actorName,
+      amount: amount ?? this.amount,
+      currency: currency ?? this.currency,
+      createdAt: createdAt ?? this.createdAt,
+      readAt: readAt ?? this.readAt,
+      readPending: readPending ?? this.readPending,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (entryId.present) {
+      map['entry_id'] = Variable<String>(entryId.value);
+    }
+    if (actorName.present) {
+      map['actor_name'] = Variable<String>(actorName.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (readAt.present) {
+      map['read_at'] = Variable<DateTime>(readAt.value);
+    }
+    if (readPending.present) {
+      map['read_pending'] = Variable<bool>(readPending.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppNotificationsCompanion(')
+          ..write('id: $id, ')
+          ..write('type: $type, ')
+          ..write('entryId: $entryId, ')
+          ..write('actorName: $actorName, ')
+          ..write('amount: $amount, ')
+          ..write('currency: $currency, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('readAt: $readAt, ')
+          ..write('readPending: $readPending, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4824,6 +7277,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $ScheduledNotificationsTable(this);
   late final $MetaTable meta = $MetaTable(this);
   late final $SyncTombstonesTable syncTombstones = $SyncTombstonesTable(this);
+  late final $PeopleTable people = $PeopleTable(this);
+  late final $LedgerEntriesTable ledgerEntries = $LedgerEntriesTable(this);
+  late final $LedgerOutboxTable ledgerOutbox = $LedgerOutboxTable(this);
+  late final $AppNotificationsTable appNotifications = $AppNotificationsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4839,6 +7298,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     scheduledNotifications,
     meta,
     syncTombstones,
+    people,
+    ledgerEntries,
+    ledgerOutbox,
+    appNotifications,
   ];
 }
 
@@ -8513,6 +10976,1434 @@ typedef $$SyncTombstonesTableProcessedTableManager =
       SyncTombstone,
       PrefetchHooks Function()
     >;
+typedef $$PeopleTableCreateCompanionBuilder =
+    PeopleCompanion Function({
+      Value<String?> syncId,
+      Value<int> updatedAt,
+      Value<bool> dirty,
+      Value<int> id,
+      required String name,
+      Value<String?> phone,
+      Value<String?> email,
+      Value<String?> notes,
+      Value<String?> linkedUserId,
+    });
+typedef $$PeopleTableUpdateCompanionBuilder =
+    PeopleCompanion Function({
+      Value<String?> syncId,
+      Value<int> updatedAt,
+      Value<bool> dirty,
+      Value<int> id,
+      Value<String> name,
+      Value<String?> phone,
+      Value<String?> email,
+      Value<String?> notes,
+      Value<String?> linkedUserId,
+    });
+
+final class $$PeopleTableReferences
+    extends BaseReferences<_$AppDatabase, $PeopleTable, Person> {
+  $$PeopleTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$LedgerEntriesTable, List<LedgerEntry>>
+  _ledgerEntriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.ledgerEntries,
+    aliasName: 'people__id__ledger_entries__person_id',
+  );
+
+  $$LedgerEntriesTableProcessedTableManager get ledgerEntriesRefs {
+    final manager = $$LedgerEntriesTableTableManager(
+      $_db,
+      $_db.ledgerEntries,
+    ).filter((f) => f.personId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_ledgerEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$PeopleTableFilterComposer
+    extends Composer<_$AppDatabase, $PeopleTable> {
+  $$PeopleTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get linkedUserId => $composableBuilder(
+    column: $table.linkedUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> ledgerEntriesRefs(
+    Expression<bool> Function($$LedgerEntriesTableFilterComposer f) f,
+  ) {
+    final $$LedgerEntriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ledgerEntries,
+      getReferencedColumn: (t) => t.personId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgerEntriesTableFilterComposer(
+            $db: $db,
+            $table: $db.ledgerEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PeopleTableOrderingComposer
+    extends Composer<_$AppDatabase, $PeopleTable> {
+  $$PeopleTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get syncId => $composableBuilder(
+    column: $table.syncId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get dirty => $composableBuilder(
+    column: $table.dirty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phone => $composableBuilder(
+    column: $table.phone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+    column: $table.notes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get linkedUserId => $composableBuilder(
+    column: $table.linkedUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$PeopleTableAnnotationComposer
+    extends Composer<_$AppDatabase, $PeopleTable> {
+  $$PeopleTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get syncId =>
+      $composableBuilder(column: $table.syncId, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get dirty =>
+      $composableBuilder(column: $table.dirty, builder: (column) => column);
+
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get phone =>
+      $composableBuilder(column: $table.phone, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get linkedUserId => $composableBuilder(
+    column: $table.linkedUserId,
+    builder: (column) => column,
+  );
+
+  Expression<T> ledgerEntriesRefs<T extends Object>(
+    Expression<T> Function($$LedgerEntriesTableAnnotationComposer a) f,
+  ) {
+    final $$LedgerEntriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.ledgerEntries,
+      getReferencedColumn: (t) => t.personId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LedgerEntriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.ledgerEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$PeopleTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $PeopleTable,
+          Person,
+          $$PeopleTableFilterComposer,
+          $$PeopleTableOrderingComposer,
+          $$PeopleTableAnnotationComposer,
+          $$PeopleTableCreateCompanionBuilder,
+          $$PeopleTableUpdateCompanionBuilder,
+          (Person, $$PeopleTableReferences),
+          Person,
+          PrefetchHooks Function({bool ledgerEntriesRefs})
+        > {
+  $$PeopleTableTableManager(_$AppDatabase db, $PeopleTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$PeopleTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$PeopleTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$PeopleTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String?> syncId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String?> phone = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> linkedUserId = const Value.absent(),
+              }) => PeopleCompanion(
+                syncId: syncId,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                id: id,
+                name: name,
+                phone: phone,
+                email: email,
+                notes: notes,
+                linkedUserId: linkedUserId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<String?> syncId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<bool> dirty = const Value.absent(),
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<String?> phone = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<String?> linkedUserId = const Value.absent(),
+              }) => PeopleCompanion.insert(
+                syncId: syncId,
+                updatedAt: updatedAt,
+                dirty: dirty,
+                id: id,
+                name: name,
+                phone: phone,
+                email: email,
+                notes: notes,
+                linkedUserId: linkedUserId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$PeopleTable, Person>(table),
+                  $$PeopleTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({ledgerEntriesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (ledgerEntriesRefs) db.ledgerEntries,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (ledgerEntriesRefs)
+                    await $_getPrefetchedData<
+                      Person,
+                      $PeopleTable,
+                      LedgerEntry
+                    >(
+                      currentTable: table,
+                      referencedTable: $$PeopleTableReferences
+                          ._ledgerEntriesRefsTable(db),
+                      managerFromTypedResult: (p0) => $$PeopleTableReferences(
+                        db,
+                        table,
+                        p0,
+                      ).ledgerEntriesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.personId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$PeopleTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $PeopleTable,
+      Person,
+      $$PeopleTableFilterComposer,
+      $$PeopleTableOrderingComposer,
+      $$PeopleTableAnnotationComposer,
+      $$PeopleTableCreateCompanionBuilder,
+      $$PeopleTableUpdateCompanionBuilder,
+      (Person, $$PeopleTableReferences),
+      Person,
+      PrefetchHooks Function({bool ledgerEntriesRefs})
+    >;
+typedef $$LedgerEntriesTableCreateCompanionBuilder =
+    LedgerEntriesCompanion Function({
+      Value<int> id,
+      required String entryId,
+      Value<int?> personId,
+      required LedgerKind kind,
+      required LedgerDirection direction,
+      required double amount,
+      Value<String> currency,
+      required DateTime date,
+      Value<String?> description,
+      required LedgerStatus status,
+      Value<String?> rejectReason,
+      Value<String?> settlesEntryId,
+      Value<bool> createdByMe,
+      Value<String?> counterpartUserId,
+      Value<String?> counterpartName,
+      Value<bool> queued,
+      Value<DateTime> createdAt,
+    });
+typedef $$LedgerEntriesTableUpdateCompanionBuilder =
+    LedgerEntriesCompanion Function({
+      Value<int> id,
+      Value<String> entryId,
+      Value<int?> personId,
+      Value<LedgerKind> kind,
+      Value<LedgerDirection> direction,
+      Value<double> amount,
+      Value<String> currency,
+      Value<DateTime> date,
+      Value<String?> description,
+      Value<LedgerStatus> status,
+      Value<String?> rejectReason,
+      Value<String?> settlesEntryId,
+      Value<bool> createdByMe,
+      Value<String?> counterpartUserId,
+      Value<String?> counterpartName,
+      Value<bool> queued,
+      Value<DateTime> createdAt,
+    });
+
+final class $$LedgerEntriesTableReferences
+    extends BaseReferences<_$AppDatabase, $LedgerEntriesTable, LedgerEntry> {
+  $$LedgerEntriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $PeopleTable _personIdTable(_$AppDatabase db) =>
+      db.people.createAlias('ledger_entries__person_id__people__id');
+
+  $$PeopleTableProcessedTableManager? get personId {
+    final $_column = $_itemColumn<int>('person_id');
+    if ($_column == null) return null;
+    final manager = $$PeopleTableTableManager(
+      $_db,
+      $_db.people,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_personIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LedgerEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $LedgerEntriesTable> {
+  $$LedgerEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LedgerKind, LedgerKind, String> get kind =>
+      $composableBuilder(
+        column: $table.kind,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<LedgerDirection, LedgerDirection, String>
+  get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<LedgerStatus, LedgerStatus, String>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get rejectReason => $composableBuilder(
+    column: $table.rejectReason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get settlesEntryId => $composableBuilder(
+    column: $table.settlesEntryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get createdByMe => $composableBuilder(
+    column: $table.createdByMe,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get counterpartUserId => $composableBuilder(
+    column: $table.counterpartUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get counterpartName => $composableBuilder(
+    column: $table.counterpartName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get queued => $composableBuilder(
+    column: $table.queued,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$PeopleTableFilterComposer get personId {
+    final $$PeopleTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.personId,
+      referencedTable: $db.people,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeopleTableFilterComposer(
+            $db: $db,
+            $table: $db.people,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LedgerEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LedgerEntriesTable> {
+  $$LedgerEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direction => $composableBuilder(
+    column: $table.direction,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(
+    column: $table.date,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rejectReason => $composableBuilder(
+    column: $table.rejectReason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get settlesEntryId => $composableBuilder(
+    column: $table.settlesEntryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get createdByMe => $composableBuilder(
+    column: $table.createdByMe,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get counterpartUserId => $composableBuilder(
+    column: $table.counterpartUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get counterpartName => $composableBuilder(
+    column: $table.counterpartName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get queued => $composableBuilder(
+    column: $table.queued,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$PeopleTableOrderingComposer get personId {
+    final $$PeopleTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.personId,
+      referencedTable: $db.people,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeopleTableOrderingComposer(
+            $db: $db,
+            $table: $db.people,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LedgerEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LedgerEntriesTable> {
+  $$LedgerEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LedgerKind, String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<LedgerDirection, String> get direction =>
+      $composableBuilder(column: $table.direction, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date =>
+      $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+    column: $table.description,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<LedgerStatus, String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get rejectReason => $composableBuilder(
+    column: $table.rejectReason,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get settlesEntryId => $composableBuilder(
+    column: $table.settlesEntryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get createdByMe => $composableBuilder(
+    column: $table.createdByMe,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get counterpartUserId => $composableBuilder(
+    column: $table.counterpartUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get counterpartName => $composableBuilder(
+    column: $table.counterpartName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get queued =>
+      $composableBuilder(column: $table.queued, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$PeopleTableAnnotationComposer get personId {
+    final $$PeopleTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.personId,
+      referencedTable: $db.people,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PeopleTableAnnotationComposer(
+            $db: $db,
+            $table: $db.people,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LedgerEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LedgerEntriesTable,
+          LedgerEntry,
+          $$LedgerEntriesTableFilterComposer,
+          $$LedgerEntriesTableOrderingComposer,
+          $$LedgerEntriesTableAnnotationComposer,
+          $$LedgerEntriesTableCreateCompanionBuilder,
+          $$LedgerEntriesTableUpdateCompanionBuilder,
+          (LedgerEntry, $$LedgerEntriesTableReferences),
+          LedgerEntry,
+          PrefetchHooks Function({bool personId})
+        > {
+  $$LedgerEntriesTableTableManager(_$AppDatabase db, $LedgerEntriesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LedgerEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LedgerEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LedgerEntriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> entryId = const Value.absent(),
+                Value<int?> personId = const Value.absent(),
+                Value<LedgerKind> kind = const Value.absent(),
+                Value<LedgerDirection> direction = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<DateTime> date = const Value.absent(),
+                Value<String?> description = const Value.absent(),
+                Value<LedgerStatus> status = const Value.absent(),
+                Value<String?> rejectReason = const Value.absent(),
+                Value<String?> settlesEntryId = const Value.absent(),
+                Value<bool> createdByMe = const Value.absent(),
+                Value<String?> counterpartUserId = const Value.absent(),
+                Value<String?> counterpartName = const Value.absent(),
+                Value<bool> queued = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => LedgerEntriesCompanion(
+                id: id,
+                entryId: entryId,
+                personId: personId,
+                kind: kind,
+                direction: direction,
+                amount: amount,
+                currency: currency,
+                date: date,
+                description: description,
+                status: status,
+                rejectReason: rejectReason,
+                settlesEntryId: settlesEntryId,
+                createdByMe: createdByMe,
+                counterpartUserId: counterpartUserId,
+                counterpartName: counterpartName,
+                queued: queued,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String entryId,
+                Value<int?> personId = const Value.absent(),
+                required LedgerKind kind,
+                required LedgerDirection direction,
+                required double amount,
+                Value<String> currency = const Value.absent(),
+                required DateTime date,
+                Value<String?> description = const Value.absent(),
+                required LedgerStatus status,
+                Value<String?> rejectReason = const Value.absent(),
+                Value<String?> settlesEntryId = const Value.absent(),
+                Value<bool> createdByMe = const Value.absent(),
+                Value<String?> counterpartUserId = const Value.absent(),
+                Value<String?> counterpartName = const Value.absent(),
+                Value<bool> queued = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => LedgerEntriesCompanion.insert(
+                id: id,
+                entryId: entryId,
+                personId: personId,
+                kind: kind,
+                direction: direction,
+                amount: amount,
+                currency: currency,
+                date: date,
+                description: description,
+                status: status,
+                rejectReason: rejectReason,
+                settlesEntryId: settlesEntryId,
+                createdByMe: createdByMe,
+                counterpartUserId: counterpartUserId,
+                counterpartName: counterpartName,
+                queued: queued,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LedgerEntriesTable, LedgerEntry>(table),
+                  $$LedgerEntriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({personId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (personId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.personId,
+                                referencedTable: $$LedgerEntriesTableReferences
+                                    ._personIdTable(db),
+                                referencedColumn: $$LedgerEntriesTableReferences
+                                    ._personIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LedgerEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LedgerEntriesTable,
+      LedgerEntry,
+      $$LedgerEntriesTableFilterComposer,
+      $$LedgerEntriesTableOrderingComposer,
+      $$LedgerEntriesTableAnnotationComposer,
+      $$LedgerEntriesTableCreateCompanionBuilder,
+      $$LedgerEntriesTableUpdateCompanionBuilder,
+      (LedgerEntry, $$LedgerEntriesTableReferences),
+      LedgerEntry,
+      PrefetchHooks Function({bool personId})
+    >;
+typedef $$LedgerOutboxTableCreateCompanionBuilder =
+    LedgerOutboxCompanion Function({
+      Value<int> id,
+      required String entryId,
+      required String op,
+      required String payload,
+      Value<DateTime> createdAt,
+    });
+typedef $$LedgerOutboxTableUpdateCompanionBuilder =
+    LedgerOutboxCompanion Function({
+      Value<int> id,
+      Value<String> entryId,
+      Value<String> op,
+      Value<String> payload,
+      Value<DateTime> createdAt,
+    });
+
+class $$LedgerOutboxTableFilterComposer
+    extends Composer<_$AppDatabase, $LedgerOutboxTable> {
+  $$LedgerOutboxTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get op => $composableBuilder(
+    column: $table.op,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$LedgerOutboxTableOrderingComposer
+    extends Composer<_$AppDatabase, $LedgerOutboxTable> {
+  $$LedgerOutboxTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get op => $composableBuilder(
+    column: $table.op,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payload => $composableBuilder(
+    column: $table.payload,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$LedgerOutboxTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LedgerOutboxTable> {
+  $$LedgerOutboxTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<String> get op =>
+      $composableBuilder(column: $table.op, builder: (column) => column);
+
+  GeneratedColumn<String> get payload =>
+      $composableBuilder(column: $table.payload, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$LedgerOutboxTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LedgerOutboxTable,
+          LedgerOutboxItem,
+          $$LedgerOutboxTableFilterComposer,
+          $$LedgerOutboxTableOrderingComposer,
+          $$LedgerOutboxTableAnnotationComposer,
+          $$LedgerOutboxTableCreateCompanionBuilder,
+          $$LedgerOutboxTableUpdateCompanionBuilder,
+          (
+            LedgerOutboxItem,
+            BaseReferences<_$AppDatabase, $LedgerOutboxTable, LedgerOutboxItem>,
+          ),
+          LedgerOutboxItem,
+          PrefetchHooks Function()
+        > {
+  $$LedgerOutboxTableTableManager(_$AppDatabase db, $LedgerOutboxTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LedgerOutboxTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LedgerOutboxTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LedgerOutboxTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> entryId = const Value.absent(),
+                Value<String> op = const Value.absent(),
+                Value<String> payload = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => LedgerOutboxCompanion(
+                id: id,
+                entryId: entryId,
+                op: op,
+                payload: payload,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String entryId,
+                required String op,
+                required String payload,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => LedgerOutboxCompanion.insert(
+                id: id,
+                entryId: entryId,
+                op: op,
+                payload: payload,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LedgerOutboxTable, LedgerOutboxItem>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $LedgerOutboxTable,
+                    LedgerOutboxItem
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$LedgerOutboxTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LedgerOutboxTable,
+      LedgerOutboxItem,
+      $$LedgerOutboxTableFilterComposer,
+      $$LedgerOutboxTableOrderingComposer,
+      $$LedgerOutboxTableAnnotationComposer,
+      $$LedgerOutboxTableCreateCompanionBuilder,
+      $$LedgerOutboxTableUpdateCompanionBuilder,
+      (
+        LedgerOutboxItem,
+        BaseReferences<_$AppDatabase, $LedgerOutboxTable, LedgerOutboxItem>,
+      ),
+      LedgerOutboxItem,
+      PrefetchHooks Function()
+    >;
+typedef $$AppNotificationsTableCreateCompanionBuilder =
+    AppNotificationsCompanion Function({
+      required String id,
+      required String type,
+      Value<String?> entryId,
+      Value<String?> actorName,
+      Value<double?> amount,
+      Value<String?> currency,
+      required DateTime createdAt,
+      Value<DateTime?> readAt,
+      Value<bool> readPending,
+      Value<int> rowid,
+    });
+typedef $$AppNotificationsTableUpdateCompanionBuilder =
+    AppNotificationsCompanion Function({
+      Value<String> id,
+      Value<String> type,
+      Value<String?> entryId,
+      Value<String?> actorName,
+      Value<double?> amount,
+      Value<String?> currency,
+      Value<DateTime> createdAt,
+      Value<DateTime?> readAt,
+      Value<bool> readPending,
+      Value<int> rowid,
+    });
+
+class $$AppNotificationsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppNotificationsTable> {
+  $$AppNotificationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get actorName => $composableBuilder(
+    column: $table.actorName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get readPending => $composableBuilder(
+    column: $table.readPending,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppNotificationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppNotificationsTable> {
+  $$AppNotificationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entryId => $composableBuilder(
+    column: $table.entryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get actorName => $composableBuilder(
+    column: $table.actorName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get readAt => $composableBuilder(
+    column: $table.readAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get readPending => $composableBuilder(
+    column: $table.readPending,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppNotificationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppNotificationsTable> {
+  $$AppNotificationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get entryId =>
+      $composableBuilder(column: $table.entryId, builder: (column) => column);
+
+  GeneratedColumn<String> get actorName =>
+      $composableBuilder(column: $table.actorName, builder: (column) => column);
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get readAt =>
+      $composableBuilder(column: $table.readAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get readPending => $composableBuilder(
+    column: $table.readPending,
+    builder: (column) => column,
+  );
+}
+
+class $$AppNotificationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppNotificationsTable,
+          AppNotification,
+          $$AppNotificationsTableFilterComposer,
+          $$AppNotificationsTableOrderingComposer,
+          $$AppNotificationsTableAnnotationComposer,
+          $$AppNotificationsTableCreateCompanionBuilder,
+          $$AppNotificationsTableUpdateCompanionBuilder,
+          (
+            AppNotification,
+            BaseReferences<
+              _$AppDatabase,
+              $AppNotificationsTable,
+              AppNotification
+            >,
+          ),
+          AppNotification,
+          PrefetchHooks Function()
+        > {
+  $$AppNotificationsTableTableManager(
+    _$AppDatabase db,
+    $AppNotificationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppNotificationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppNotificationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppNotificationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> entryId = const Value.absent(),
+                Value<String?> actorName = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime?> readAt = const Value.absent(),
+                Value<bool> readPending = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppNotificationsCompanion(
+                id: id,
+                type: type,
+                entryId: entryId,
+                actorName: actorName,
+                amount: amount,
+                currency: currency,
+                createdAt: createdAt,
+                readAt: readAt,
+                readPending: readPending,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String type,
+                Value<String?> entryId = const Value.absent(),
+                Value<String?> actorName = const Value.absent(),
+                Value<double?> amount = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                required DateTime createdAt,
+                Value<DateTime?> readAt = const Value.absent(),
+                Value<bool> readPending = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AppNotificationsCompanion.insert(
+                id: id,
+                type: type,
+                entryId: entryId,
+                actorName: actorName,
+                amount: amount,
+                currency: currency,
+                createdAt: createdAt,
+                readAt: readAt,
+                readPending: readPending,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$AppNotificationsTable, AppNotification>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $AppNotificationsTable,
+                    AppNotification
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppNotificationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppNotificationsTable,
+      AppNotification,
+      $$AppNotificationsTableFilterComposer,
+      $$AppNotificationsTableOrderingComposer,
+      $$AppNotificationsTableAnnotationComposer,
+      $$AppNotificationsTableCreateCompanionBuilder,
+      $$AppNotificationsTableUpdateCompanionBuilder,
+      (
+        AppNotification,
+        BaseReferences<_$AppDatabase, $AppNotificationsTable, AppNotification>,
+      ),
+      AppNotification,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8542,4 +12433,12 @@ class $AppDatabaseManager {
   $$MetaTableTableManager get meta => $$MetaTableTableManager(_db, _db.meta);
   $$SyncTombstonesTableTableManager get syncTombstones =>
       $$SyncTombstonesTableTableManager(_db, _db.syncTombstones);
+  $$PeopleTableTableManager get people =>
+      $$PeopleTableTableManager(_db, _db.people);
+  $$LedgerEntriesTableTableManager get ledgerEntries =>
+      $$LedgerEntriesTableTableManager(_db, _db.ledgerEntries);
+  $$LedgerOutboxTableTableManager get ledgerOutbox =>
+      $$LedgerOutboxTableTableManager(_db, _db.ledgerOutbox);
+  $$AppNotificationsTableTableManager get appNotifications =>
+      $$AppNotificationsTableTableManager(_db, _db.appNotifications);
 }

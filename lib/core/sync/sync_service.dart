@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../db/database.dart';
@@ -8,12 +10,16 @@ import 'sync_schema.dart';
 const _cursorKey = 'sync_cursor';
 const _userKey = 'sync_user_id';
 const _lastSyncKey = 'sync_last_at';
+const _ledgerCursorKey = 'sync_ledger_cursor';
+const _notifCursorKey = 'sync_notification_cursor';
 const _chunk = 1500; // the server accepts at most 2000 records per entity per request
 
 class SyncReport {
-  const SyncReport({this.pushed = 0, this.pulled = 0, this.skipped = 0});
+  const SyncReport({this.pushed = 0, this.pulled = 0, this.skipped = 0, this.ledgerErrors = 0});
   final int pushed;
   final int pulled;
+  /// Ledger operations the server refused (e.g. an entry with yourself); the local copy is corrected.
+  final int ledgerErrors;
   /// Remote records that referenced something this device does not have (kept out, not lost on the server).
   final int skipped;
 }
@@ -60,13 +66,22 @@ class SyncService {
   /// First sign-in on this device (or switching to another account): everything local has to be
   /// uploaded and the pull cursor starts over.
   Future<void> prepareForAccount(String userId) async {
-    if (await _meta(_userKey) == userId) return;
+    final previous = await _meta(_userKey);
+    if (previous == userId) return;
     await _db.transaction(() async {
       for (final t in syncTables) {
         await _db.customStatement('UPDATE ${t.table} SET dirty = 1');
       }
       await _db.customStatement('DELETE FROM sync_tombstones');
+      if (previous != null) {
+        // The ledger replica belongs to the other account (its server copy stays there).
+        await _db.customStatement('DELETE FROM ledger_outbox');
+        await _db.customStatement('DELETE FROM ledger_entries');
+        await _db.customStatement('DELETE FROM app_notifications');
+      }
       await _setMeta(_cursorKey, '0');
+      await _setMeta(_ledgerCursorKey, '0');
+      await _setMeta(_notifCursorKey, '0');
       await _setMeta(_userKey, userId);
     });
   }
@@ -75,12 +90,16 @@ class SyncService {
   Future<void> wipeLocalData() async {
     await _db.transaction(() async {
       await _setMeta(syncApplyingKey, '1');
+      await _db.customStatement('DELETE FROM ledger_entries');
       for (final t in syncTables.reversed) {
         await _db.customStatement('DELETE FROM ${t.table}');
       }
       await _db.customStatement('DELETE FROM sync_tombstones');
+      await _db.customStatement('DELETE FROM ledger_outbox');
+      await _db.customStatement('DELETE FROM ledger_entries');
+      await _db.customStatement('DELETE FROM app_notifications');
       await _delMeta(syncApplyingKey);
-      for (final k in [_cursorKey, _userKey, _lastSyncKey, 'seed-completed-v1']) {
+      for (final k in [_cursorKey, _ledgerCursorKey, _notifCursorKey, _userKey, _lastSyncKey, 'seed-completed-v1']) {
         await _delMeta(k);
       }
     });
@@ -93,6 +112,15 @@ class SyncService {
     var pushedCount = outbox.records.values.fold<int>(0, (a, l) => a + l.length);
     final pending = {for (final e in outbox.records.entries) e.key: List<_Json>.from(e.value)};
 
+    var ledgerCursor = int.tryParse(await _meta(_ledgerCursorKey) ?? '') ?? 0;
+    var notifCursor = int.tryParse(await _meta(_notifCursorKey) ?? '') ?? 0;
+    final ops = await _db.select(_db.ledgerOutbox).get();
+    final readIds = await (_db.select(_db.appNotifications)..where((n) => n.readPending.equals(true))).get();
+    var firstRound = true;
+    var ledgerResults = <_Json>[];
+    final ledgerEntries = <_Json>[];
+    final notifications = <_Json>[];
+
     final pulled = <String, List<_Json>>{};
     while (true) {
       final changes = <String, List<_Json>>{};
@@ -102,8 +130,28 @@ class SyncService {
         changes[e.key] = e.value.sublist(0, n);
         e.value.removeRange(0, n);
       }
-      final res = await _api.sync({'cursor': cursor, 'changes': changes});
+      final res = await _api.sync({
+        'cursor': cursor,
+        'changes': changes,
+        'ledgerCursor': ledgerCursor,
+        'notificationCursor': notifCursor,
+        // Ops and read receipts go with the first request only; they are idempotent on the server.
+        if (firstRound) 'ledgerOps': [for (final o in ops) jsonDecode(o.payload)],
+        if (firstRound) 'readNotifications': [for (final n in readIds) n.id],
+      });
+      if (firstRound) ledgerResults = ((res['ledgerResults'] as List?) ?? const []).cast<_Json>();
+      firstRound = false;
       cursor = (res['cursor'] as num).toInt();
+      final ledger = res['ledger'] as _Json?;
+      if (ledger != null) {
+        ledgerEntries.addAll((ledger['entries'] as List).cast<_Json>());
+        ledgerCursor = (ledger['cursor'] as num).toInt();
+      }
+      final notif = res['notifications'] as _Json?;
+      if (notif != null) {
+        notifications.addAll((notif['items'] as List).cast<_Json>());
+        notifCursor = (notif['cursor'] as num).toInt();
+      }
       (res['changes'] as Map<String, dynamic>).forEach((entity, list) {
         pulled.putIfAbsent(entity, () => []).addAll((list as List).cast<_Json>());
       });
@@ -114,6 +162,7 @@ class SyncService {
 
     var skipped = 0;
     var pulledCount = 0;
+    var ledgerErrors = 0;
     await _db.transaction(() async {
       await _setMeta(syncApplyingKey, '1');
       final stats = await _apply(pulled);
@@ -132,9 +181,28 @@ class SyncService {
       await _setMeta(_cursorKey, '$cursor');
       await _setMeta(_lastSyncKey, DateTime.now().toUtc().toIso8601String());
       await _delMeta(syncApplyingKey);
+
+      // Ledger: outside the trigger guard on purpose, so people created/linked here sync too.
+      ledgerErrors = await _applyLedgerResults(ops, ledgerResults);
+      for (final e in ledgerEntries) {
+        await _applyLedgerEntry(e);
+      }
+      for (final n in notifications) {
+        await _applyNotification(n);
+      }
+      if (readIds.isNotEmpty) {
+        await (_db.update(_db.appNotifications)..where((n) => n.id.isIn(readIds.map((r) => r.id))))
+            .write(const AppNotificationsCompanion(readPending: Value(false)));
+      }
+      await _setMeta(_ledgerCursorKey, '$ledgerCursor');
+      await _setMeta(_notifCursorKey, '$notifCursor');
     });
-    pushedCount += 0;
-    return SyncReport(pushed: pushedCount, pulled: pulledCount, skipped: skipped);
+    return SyncReport(
+      pushed: pushedCount + ops.length,
+      pulled: pulledCount + ledgerEntries.length,
+      skipped: skipped,
+      ledgerErrors: ledgerErrors,
+    );
   }
 
   // ───────────────────────────── push ─────────────────────────────
@@ -201,6 +269,14 @@ class SyncService {
       });
     }
 
+    for (final p in await (_db.select(_db.people)..where((p) => p.dirty.equals(true))).get()) {
+      if (p.syncId == null) continue;
+      add('people', 'people', p.id, p.updatedAt, {
+        'id': p.syncId, 'name': p.name, 'phone': p.phone, 'email': p.email, 'notes': p.notes,
+        'linkedUserId': p.linkedUserId,
+      });
+    }
+
     final tombstones = await _db.select(_db.syncTombstones).get();
     for (final t in tombstones) {
       final keyName = switch (t.entity) {
@@ -253,6 +329,9 @@ class SyncService {
         applied++;
       }
     }
+    for (final r in live('people')) {
+      if (await _upsertPerson(r)) applied++;
+    }
     for (final r in live('categoryBudgets')) {
       final ok = await _upsertBudget(r);
       if (ok == null) {
@@ -276,6 +355,18 @@ class SyncService {
         applied++;
       }
     }
+    for (final r in dead('people')) {
+      final id = r['id'] as String;
+      final local = await (_db.select(_db.people)..where((p) => p.syncId.equals(id))).getSingleOrNull();
+      final used = local == null
+          ? true
+          : (await (_db.select(_db.ledgerEntries)..where((e) => e.personId.equals(local.id))..limit(1)).get()).isNotEmpty;
+      // A person with ledger history on this device is kept (history is never dropped).
+      if (!used && local.updatedAt <= _secs(r['deletedAt'] as String)) {
+        await (_db.delete(_db.people)..where((p) => p.id.equals(local.id))).go();
+        applied++;
+      }
+    }
     for (final r in dead('cards')) {
       if (await _deleteBySyncId('cards', r)) applied++;
     }
@@ -292,6 +383,146 @@ class SyncService {
   /// A remote version replaces the local one only if it is strictly newer (last writer wins).
   bool _newer(int? localUpdatedAt, _Json remote) =>
       localUpdatedAt == null || _secs(remote['updatedAt'] as String) > localUpdatedAt;
+
+  Future<bool> _upsertPerson(_Json r) async {
+    final id = r['id'] as String;
+    final local = await (_db.select(_db.people)..where((p) => p.syncId.equals(id))).getSingleOrNull();
+    if (!_newer(local?.updatedAt, r)) return false;
+    final comp = PeopleCompanion(
+      syncId: Value(id),
+      name: Value(r['name'] as String),
+      phone: Value(r['phone'] as String?),
+      email: Value(r['email'] as String?),
+      notes: Value(r['notes'] as String?),
+      linkedUserId: Value(r['linkedUserId'] as String?),
+      updatedAt: Value(_secs(r['updatedAt'] as String)),
+      dirty: const Value(false),
+    );
+    if (local == null) {
+      await _db.into(_db.people).insert(comp);
+    } else {
+      await (_db.update(_db.people)..where((p) => p.id.equals(local.id))).write(comp);
+    }
+    return true;
+  }
+
+  // ───────────────────────────── ledger ─────────────────────────────
+
+  /// Drops the sent ops; where the server refused one, corrects the optimistic local copy.
+  Future<int> _applyLedgerResults(List<LedgerOutboxItem> sent, List<_Json> results) async {
+    if (sent.isEmpty) return 0;
+    var errors = 0;
+    for (final r in results) {
+      if (r['ok'] == true) continue;
+      errors++;
+      final id = r['id'] as String;
+      final status = r['status'] as String?;
+      if (r['op'] == 'create' || r['error'] == 'not_found') {
+        await (_db.delete(_db.ledgerEntries)..where((e) => e.entryId.equals(id))).go();
+      } else if (status != null) {
+        await (_db.update(_db.ledgerEntries)..where((e) => e.entryId.equals(id))).write(LedgerEntriesCompanion(
+              status: Value(_enum(LedgerStatus.values, status.toLowerCase(), LedgerStatus.pending)),
+              queued: const Value(false),
+            ));
+      }
+    }
+    await (_db.delete(_db.ledgerOutbox)..where((o) => o.id.isIn(sent.map((o) => o.id)))).go();
+    return errors;
+  }
+
+  /// The local People row for a feed entry: by my own person id, else by the other user's account
+  /// (linking an existing person by e-mail), else a new person for them.
+  Future<int?> _personFor(_Json e) async {
+    final cp = (e['counterparty'] as _Json?) ?? const {};
+    final userId = cp['userId'] as String?;
+    final email = (cp['email'] as String?)?.toLowerCase();
+    final name = (cp['name'] as String?)?.trim();
+    Person? person;
+    if (e['personId'] != null) {
+      person = await (_db.select(_db.people)..where((p) => p.syncId.equals(e['personId'] as String))).getSingleOrNull();
+    }
+    if (person == null && userId != null) {
+      person = await (_db.select(_db.people)..where((p) => p.linkedUserId.equals(userId))).getSingleOrNull();
+    }
+    if (person == null && email != null) {
+      person = await (_db.select(_db.people)..where((p) => p.email.lower().equals(email))..limit(1)).getSingleOrNull();
+    }
+    if (person == null && userId == null && name != null && name.isNotEmpty) {
+      person = await (_db.select(_db.people)..where((p) => p.name.equals(name))..limit(1)).getSingleOrNull();
+    }
+    if (person == null) {
+      if (name == null || name.isEmpty) return null;
+      return _db.into(_db.people).insert(PeopleCompanion.insert(
+            name: name,
+            email: Value(email),
+            linkedUserId: Value(userId),
+            // Same id on every device of this user, so they converge on one person.
+            syncId: Value(userId != null ? 'u-$userId' : null),
+          ));
+    }
+    if (userId != null && person.linkedUserId != userId) {
+      await (_db.update(_db.people)..where((p) => p.id.equals(person!.id)))
+          .write(PeopleCompanion(linkedUserId: Value(userId)));
+    }
+    return person.id;
+  }
+
+  Future<void> _applyLedgerEntry(_Json e) async {
+    final id = e['id'] as String;
+    final local = await (_db.select(_db.ledgerEntries)..where((x) => x.entryId.equals(id))).getSingleOrNull();
+    final stillQueued = (await (_db.select(_db.ledgerOutbox)..where((o) => o.entryId.equals(id))..limit(1)).get()).isNotEmpty;
+    final personId = local?.personId ?? await _personFor(e);
+    final cp = (e['counterparty'] as _Json?) ?? const {};
+    final otherUser = cp['userId'] as String?;
+    if (personId != null && otherUser != null) {
+      // The server found an account for this person: remember it (syncs to my other devices).
+      await (_db.update(_db.people)..where((p) => p.id.equals(personId) & (p.linkedUserId.isNull() | p.linkedUserId.equals(otherUser).not())))
+          .write(PeopleCompanion(linkedUserId: Value(otherUser)));
+    }
+    final comp = LedgerEntriesCompanion(
+      entryId: Value(id),
+      personId: Value(personId),
+      kind: Value(_enum(LedgerKind.values, (e['kind'] as String).toLowerCase(), LedgerKind.other)),
+      direction: Value(_enum(LedgerDirection.values, (e['direction'] as String).toLowerCase(), LedgerDirection.gave)),
+      amount: Value((e['amount'] as num).toDouble()),
+      currency: Value(e['currency'] as String? ?? 'EGP'),
+      date: Value(_parseYmd(e['date'] as String)),
+      description: Value(e['description'] as String?),
+      // A newer local action (made while this request was in flight) keeps its optimistic status.
+      status: stillQueued && local != null
+          ? const Value.absent()
+          : Value(_enum(LedgerStatus.values, (e['status'] as String).toLowerCase(), LedgerStatus.pending)),
+      rejectReason: Value(e['rejectReason'] as String?),
+      settlesEntryId: Value(e['settlesEntryId'] as String?),
+      createdByMe: Value(e['createdByMe'] == true),
+      counterpartUserId: Value(cp['userId'] as String?),
+      counterpartName: Value(cp['name'] as String?),
+      queued: Value(stillQueued),
+      createdAt: Value(DateTime.parse(e['createdAt'] as String)),
+    );
+    if (local == null) {
+      await _db.into(_db.ledgerEntries).insert(comp);
+    } else {
+      await (_db.update(_db.ledgerEntries)..where((x) => x.id.equals(local.id))).write(comp);
+    }
+  }
+
+  Future<void> _applyNotification(_Json n) async {
+    final id = n['id'] as String;
+    final local = await (_db.select(_db.appNotifications)..where((x) => x.id.equals(id))).getSingleOrNull();
+    final serverRead = n['readAt'] == null ? null : DateTime.parse(n['readAt'] as String);
+    await _db.into(_db.appNotifications).insertOnConflictUpdate(AppNotificationsCompanion(
+          id: Value(id),
+          type: Value(n['type'] as String),
+          entryId: Value(n['entryId'] as String?),
+          actorName: Value(n['actorName'] as String?),
+          amount: Value((n['amount'] as num?)?.toDouble()),
+          currency: Value(n['currency'] as String?),
+          createdAt: Value(DateTime.parse(n['createdAt'] as String)),
+          readAt: Value(local?.readPending == true ? local!.readAt : serverRead),
+          readPending: Value(local?.readPending == true && serverRead == null),
+        ));
+  }
 
   Future<bool> _deleteBySyncId(String table, _Json r) async {
     final id = r['id'] as String;

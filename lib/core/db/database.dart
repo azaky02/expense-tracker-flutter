@@ -23,6 +23,10 @@ part 'database.g.dart';
     ScheduledNotifications,
     Meta,
     SyncTombstones,
+    People,
+    LedgerEntries,
+    LedgerOutbox,
+    AppNotifications,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -32,7 +36,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +76,15 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(categoryBudgets, categoryBudgets.dirty);
             await m.createTable(syncTombstones);
             await backfillSyncIds(this);
+            await createSyncObjects(this);
+          }
+          if (from < 3) {
+            // v3: People + Shared Ledger replica (V2 design). Existing amanat rows are moved into
+            // the ledger after opening, see migrateAmanatToLedger().
+            await m.createTable(people);
+            await m.createTable(ledgerEntries);
+            await m.createTable(ledgerOutbox);
+            await m.createTable(appNotifications);
             await createSyncObjects(this);
           }
         },

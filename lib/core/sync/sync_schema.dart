@@ -25,6 +25,7 @@ const syncTables = <SyncTable>[
     'amount', 'type', 'category_id', 'payment_method_type', 'card_id', 'date', 'note',
     'beneficiary_name',
   ]),
+  SyncTable('people', 'people', ['name', 'phone', 'email', 'notes', 'linked_user_id']),
   SyncTable('categoryBudgets', 'category_budgets', ['category_id', 'monthly_limit', 'is_enabled'],
       tombstoneExpr: '(SELECT sync_id FROM categories WHERE id = OLD.category_id)'),
 ];

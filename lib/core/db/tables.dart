@@ -15,6 +15,14 @@ enum TransactionType { expense, income, trustIn, trustOut }
 
 enum NotificationKind { dueDateReminder, budgetAlert, dailyReminder }
 
+/// Shared Ledger (V2). Server values are the upper-case names (LOAN, GAVE, PENDING, ...).
+enum LedgerKind { loan, advance, settlement, other }
+
+/// From *this* user's point of view: gave = I handed money to the person, received = I got money.
+enum LedgerDirection { gave, received }
+
+enum LedgerStatus { pending, confirmed, rejected, cancelled }
+
 
 /// Columns that make a table syncable. They are maintained entirely by SQLite triggers (see
 /// sync_schema.dart), so repositories never touch them: every local write stamps updated_at and
@@ -140,4 +148,67 @@ class Meta extends Table {
 
   @override
   Set<Column> get primaryKey => {key};
+}
+
+/// Counterparties (the People module). Synced like the other personal data.
+@DataClassName('Person')
+class People extends Table with SyncColumns {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get phone => text().nullable()();
+  /// If this e-mail belongs to an account on the server, entries with this person are shared with
+  /// them and need their confirmation.
+  TextColumn get email => text().nullable()();
+  TextColumn get notes => text().nullable()();
+  /// Server user id once an entry has shown this person has an account.
+  TextColumn get linkedUserId => text().nullable()();
+}
+
+/// Local replica of the server's Shared Ledger (the server is the source of truth), seen from
+/// this user's side. Rows created on this device are `queued` until the server accepts them.
+class LedgerEntries extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get entryId => text().unique()();
+  IntColumn get personId => integer().nullable().references(People, #id)();
+  TextColumn get kind => textEnum<LedgerKind>()();
+  TextColumn get direction => textEnum<LedgerDirection>()();
+  RealColumn get amount => real()();
+  TextColumn get currency => text().withDefault(const Constant('EGP'))();
+  DateTimeColumn get date => dateTime()();
+  TextColumn get description => text().nullable()();
+  TextColumn get status => textEnum<LedgerStatus>()();
+  TextColumn get rejectReason => text().nullable()();
+  TextColumn get settlesEntryId => text().nullable()();
+  BoolColumn get createdByMe => boolean().withDefault(const Constant(true))();
+  TextColumn get counterpartUserId => text().nullable()();
+  TextColumn get counterpartName => text().nullable()();
+  BoolColumn get queued => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Ledger operations waiting to be sent (create / confirm / reject / cancel), in order.
+@DataClassName('LedgerOutboxItem')
+class LedgerOutbox extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get entryId => text()();
+  TextColumn get op => text()();
+  TextColumn get payload => text()(); // JSON body of the op
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// In-app notifications pulled from the server.
+class AppNotifications extends Table {
+  TextColumn get id => text()();
+  TextColumn get type => text()();
+  TextColumn get entryId => text().nullable()();
+  TextColumn get actorName => text().nullable()();
+  RealColumn get amount => real().nullable()();
+  TextColumn get currency => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get readAt => dateTime().nullable()();
+  /// Read here, not yet reported to the server.
+  BoolColumn get readPending => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
