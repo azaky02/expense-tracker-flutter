@@ -35,7 +35,7 @@ class PersonBalance {
     var pending = 0;
     DateTime? last;
     for (final e in entries) {
-      if (e.status == LedgerStatus.pending || e.queued) pending++;
+      if (e.status == LedgerStatus.pending) pending++;
       if (e.status != LedgerStatus.confirmed) continue;
       final isSettlement = e.kind == LedgerKind.settlement;
       if (e.direction == LedgerDirection.received) {

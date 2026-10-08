@@ -39,7 +39,7 @@ class StatementScreen extends ConsumerWidget {
       final b = StringBuffer('${'statement.title'.tr(namedArgs: {'name': name}, context: context)}\n\n');
       for (final l in lines) {
         final e = l.entry;
-        b.writeln('${DateFormat.yMd().format(e.date)} | ${kindLabel(context, e.kind)} · ${directionLabel(context, e.direction)}'
+        b.writeln('${DateFormat.yMd(context.locale.languageCode).format(e.date)} | ${kindLabel(context, e.kind)} · ${directionLabel(context, e.direction)}'
             '${e.description != null ? ' (${e.description})' : ''} | ${formatAmount(e.amount)} | ${_balanceText(context, l.runningBalance)}');
       }
       b
@@ -77,7 +77,7 @@ class StatementScreen extends ConsumerWidget {
                         _row(context, 'statement.remaining'.tr(context: context), _balanceText(context, remaining),
                             color: netColor(context, remaining), bold: true),
                         _row(context, 'statement.count'.tr(context: context), '${lines.length}'),
-                        _row(context, 'statement.last'.tr(context: context), DateFormat.yMd().format(lines.last.entry.date)),
+                        _row(context, 'statement.last'.tr(context: context), DateFormat.yMd(context.locale.languageCode).format(lines.last.entry.date)),
                       ],
                     ),
                   ),
@@ -104,7 +104,7 @@ class StatementScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(children: [
-                          Expanded(flex: 3, child: Text(DateFormat.yMd().format(l.entry.date))),
+                          Expanded(flex: 3, child: Text(DateFormat.yMd(context.locale.languageCode).format(l.entry.date))),
                           // Debit = it adds to what I owe (I received); credit = it adds to what they owe (I gave).
                           Expanded(
                             flex: 3,

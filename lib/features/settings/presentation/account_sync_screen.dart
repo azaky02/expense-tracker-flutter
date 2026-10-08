@@ -140,7 +140,7 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
                 : 'sync.synced'.tr(context: context)),
         subtitle: Text(last == null
             ? 'sync.neverSynced'.tr(context: context)
-            : 'sync.lastSync'.tr(namedArgs: {'time': DateFormat.yMd().add_Hm().format(last)}, context: context)),
+            : 'sync.lastSync'.tr(namedArgs: {'time': DateFormat.yMd(context.locale.languageCode).add_Hm().format(last)}, context: context)),
       ),
       if (skipped > 0)
         Padding(

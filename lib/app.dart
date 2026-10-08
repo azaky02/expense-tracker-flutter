@@ -46,10 +46,22 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
     final settings = ref.watch(settingsProvider);
 
     return dbReady.when(
-      loading: () => const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      // The splash/error apps carry the same localization delegates as the real one, so the
+      // switch to the router app never builds a frame without translations (which crashed
+      // `.tr(context: …)` lookups such as the bottom navigation labels).
+      loading: () => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
       error: (error, stack) => MaterialApp(
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
         home: Scaffold(body: Center(child: Text('Failed to open database: $error'))),
       ),
       data: (_) {

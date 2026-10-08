@@ -48,7 +48,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   ListTile(
                     leading: Icon(_icon(n.type)),
                     title: Text(_text(context, n)),
-                    subtitle: Text(DateFormat.yMd().add_Hm().format(n.createdAt.toLocal())),
+                    subtitle: Text(DateFormat.yMd(context.locale.languageCode).add_Hm().format(n.createdAt.toLocal())),
                     onTap: n.entryId == null
                         ? null
                         : () async {

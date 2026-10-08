@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../sync/sync_controller.dart';
+import '../theme/app_theme.dart';
 import '../theme/ds_tokens.dart';
 import '../utils/currency.dart';
 
@@ -54,7 +54,7 @@ class AmountText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sign = signed ? (amount > 0 ? '+' : amount < 0 ? '-' : '') : (amount < 0 ? '-' : '');
-    final style = GoogleFonts.inter(fontSize: size, fontWeight: weight, color: color ?? Theme.of(context).colorScheme.onSurface);
+    final style = AppTheme.numbers(fontSize: size, fontWeight: weight, color: color ?? Theme.of(context).colorScheme.onSurface);
     return Directionality(
       textDirection: ui.TextDirection.ltr,
       child: Text.rich(
@@ -315,11 +315,11 @@ class AmountField extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       textAlign: TextAlign.start,
       textDirection: ui.TextDirection.ltr,
-      style: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.w700),
+      style: AppTheme.numbers(fontSize: 26, fontWeight: FontWeight.w700),
       decoration: InputDecoration(
         hintText: '0.00',
         suffixText: currency,
-        suffixStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        suffixStyle: AppTheme.numbers(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }

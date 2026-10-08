@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/db/database.dart' hide Card;
 import '../../../core/db/tables.dart';
+import '../../../core/sync/sync_controller.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/widgets/ds_widgets.dart';
@@ -135,6 +136,8 @@ class _EntryTile extends ConsumerWidget {
     final inbound = entry.direction == LedgerDirection.received;
     final color = inbound ? DS.success : theme.colorScheme.error;
     final faded = entry.status == LedgerStatus.rejected || entry.status == LedgerStatus.cancelled;
+    // Without an account nothing is ever sent, so "waiting to sync" would only be noise.
+    final showQueued = entry.queued && ref.watch(syncControllerProvider).signedIn;
     final title = entry.kind == LedgerKind.settlement
         ? kindLabel(context, entry.kind)
         : (inbound ? 'ledger.receivedFrom' : 'ledger.gaveTo').tr(namedArgs: {'name': personName});
@@ -159,10 +162,10 @@ class _EntryTile extends ConsumerWidget {
           ),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Opacity(opacity: faded ? 0.45 : 1, child: AmountText(inbound ? entry.amount : -entry.amount, size: 14, color: color, signed: true)),
-            if (entry.status != LedgerStatus.confirmed || entry.queued)
+            if (entry.status != LedgerStatus.confirmed || showQueued)
               StatusPill(
-                entry.queued && entry.status == LedgerStatus.confirmed ? 'ledger.queued'.tr() : statusLabel(context, entry.status),
-                color: entry.queued && entry.status == LedgerStatus.confirmed ? theme.colorScheme.onSurfaceVariant : statusColor(context, entry.status),
+                showQueued && entry.status == LedgerStatus.confirmed ? 'ledger.queued'.tr() : statusLabel(context, entry.status),
+                color: showQueued && entry.status == LedgerStatus.confirmed ? theme.colorScheme.onSurfaceVariant : statusColor(context, entry.status),
               ),
           ]),
         ]),
@@ -191,7 +194,7 @@ Future<void> showEntrySheet(BuildContext context, WidgetRef ref, LedgerEntry e) 
             Text(formatAmount(e.amount), style: Theme.of(ctx).textTheme.headlineSmall, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text('${kindLabel(ctx, e.kind)} · ${directionLabel(ctx, e.direction)}', textAlign: TextAlign.center),
-            Text(DateFormat.yMMMd().format(e.date), textAlign: TextAlign.center),
+            Text(DateFormat.yMMMd(ctx.locale.languageCode).format(e.date), textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(statusLabel(ctx, e.status),
                 textAlign: TextAlign.center, style: TextStyle(color: statusColor(ctx, e.status), fontWeight: FontWeight.bold)),

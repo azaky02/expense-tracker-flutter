@@ -75,6 +75,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/transactions/add',
         pageBuilder: (context, state) => MaterialPage(
+          key: ValueKey(state.uri.toString()),
           fullscreenDialog: true,
           child: AddTransactionScreen(
             type: switch (state.uri.queryParameters['type']) {
@@ -149,6 +150,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ledger/new',
         pageBuilder: (context, state) => MaterialPage(
+          key: ValueKey(state.uri.toString()),
           fullscreenDialog: true,
           child: LedgerEntryFormScreen(
             personId: int.tryParse(state.uri.queryParameters['personId'] ?? ''),

@@ -110,7 +110,7 @@ class CardDetailsScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(t.transaction.beneficiaryName ?? t.categoryName),
-                          Text(DateFormat.yMd().format(t.transaction.date),
+                          Text(DateFormat.yMd(context.locale.languageCode).format(t.transaction.date),
                               style: theme.textTheme.bodySmall),
                         ],
                       ),

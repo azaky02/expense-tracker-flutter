@@ -9,6 +9,14 @@ import 'ds_tokens.dart';
 class AppTheme {
   AppTheme._();
 
+  /// Tests and screenshot runs load fonts locally instead of fetching them.
+  static bool useGoogleFonts = true;
+
+  /// Amount style (Inter), shared by AmountText and AmountField.
+  static TextStyle numbers({double? fontSize, FontWeight? fontWeight, Color? color}) => useGoogleFonts
+      ? GoogleFonts.inter(fontSize: fontSize, fontWeight: fontWeight, color: color)
+      : TextStyle(fontFamily: 'Inter', fontSize: fontSize, fontWeight: fontWeight, color: color);
+
   static ThemeData get light => _build(
         brightness: Brightness.light,
         scheme: const ColorScheme(
@@ -70,7 +78,7 @@ class AppTheme {
     required AppSemanticColors semantic,
   }) {
     final base = ThemeData(useMaterial3: true, brightness: brightness, colorScheme: scheme);
-    final text = GoogleFonts.cairoTextTheme(base.textTheme).apply(
+    final text = (useGoogleFonts ? GoogleFonts.cairoTextTheme(base.textTheme) : base.textTheme.apply(fontFamily: 'Cairo')).apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
     );
