@@ -6,14 +6,25 @@ import 'package:go_router/go_router.dart';
 import '../../../core/db/tables.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/utils/date_utils.dart';
-import '../../categories/presentation/category_providers.dart';
+import '../../../core/widgets/ds_widgets.dart';
 import '../data/transaction_models.dart';
 import '../data/transaction_repository.dart';
 import 'quick_note_dialog.dart';
 import 'transaction_providers.dart';
+import 'widgets/transaction_tile.dart';
 
-enum _PaymentFilter { all, cash, card }
+/// Filters currently applied to the transactions list (the filters screen edits a copy).
+final transactionFiltersProvider = NotifierProvider<TransactionFiltersNotifier, TransactionFilters>(TransactionFiltersNotifier.new);
 
+class TransactionFiltersNotifier extends Notifier<TransactionFilters> {
+  @override
+  TransactionFilters build() => const TransactionFilters();
+  void set(TransactionFilters f) => state = f;
+}
+
+enum _Tab { all, income, expense, transfer }
+
+/// Transactions (UI/UX TRX-01, mockup 6): search, type tabs, filters, timeline grouped by day.
 class TransactionsListScreen extends ConsumerStatefulWidget {
   const TransactionsListScreen({super.key});
 
@@ -22,171 +33,146 @@ class TransactionsListScreen extends ConsumerStatefulWidget {
 }
 
 class _TransactionsListScreenState extends ConsumerState<TransactionsListScreen> {
-  _PaymentFilter _paymentFilter = _PaymentFilter.all;
-  int? _categoryFilterId;
+  final _search = TextEditingController();
+  _Tab _tab = _Tab.all;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  TransactionFilters _effective(TransactionFilters base) {
+    final types = switch (_tab) {
+      _Tab.all => base.types,
+      _Tab.income => {TransactionType.income},
+      _Tab.expense => {TransactionType.expense},
+      _Tab.transfer => {TransactionType.transfer},
+    };
+    return base.copyWith(search: _search.text.trim(), types: types, clearTypes: types == null);
+  }
+
+  String _dayLabel(DateTime d) {
+    final today = todayDateOnly();
+    if (d == today) return 'common.today'.tr();
+    if (d == today.subtract(const Duration(days: 1))) return 'common.yesterday'.tr();
+    return DateFormat.yMMMMEEEEd(context.locale.languageCode).format(d);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final categoryTreeAsync = ref.watch(categoryTreeProvider(null));
-    final categoryTree = categoryTreeAsync.value ?? const [];
-
-    List<int>? categoryIds;
-    if (_categoryFilterId != null) {
-      final main = categoryTree.where((n) => n.main.id == _categoryFilterId).firstOrNull;
-      categoryIds = main == null
-          ? [_categoryFilterId!]
-          : [main.main.id, ...main.children.map((c) => c.id)];
-    }
-
-    final filters = TransactionFilters(
-      categoryIds: categoryIds,
-      paymentMethodType: switch (_paymentFilter) {
-        _PaymentFilter.all => null,
-        _PaymentFilter.cash => PaymentMethodType.cash,
-        _PaymentFilter.card => PaymentMethodType.card,
-      },
-    );
-    final listAsync = ref.watch(transactionsListProvider(filters));
+    final base = ref.watch(transactionFiltersProvider);
+    final async = ref.watch(transactionsListProvider(_effective(base)));
+    final theme = Theme.of(context);
+    final filtered = !base.isEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: Text('nav.transactions'.tr())),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              children: [
-                for (final option in _PaymentFilter.values)
-                  ChoiceChip(
-                    label: Text(switch (option) {
-                      _PaymentFilter.all => 'common.all'.tr(),
-                      _PaymentFilter.cash => 'common.cash'.tr(),
-                      _PaymentFilter.card => 'common.card'.tr(),
-                    }),
-                    selected: _paymentFilter == option,
-                    onSelected: (_) => setState(() => _paymentFilter = option),
-                  ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 44,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                for (final node in categoryTree)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      avatar: Text(node.main.icon),
-                      label: Text(node.main.name),
-                      selected: _categoryFilterId == node.main.id,
-                      onSelected: (_) => setState(
-                        () => _categoryFilterId = _categoryFilterId == node.main.id ? null : node.main.id,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: listAsync.when(
-              data: (items) => ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: items.length,
-                itemBuilder: (context, index) => _TransactionRow(item: items[index]),
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('$e')),
-            ),
+      appBar: AppBar(
+        title: Text('nav.transactions'.tr()),
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/transactions/filters'),
+            icon: Badge(isLabelVisible: filtered, smallSize: 8, child: const Icon(Icons.tune)),
           ),
         ],
       ),
+      body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: TextField(
+            controller: _search,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'transactions.searchHint'.tr(),
+              suffixIcon: _search.text.isEmpty
+                  ? null
+                  : IconButton(icon: const Icon(Icons.close), onPressed: () => setState(_search.clear)),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 44,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              for (final t in _Tab.values)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: 8),
+                  child: ChoiceChip(
+                    label: Text('transactions.tab.${t.name}'.tr()),
+                    selected: _tab == t,
+                    onSelected: (_) => setState(() => _tab = t),
+                  ),
+                ),
+              if (filtered)
+                ActionChip(
+                  avatar: const Icon(Icons.filter_alt_off_outlined, size: 16),
+                  label: Text('transactions.clearFilters'.tr()),
+                  onPressed: () => ref.read(transactionFiltersProvider.notifier).set(const TransactionFilters()),
+                ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: async.when(
+            loading: () => const Padding(padding: EdgeInsets.all(16), child: SkeletonList()),
+            error: (e, _) => ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(transactionsListProvider)),
+            data: (items) {
+              if (items.isEmpty) {
+                return EmptyState(
+                  icon: Icons.receipt_long_outlined,
+                  title: filtered || _search.text.isNotEmpty ? 'transactions.noResults'.tr() : 'dashboard.noTransactions'.tr(),
+                  actionLabel: filtered ? null : 'add.expense'.tr(),
+                  onAction: () => context.push('/transactions/add'),
+                );
+              }
+              final groups = <DateTime, List<TransactionWithDetails>>{};
+              for (final t in items) {
+                (groups[dateOnly(t.transaction.date)] ??= []).add(t);
+              }
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                children: [
+                  for (final e in groups.entries) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(top: 14, bottom: 6),
+                      child: Text(_dayLabel(e.key), style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                    ),
+                    AppCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                      child: Column(children: [
+                        for (final t in e.value)
+                          TransactionTile(
+                            item: t,
+                            onTap: () => context.push('/transactions/${t.transaction.id}/edit'),
+                            onLongPress: () => _quickNote(t),
+                            onDoubleTap: () => _monthTotal(t),
+                          ),
+                      ]),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
+      ]),
     );
   }
-}
 
-class _TransactionRow extends ConsumerWidget {
-  const _TransactionRow({required this.item});
-  final TransactionWithDetails item;
+  Future<void> _quickNote(TransactionWithDetails item) async {
+    final note = await showQuickNoteDialog(context, item.transaction.note ?? '');
+    if (note != null) await ref.read(transactionRepositoryProvider).updateNote(item.transaction.id, note);
+  }
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final type = item.transaction.type;
-    final isTrust = type == TransactionType.trustIn || type == TransactionType.trustOut;
-    final negative = type == TransactionType.expense || type == TransactionType.trustOut;
-    final theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: () => context.push('/transactions/${item.transaction.id}/edit'),
-      onDoubleTap: () async {
-        final (start, end) = getMonthRange();
-        final total = await ref.read(
-          categoryMonthTotalProvider((item.transaction.categoryId, start, end)).future,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'transactions.monthTotalForCategory'.tr(
-                  namedArgs: {'category': item.categoryName, 'amount': formatAmount(total)},
-                ),
-              ),
-            ),
-          );
-        }
-      },
-      onLongPress: () async {
-        final note = await showQuickNoteDialog(context, item.transaction.note ?? '');
-        if (note != null) {
-          await ref.read(transactionRepositoryProvider).updateNote(item.transaction.id, note);
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(backgroundColor: theme.colorScheme.surface, child: Text(item.categoryIcon)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.transaction.beneficiaryName ?? item.categoryName),
-                  Text(
-                    [
-                      if (isTrust) (type == TransactionType.trustIn ? 'transactions.trustIn' : 'transactions.trustOut').tr(),
-                      DateFormat.yMd().format(item.transaction.date),
-                      item.transaction.paymentMethodType == PaymentMethodType.cash
-                          ? 'common.cash'.tr()
-                          : item.cardNickname ?? '',
-                      if (item.transaction.note != null && item.transaction.note!.isNotEmpty) '📝',
-                    ].join(' · '),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            Text(
-              '${negative ? '-' : '+'}${formatAmount(item.transaction.amount)}',
-              style: TextStyle(
-                color: isTrust
-                    ? Colors.amber.shade800
-                    : (negative ? theme.colorScheme.error : Colors.green),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _monthTotal(TransactionWithDetails item) async {
+    final (start, end) = getMonthRange();
+    final total = await ref.read(categoryMonthTotalProvider((item.transaction.categoryId, start, end)).future);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('transactions.monthTotalForCategory'.tr(namedArgs: {'category': item.categoryName, 'amount': formatAmount(total)})),
+    ));
   }
 }

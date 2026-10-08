@@ -2,6 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../theme/ds_tokens.dart';
+import '../widgets/ds_widgets.dart';
+
 /// Bottom nav shell for the 4 real tabs (Home/Transactions/Cards/Settings). The center "+"
 /// is a floating action button, not a 5th shell branch — it pushes the add-transaction modal.
 class ScaffoldWithNavBar extends StatelessWidget {
@@ -90,29 +93,42 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// The "+" button: Expense / Income / Transaction with a person / Settlement (V2 design, section 15).
+/// The "+" button (UI/UX §4, mockup 7): Expense / Income / Transfer / Transaction with a person /
+/// Settlement.
 void _showAddMenu(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,
-    showDragHandle: true,
     builder: (ctx) {
-      Widget item(IconData icon, String label, String route) => ListTile(
-            leading: Icon(icon),
-            title: Text(label.tr(context: ctx)),
-            onTap: () {
-              Navigator.pop(ctx);
-              context.push(route);
-            },
+      Widget item(IconData icon, Color color, String label, String hint, String route) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: ListTile(
+              leading: IconBubble(icon: icon, color: color, size: 46),
+              title: Text(label.tr(context: ctx), style: Theme.of(ctx).textTheme.titleSmall),
+              subtitle: Text(hint.tr(context: ctx)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.push(route);
+              },
+            ),
           );
       return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            item(Icons.remove_circle_outline, 'add.expense', '/transactions/add'),
-            item(Icons.add_circle_outline, 'add.income', '/transactions/add?type=income'),
-            item(Icons.handshake_outlined, 'add.ledger', '/ledger/new'),
-            item(Icons.payments_outlined, 'add.settlement', '/ledger/new?kind=settlement'),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('add.title'.tr(context: ctx), textAlign: TextAlign.center, style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              item(Icons.remove_circle_outline, DS.danger, 'add.expense', 'add.expenseHint', '/transactions/add'),
+              item(Icons.add_circle_outline, DS.success, 'add.income', 'add.incomeHint', '/transactions/add?type=income'),
+              item(Icons.swap_horiz, const Color(0xFF8B5CF6), 'add.transfer', 'add.transferHint', '/transactions/add?type=transfer'),
+              item(Icons.handshake_outlined, DS.warning, 'add.ledger', 'add.ledgerHint', '/ledger/new'),
+              item(Icons.payments_outlined, DS.primary, 'add.settlement', 'add.settlementHint', '/ledger/new?kind=settlement'),
+              const SizedBox(height: 8),
+              OutlinedButton(onPressed: () => Navigator.pop(ctx), child: Text('common.cancel'.tr(context: ctx))),
+            ],
+          ),
         ),
       );
     },

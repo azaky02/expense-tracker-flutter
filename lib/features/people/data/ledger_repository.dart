@@ -244,6 +244,15 @@ class LedgerRepository {
         ));
   }
 
+  /// Entries other people recorded with me that wait for my confirmation.
+  Stream<int> watchPendingIncomingCount() {
+    final count = _db.ledgerEntries.id.count();
+    final q = _db.selectOnly(_db.ledgerEntries)
+      ..addColumns([count])
+      ..where(_db.ledgerEntries.createdByMe.equals(false) & _db.ledgerEntries.status.equalsValue(LedgerStatus.pending));
+    return q.watchSingle().map((r) => r.read(count) ?? 0);
+  }
+
   // ───────────── notifications ─────────────
 
   Stream<List<AppNotification>> watchNotifications() =>

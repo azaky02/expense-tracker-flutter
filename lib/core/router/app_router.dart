@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/accounts/presentation/accounts_screen.dart';
+import '../../features/budgets/presentation/budgets_screen.dart';
 import '../../features/categories/presentation/category_management_screen.dart';
+import '../../features/transactions/presentation/transaction_filters_screen.dart';
 import '../../features/people/presentation/ledger_entry_form_screen.dart';
 import '../../features/people/presentation/notifications_screen.dart';
 import '../../features/people/presentation/people_screen.dart';
@@ -112,6 +115,32 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cards',
         builder: (context, state) => const PaymentMethodsScreen(),
+      ),
+      GoRoute(path: '/accounts', builder: (context, state) => const AccountsScreen()),
+      GoRoute(
+        path: '/accounts/new',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: AccountFormScreen(
+            type: AccountType.values.firstWhere((t) => t.name == state.uri.queryParameters['type'], orElse: () => AccountType.bank),
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/accounts/:id',
+        builder: (context, state) => AccountDetailsScreen(accountId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/accounts/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: AccountFormScreen(accountId: int.parse(state.pathParameters['id']!)),
+        ),
+      ),
+      GoRoute(path: '/budgets', builder: (context, state) => const BudgetsScreen()),
+      GoRoute(
+        path: '/transactions/filters',
+        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: TransactionFiltersScreen()),
       ),
       GoRoute(
         path: '/ledger/new',

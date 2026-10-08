@@ -38,3 +38,7 @@ final outstandingTotalsProvider = Provider<(double, double)>((ref) {
   }
   return (receivable, payable);
 });
+
+final pendingIncomingProvider = StreamProvider<int>(
+  (ref) => ref.watch(ledgerRepositoryProvider).watchPendingIncomingCount(),
+);
