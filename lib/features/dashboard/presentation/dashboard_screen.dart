@@ -11,6 +11,8 @@ import '../../../core/utils/color_utils.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../payment_methods/data/card_repository.dart';
+import '../../people/presentation/people_providers.dart';
+import '../../people/presentation/people_screen.dart';
 import '../../payment_methods/presentation/payment_method_providers.dart';
 import '../../transactions/data/transaction_models.dart';
 import '../../transactions/presentation/transaction_providers.dart';
@@ -51,6 +53,7 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(greeting),
         actions: [
+          const NotificationsBell(),
           IconButton(
             icon: const Icon(Icons.bar_chart),
             onPressed: () => context.push('/reports'),
@@ -151,6 +154,8 @@ class DashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
           ],
+          const _OutstandingCard(),
+          const SizedBox(height: 16),
           if (upcomingDue != null) ...[
             Container(
               padding: const EdgeInsets.all(12),
@@ -223,6 +228,49 @@ class _TransactionTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Outstanding balances with people (V2): what others owe me and what I owe them.
+class _OutstandingCard extends ConsumerWidget {
+  const _OutstandingCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final (receivable, payable) = ref.watch(outstandingTotalsProvider);
+    if (receivable == 0 && payable == 0) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => context.go('/people'),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('dashboard.outstanding'.tr(context: context), style: theme.textTheme.titleSmall),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('people.totalReceivable'.tr(context: context), style: theme.textTheme.bodySmall),
+                    Text(formatAmount(receivable), style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade700)),
+                  ]),
+                ),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('people.totalPayable'.tr(context: context), style: theme.textTheme.bodySmall),
+                    Text(formatAmount(payable), style: TextStyle(fontWeight: FontWeight.bold, color: theme.colorScheme.error)),
+                  ]),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

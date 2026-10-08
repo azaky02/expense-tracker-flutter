@@ -14,7 +14,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
     return Scaffold(
       body: navigationShell,
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/transactions/add'),
+        onPressed: () => _showAddMenu(context),
         child: const Icon(Icons.add),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -38,14 +38,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
             ),
             const SizedBox(width: 48), // room for the docked FAB
             _NavItem(
-              icon: Icons.credit_card,
-              label: 'nav.cards'.tr(context: context),
+              icon: Icons.people_alt_outlined,
+              label: 'nav.people'.tr(context: context),
               selected: navigationShell.currentIndex == 2,
               onTap: () => navigationShell.goBranch(2),
             ),
             _NavItem(
-              icon: Icons.settings,
-              label: 'nav.settings'.tr(context: context),
+              icon: Icons.more_horiz,
+              label: 'nav.more'.tr(context: context),
               selected: navigationShell.currentIndex == 3,
               onTap: () => navigationShell.goBranch(3),
             ),
@@ -88,4 +88,33 @@ class _NavItem extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The "+" button: Expense / Income / Transaction with a person / Settlement (V2 design, section 15).
+void _showAddMenu(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) {
+      Widget item(IconData icon, String label, String route) => ListTile(
+            leading: Icon(icon),
+            title: Text(label.tr(context: ctx)),
+            onTap: () {
+              Navigator.pop(ctx);
+              context.push(route);
+            },
+          );
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            item(Icons.remove_circle_outline, 'add.expense', '/transactions/add'),
+            item(Icons.add_circle_outline, 'add.income', '/transactions/add?type=income'),
+            item(Icons.handshake_outlined, 'add.ledger', '/ledger/new'),
+            item(Icons.payments_outlined, 'add.settlement', '/ledger/new?kind=settlement'),
+          ],
+        ),
+      );
+    },
+  );
 }

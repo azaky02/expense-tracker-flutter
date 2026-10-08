@@ -17,7 +17,9 @@
     "home": "الرئيسية",
     "transactions": "المعاملات",
     "cards": "البطاقات",
-    "settings": "الإعدادات"
+    "settings": "الإعدادات",
+    "people": "الأشخاص",
+    "more": "المزيد"
   },
   "onboarding": {
     "welcome": "أهلاً بيك في المصاريف بتاعتي 👋",
@@ -32,7 +34,8 @@
     "expenseByCategory": "توزيع المصروفات حسب الفئة",
     "recentTransactions": "آخر المعاملات",
     "dueSoonAlert": "بعد {days} أيام تنبيه استحقاق {cardName}",
-    "reports": "التقارير"
+    "reports": "التقارير",
+    "outstanding": "الأرصدة مع الأشخاص"
   },
   "transactions": {
     "addTitle": "إضافة معاملة جديدة",
@@ -126,7 +129,7 @@
     "appLock": "قفل التطبيق",
     "backup": "نسخة احتياطية",
     "accountSync": "الحساب والمزامنة",
-    "trust": "الأمانات"
+    "cards": "البطاقات وطرق الدفع"
   },
   "security": {
     "enterPin": "أدخل رمز PIN",
@@ -203,5 +206,94 @@
     "paid": "صرفت",
     "totalHeld": "إجمالي الأمانات عندي",
     "dashboardCard": "الأمانات"
+  },
+  "add": {
+    "expense": "مصروف",
+    "income": "دخل",
+    "ledger": "معاملة مع شخص",
+    "settlement": "سداد"
+  },
+  "people": {
+    "title": "الأشخاص",
+    "add": "إضافة شخص",
+    "edit": "تعديل الشخص",
+    "delete": "حذف",
+    "name": "الاسم",
+    "phone": "الموبايل",
+    "email": "البريد الإلكتروني",
+    "emailHint": "لو عنده حساب على التطبيق بنفس البريد، المعاملات هتوصله ولازم يأكدها.",
+    "notes": "ملاحظات",
+    "empty": "لسه ما ضفتش أشخاص. ضيف شخص عشان تسجّل الفلوس اللي بينكم.",
+    "heOwesMe": "ليّ عنده",
+    "iOweHim": "عليّ له",
+    "net": "الصافي",
+    "settled": "مسوّى",
+    "pending": "{count} بانتظار التأكيد",
+    "statement": "كشف حساب",
+    "newEntry": "معاملة",
+    "settlement": "سداد",
+    "deleteBlocked": "مينفعش تحذف شخص له معاملات.",
+    "totalReceivable": "إجمالي ليّ",
+    "totalPayable": "إجمالي عليّ",
+    "linked": "المعاملات معاه مشتركة ولازم يأكدها.",
+    "notLinked": "من غير حساب: المعاملات بتتسجل عندك نهائية."
+  },
+  "ledger": {
+    "kind": {
+      "loan": "قرض / سلفة",
+      "advance": "مقدّم / عهدة",
+      "settlement": "سداد",
+      "other": "أخرى"
+    },
+    "status": {
+      "pending": "بانتظار التأكيد",
+      "confirmed": "مؤكدة",
+      "rejected": "مرفوضة",
+      "cancelled": "ملغاة"
+    },
+    "gave": "أعطيته",
+    "received": "أخذت منه",
+    "queued": "بانتظار المزامنة",
+    "confirm": "تأكيد",
+    "reject": "رفض",
+    "cancel": "إلغاء المعاملة",
+    "rejectReason": "سبب الرفض",
+    "direction": "الاتجاه",
+    "kindLabel": "النوع",
+    "person": "الشخص",
+    "choosePerson": "اختر الشخص",
+    "description": "البيان",
+    "save": "حفظ المعاملة",
+    "newTitle": "معاملة مع شخص",
+    "settlementTitle": "تسجيل سداد",
+    "createdByOther": "سجّلها {name}",
+    "rejectedBecause": "سبب الرفض: {reason}",
+    "sharedHint": "{name} ممكن يكون عنده حساب: لو عنده، المعاملة هتوصله ولازم يأكدها.",
+    "localHint": "{name} من غير بريد: المعاملة بتتسجل عندك نهائية."
+  },
+  "statement": {
+    "title": "كشف حساب {name}",
+    "date": "التاريخ",
+    "debit": "عليّ",
+    "credit": "ليّ",
+    "balance": "الرصيد",
+    "totalObligations": "إجمالي الالتزامات",
+    "totalSettlements": "إجمالي التسويات",
+    "remaining": "الرصيد المتبقي",
+    "count": "عدد المعاملات",
+    "last": "آخر معاملة",
+    "share": "مشاركة",
+    "payable": "عليّ",
+    "receivable": "ليّ",
+    "empty": "لا توجد معاملات مؤكدة بعد."
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "empty": "لا توجد إشعارات.",
+    "NEW_ENTRY": "{name} سجّل معاملة معك بقيمة {amount} – مطلوب تأكيدك",
+    "SETTLEMENT_RECEIVED": "{name} سجّل سداد بقيمة {amount} – مطلوب تأكيدك",
+    "CONFIRMED": "{name} أكّد المعاملة بقيمة {amount}",
+    "REJECTED": "{name} رفض المعاملة بقيمة {amount}",
+    "CANCELLED": "{name} ألغى المعاملة بقيمة {amount}"
   }
 }

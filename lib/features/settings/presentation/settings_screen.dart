@@ -32,10 +32,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.handshake_outlined),
-            title: Text('settings.trust'.tr(context: context)),
+            leading: const Icon(Icons.credit_card),
+            title: Text('settings.cards'.tr(context: context)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/trust'),
+            onTap: () => context.push('/cards'),
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,

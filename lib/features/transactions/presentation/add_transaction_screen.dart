@@ -10,7 +10,8 @@ import 'transaction_form_state.dart';
 import 'transaction_providers.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key});
+  const AddTransactionScreen({super.key, this.income = false});
+  final bool income;
 
   @override
   ConsumerState<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -26,7 +27,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       body: TransactionForm(
         initialValues: TransactionFormValues(
           amount: 0,
-          type: TransactionType.expense,
+          type: widget.income ? TransactionType.income : TransactionType.expense,
           categoryId: 0,
           paymentMethodType: PaymentMethodType.cash,
           date: todayDateOnly(),

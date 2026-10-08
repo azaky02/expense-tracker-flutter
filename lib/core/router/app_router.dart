@@ -3,6 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/categories/presentation/category_management_screen.dart';
+import '../../features/people/presentation/ledger_entry_form_screen.dart';
+import '../../features/people/presentation/notifications_screen.dart';
+import '../../features/people/presentation/people_screen.dart';
+import '../../features/people/presentation/person_form_screen.dart';
+import '../../features/people/presentation/person_screen.dart';
+import '../../features/people/presentation/statement_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/lock/presentation/unlock_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
@@ -16,7 +22,6 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/transactions/presentation/add_transaction_screen.dart';
 import '../../features/transactions/presentation/edit_transaction_screen.dart';
 import '../../features/transactions/presentation/transactions_list_screen.dart';
-import '../../features/transactions/presentation/trust_screen.dart';
 import '../security/lock_provider.dart';
 import '../settings/settings_provider.dart';
 import 'scaffold_with_nav_bar.dart';
@@ -61,9 +66,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/transactions/add',
-        pageBuilder: (context, state) => const MaterialPage(
+        pageBuilder: (context, state) => MaterialPage(
           fullscreenDialog: true,
-          child: AddTransactionScreen(),
+          child: AddTransactionScreen(income: state.uri.queryParameters['type'] == 'income'),
         ),
       ),
       GoRoute(
@@ -98,12 +103,41 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
-        path: '/trust',
-        builder: (context, state) => const TrustScreen(),
+        path: '/cards',
+        builder: (context, state) => const PaymentMethodsScreen(),
       ),
       GoRoute(
-        path: '/trust/:name',
-        builder: (context, state) => TrustPersonScreen(name: Uri.decodeComponent(state.pathParameters['name']!)),
+        path: '/ledger/new',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: LedgerEntryFormScreen(
+            personId: int.tryParse(state.uri.queryParameters['personId'] ?? ''),
+            settlement: state.uri.queryParameters['kind'] == 'settlement',
+          ),
+        ),
+      ),
+      GoRoute(
+        path: '/people/new',
+        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: PersonFormScreen()),
+      ),
+      GoRoute(
+        path: '/people/:id',
+        builder: (context, state) => PersonScreen(personId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/people/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: PersonFormScreen(personId: int.parse(state.pathParameters['id']!)),
+        ),
+      ),
+      GoRoute(
+        path: '/people/:id/statement',
+        builder: (context, state) => StatementScreen(personId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: '/account',
@@ -127,7 +161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ]),
           StatefulShellBranch(routes: [
-            GoRoute(path: '/cards', builder: (context, state) => const PaymentMethodsScreen()),
+            GoRoute(path: '/people', builder: (context, state) => const PeopleScreen()),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),

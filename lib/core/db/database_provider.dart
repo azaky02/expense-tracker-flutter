@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'database.dart';
+import '../../features/people/data/amanat_migration.dart';
 import 'seed.dart';
 
 /// The single AppDatabase instance for the app's lifetime.
@@ -16,4 +17,5 @@ final databaseReadyProvider = FutureProvider<void>((ref) async {
   final db = ref.watch(databaseProvider);
   await seedIfNeeded(db);
   await ensureTrustCategory(db);
+  await migrateAmanatToLedger(db);
 });

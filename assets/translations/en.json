@@ -17,7 +17,9 @@
     "home": "Home",
     "transactions": "Transactions",
     "cards": "Cards",
-    "settings": "Settings"
+    "settings": "Settings",
+    "people": "People",
+    "more": "More"
   },
   "onboarding": {
     "welcome": "Welcome to My Expenses 👋",
@@ -32,7 +34,8 @@
     "expenseByCategory": "Expenses by category",
     "recentTransactions": "Recent transactions",
     "dueSoonAlert": "{cardName} due in {days} days",
-    "reports": "Reports"
+    "reports": "Reports",
+    "outstanding": "Balances with people"
   },
   "transactions": {
     "addTitle": "Add new transaction",
@@ -126,7 +129,7 @@
     "appLock": "App lock",
     "backup": "Backup",
     "accountSync": "Account & sync",
-    "trust": "Amanat (held money)"
+    "cards": "Cards & payment methods"
   },
   "security": {
     "enterPin": "Enter your PIN",
@@ -203,5 +206,94 @@
     "paid": "Paid out",
     "totalHeld": "Total held for others",
     "dashboardCard": "Amanat"
+  },
+  "add": {
+    "expense": "Expense",
+    "income": "Income",
+    "ledger": "Transaction with a person",
+    "settlement": "Settlement"
+  },
+  "people": {
+    "title": "People",
+    "add": "Add person",
+    "edit": "Edit person",
+    "delete": "Delete",
+    "name": "Name",
+    "phone": "Mobile",
+    "email": "Email",
+    "emailHint": "If they have an account with this email, entries reach them and need their confirmation.",
+    "notes": "Notes",
+    "empty": "No people yet. Add someone to track money between you.",
+    "heOwesMe": "Owes me",
+    "iOweHim": "I owe",
+    "net": "Net position",
+    "settled": "Settled",
+    "pending": "{count} awaiting confirmation",
+    "statement": "Statement",
+    "newEntry": "Transaction",
+    "settlement": "Settlement",
+    "deleteBlocked": "A person with transactions cannot be deleted.",
+    "totalReceivable": "Owed to me",
+    "totalPayable": "I owe",
+    "linked": "Entries with them are shared and need their confirmation.",
+    "notLinked": "No account: entries are final on your side."
+  },
+  "ledger": {
+    "kind": {
+      "loan": "Loan",
+      "advance": "Advance",
+      "settlement": "Settlement",
+      "other": "Other"
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "gave": "I gave",
+    "received": "I received",
+    "queued": "Waiting to sync",
+    "confirm": "Confirm",
+    "reject": "Reject",
+    "cancel": "Cancel transaction",
+    "rejectReason": "Reason",
+    "direction": "Direction",
+    "kindLabel": "Type",
+    "person": "Person",
+    "choosePerson": "Choose a person",
+    "description": "Description",
+    "save": "Save transaction",
+    "newTitle": "Transaction with a person",
+    "settlementTitle": "Record a settlement",
+    "createdByOther": "Recorded by {name}",
+    "rejectedBecause": "Rejected: {reason}",
+    "sharedHint": "If {name} has an account, the entry reaches them and needs their confirmation.",
+    "localHint": "{name} has no email: the entry is final on your side."
+  },
+  "statement": {
+    "title": "Statement – {name}",
+    "date": "Date",
+    "debit": "I owe",
+    "credit": "Owed to me",
+    "balance": "Balance",
+    "totalObligations": "Total obligations",
+    "totalSettlements": "Total settlements",
+    "remaining": "Remaining balance",
+    "count": "Transactions",
+    "last": "Last transaction",
+    "share": "Share",
+    "payable": "payable",
+    "receivable": "receivable",
+    "empty": "No confirmed transactions yet."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications.",
+    "NEW_ENTRY": "{name} recorded a transaction of {amount} with you – please confirm",
+    "SETTLEMENT_RECEIVED": "{name} recorded a settlement of {amount} – please confirm",
+    "CONFIRMED": "{name} confirmed the transaction of {amount}",
+    "REJECTED": "{name} rejected the transaction of {amount}",
+    "CANCELLED": "{name} cancelled the transaction of {amount}"
   }
 }

@@ -201,7 +201,8 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
           segments: [
             ButtonSegment(value: _Kind.expense, label: Text('transactions.expense'.tr())),
             ButtonSegment(value: _Kind.income, label: Text('transactions.income'.tr())),
-            ButtonSegment(value: _Kind.trust, label: Text('transactions.trust'.tr())),
+            // Amanat moved to People / Shared Ledger in V2; old entries are migrated there.
+            if (kind == _Kind.trust) ButtonSegment(value: _Kind.trust, label: Text('transactions.trust'.tr())),
           ],
           selected: {kind},
           onSelectionChanged: (s) => _setKind(s.first),

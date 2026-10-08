@@ -3,13 +3,14 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide isNotNull, isNull;
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:expense_tracker_flutter/core/db/database.dart';
 import 'package:expense_tracker_flutter/core/db/seed.dart';
 import 'package:expense_tracker_flutter/core/db/tables.dart';
 import 'package:expense_tracker_flutter/core/sync/sync_api.dart';
 import 'package:expense_tracker_flutter/core/sync/sync_service.dart';
+import 'package:expense_tracker_flutter/features/people/data/amanat_migration.dart';
 import 'package:expense_tracker_flutter/features/people/data/ledger_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -61,6 +62,26 @@ void main() {
   });
 
   tearDownAll(() => Process.run('taskkill', ['/F', '/T', '/PID', '${_server.pid}']));
+
+  test('v1.1 amanat transactions move into the ledger once', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final trust = await (db.select(db.categories)..where((c) => c.type.equalsValue(CategoryType.trust))).getSingle();
+    for (final (type, amount) in [(TransactionType.trustIn, 1000.0), (TransactionType.trustOut, 400.0)]) {
+      await db.into(db.transactions).insert(TransactionsCompanion.insert(
+          amount: amount, type: type, categoryId: trust.id, paymentMethodType: PaymentMethodType.cash,
+          date: DateTime(2026, 10, 1), beneficiaryName: const Value('أحمد')));
+    }
+    await migrateAmanatToLedger(db);
+    await migrateAmanatToLedger(db); // idempotent
+    expect(await db.select(db.transactions).get(), isEmpty);
+    expect(await db.select(db.ledgerOutbox).get(), hasLength(2));
+    final p = (await LedgerRepository(db).watchPeopleWithBalances().first).single;
+    expect(p.person.name, 'أحمد');
+    expect(p.balance.iOweHim, 600, reason: 'held 1000, returned 400');
+    await db.close();
+  });
 
   test('balance math follows the design document scenario', () {
     LedgerEntry e(LedgerKind k, LedgerDirection d, double a) => LedgerEntry(
