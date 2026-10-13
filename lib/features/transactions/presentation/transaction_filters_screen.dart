@@ -14,6 +14,7 @@ import '../../categories/presentation/category_providers.dart';
 import '../data/transaction_repository.dart';
 import 'person_picker_sheet.dart';
 import 'transactions_list_screen.dart';
+import '../../../core/utils/currency.dart';
 
 /// Filters (UI/UX TRX-03 / §11, mockup 9): period, type, category, account, person, amount range,
 /// attachment. Edits a copy and applies it on "Apply".
@@ -80,8 +81,8 @@ class _TransactionFiltersScreenState extends ConsumerState<TransactionFiltersScr
       accountId: _f.accountId,
       person: _f.person,
       hasAttachment: _f.hasAttachment,
-      minAmount: double.tryParse(_min.text.replaceAll(',', '')),
-      maxAmount: double.tryParse(_max.text.replaceAll(',', '')),
+      minAmount: double.tryParse(asciiDigits(_min.text).replaceAll(',', '')),
+      maxAmount: double.tryParse(asciiDigits(_max.text).replaceAll(',', '')),
     );
     ref.read(transactionFiltersProvider.notifier).set(f);
     context.pop();
@@ -203,11 +204,11 @@ class _TransactionFiltersScreenState extends ConsumerState<TransactionFiltersScr
           FieldLabel('transactions.amountRange'.tr()),
           Row(children: [
             Expanded(
-              child: TextField(controller: _min, keyboardType: TextInputType.number, decoration: InputDecoration(hintText: 'transactions.from'.tr())),
+              child: TextField(controller: _min, keyboardType: TextInputType.number, inputFormatters: const [AsciiDigitsFormatter()], decoration: InputDecoration(hintText: 'transactions.from'.tr())),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: TextField(controller: _max, keyboardType: TextInputType.number, decoration: InputDecoration(hintText: 'transactions.to'.tr())),
+              child: TextField(controller: _max, keyboardType: TextInputType.number, inputFormatters: const [AsciiDigitsFormatter()], decoration: InputDecoration(hintText: 'transactions.to'.tr())),
             ),
           ]),
           const SizedBox(height: 8),

@@ -559,7 +559,8 @@
     "deleteMessage": "هيتمسح التقسيط وجدول السداد بتاعه. المصروفات اللي اتسجّلت هتفضل.",
     "reminderTitle": "تذكير بقسط {title}",
     "reminderBody": "قسط {number} لـ {provider} بقيمة {amount} ج.م مستحق {date} (باقي {days} يوم)",
-    "reminderToday": "قسط {number} لـ {provider} بقيمة {amount} ج.م مستحق النهارده"
+    "reminderToday": "قسط {number} لـ {provider} بقيمة {amount} ج.م مستحق النهارده",
+    "missingFields": "كمّل البيانات: الاسم، جهة التقسيط، القيمة الإجمالية، قيمة القسط وعدد الشهور"
   },
   "cars": {
     "title": "السيارة",
@@ -603,7 +604,12 @@
     "locationFound": "تم تسجيل الموقع: {lat}, {lng}",
     "locationDenied": "مفيش صلاحية للموقع – فعّلها من الإعدادات",
     "locationOff": "خدمة الموقع مقفولة",
-    "locationFailed": "تعذّر تحديد الموقع"
+    "locationFailed": "تعذّر تحديد الموقع",
+    "missingCategory": "اختار التصنيف",
+    "missingAmount": "اكتب القيمة المدفوعة (أو عدد اللترات)",
+    "missingAccount": "اختار طريقة الدفع",
+    "saveFailed": "تعذّر الحفظ",
+    "saved": "تم حفظ المصروف"
   },
   "fuel": {
     "title": "أسعار الوقود",

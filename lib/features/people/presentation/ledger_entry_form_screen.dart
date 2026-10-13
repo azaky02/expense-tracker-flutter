@@ -12,6 +12,7 @@ import '../data/ledger_repository.dart';
 import 'people_providers.dart';
 import 'people_screen.dart';
 import 'person_screen.dart';
+import '../../../core/utils/currency.dart';
 
 const _paymentMethods = ['cash', 'bank', 'transfer', 'other'];
 
@@ -50,7 +51,7 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
     super.dispose();
   }
 
-  double get _amountValue => double.tryParse(_amount.text.trim().replaceAll(',', '')) ?? 0;
+  double get _amountValue => parseAmount(_amount.text);
 
   /// A settlement pays down what is owed: if I owe them I give, if they owe me I receive.
   LedgerDirection _defaultDirection(PersonWithBalance? p) {

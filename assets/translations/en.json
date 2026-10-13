@@ -559,7 +559,8 @@
     "deleteMessage": "The plan and its schedule are deleted. Recorded expenses stay.",
     "reminderTitle": "Installment reminder: {title}",
     "reminderBody": "Installment {number} to {provider}, {amount} EGP, due {date} ({days} days left)",
-    "reminderToday": "Installment {number} to {provider}, {amount} EGP, is due today"
+    "reminderToday": "Installment {number} to {provider}, {amount} EGP, is due today",
+    "missingFields": "Fill in the name, provider, total, installment amount and months"
   },
   "cars": {
     "title": "Car",
@@ -603,7 +604,12 @@
     "locationFound": "Location recorded: {lat}, {lng}",
     "locationDenied": "No location permission – enable it in Settings",
     "locationOff": "Location services are off",
-    "locationFailed": "Could not get the location"
+    "locationFailed": "Could not get the location",
+    "missingCategory": "Choose a category",
+    "missingAmount": "Enter the amount paid (or the litres)",
+    "missingAccount": "Choose a payment method",
+    "saveFailed": "Could not save",
+    "saved": "Expense saved"
   },
   "fuel": {
     "title": "Fuel prices",

@@ -21,7 +21,7 @@ import '../../accounts/presentation/account_widgets.dart';
 import '../../categories/presentation/category_picker_sheet.dart';
 import '../data/car_repository.dart';
 
-double _parse(String s) => double.tryParse(s.trim().replaceAll(',', '')) ?? 0;
+double _parse(String s) => parseAmount(s);
 
 Future<void> openMap(double lat, double lng) =>
     LockNotifier.runWithoutLock(() => launchUrl(Uri.parse('https://maps.google.com/?q=$lat,$lng'), mode: LaunchMode.externalApplication));
@@ -79,24 +79,36 @@ class CarsScreen extends ConsumerWidget {
                     AppCard(
                       margin: const EdgeInsets.only(bottom: 10),
                       onTap: () => context.push('/cars/${c.car.id}'),
-                      child: Row(children: [
-                        const IconBubble(icon: Icons.directions_car_filled_outlined, color: DS.primary, size: 48),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Text(c.car.name, style: theme.textTheme.titleSmall),
-                            Text('${c.car.brand} · ${c.car.modelYear}',
-                                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                            if (c.lastOdometer != null)
-                              Text('cars.odometerValue'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(c.lastOdometer)}),
-                                  style: theme.textTheme.bodySmall),
-                          ]),
-                        ),
-                        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                          AmountText(c.total, size: 15),
-                          Text('cars.expensesCount'.tr(namedArgs: {'n': '${c.expenses.length}'}), style: theme.textTheme.labelSmall),
-                        ]),
-                      ]),
+                      child: Row(
+                        children: [
+                          const IconBubble(icon: Icons.directions_car_filled_outlined, color: DS.primary, size: 48),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(c.car.name, style: theme.textTheme.titleSmall),
+                                Text(
+                                  '${c.car.brand} · ${c.car.modelYear}',
+                                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                                ),
+                                if (c.lastOdometer != null)
+                                  Text(
+                                    'cars.odometerValue'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(c.lastOdometer)}),
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              AmountText(c.total, size: 15),
+                              Text('cars.expensesCount'.tr(namedArgs: {'n': '${c.expenses.length}'}), style: theme.textTheme.labelSmall),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),
@@ -115,30 +127,46 @@ Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async 
     isScrollControlled: true,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setState) {
-        final y = int.tryParse(year.text) ?? 0;
+        final y = int.tryParse(asciiDigits(year.text)) ?? 0;
         final valid = name.text.trim().isNotEmpty && brand.text.trim().isNotEmpty && y >= 1950 && y <= DateTime.now().year + 1;
         return Padding(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
           child: SafeArea(
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text((car == null ? 'cars.add' : 'cars.edit').tr(), style: Theme.of(ctx).textTheme.titleMedium),
-              FieldLabel('cars.name'.tr()),
-              TextField(controller: name, decoration: InputDecoration(hintText: 'cars.nameHint'.tr()), onChanged: (_) => setState(() {})),
-              FieldLabel('cars.brand'.tr()),
-              TextField(controller: brand, decoration: InputDecoration(hintText: 'cars.brandHint'.tr()), onChanged: (_) => setState(() {})),
-              FieldLabel('cars.modelYear'.tr()),
-              TextField(
-                controller: year,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
-                decoration: const InputDecoration(hintText: '2022'),
-                onChanged: (_) => setState(() {}),
-              ),
-              FieldLabel('${'cars.plate'.tr()} (${'common.optional'.tr()})'),
-              TextField(controller: plate),
-              const SizedBox(height: 16),
-              FilledButton(onPressed: valid ? () => Navigator.pop(ctx, true) : null, child: Text('common.save'.tr())),
-            ]),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text((car == null ? 'cars.add' : 'cars.edit').tr(), style: Theme.of(ctx).textTheme.titleMedium),
+                FieldLabel('cars.name'.tr()),
+                TextField(
+                  controller: name,
+                  decoration: InputDecoration(hintText: 'cars.nameHint'.tr()),
+                  onChanged: (_) => setState(() {}),
+                ),
+                FieldLabel('cars.brand'.tr()),
+                TextField(
+                  controller: brand,
+                  decoration: InputDecoration(hintText: 'cars.brandHint'.tr()),
+                  onChanged: (_) => setState(() {}),
+                ),
+                FieldLabel('cars.modelYear'.tr()),
+                TextField(
+                  controller: year,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    const AsciiDigitsFormatter(),
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(4),
+                  ],
+                  decoration: const InputDecoration(hintText: '2022'),
+                  onChanged: (_) => setState(() {}),
+                ),
+                FieldLabel('${'cars.plate'.tr()} (${'common.optional'.tr()})'),
+                TextField(controller: plate),
+                const SizedBox(height: 16),
+                FilledButton(onPressed: valid ? () => Navigator.pop(ctx, true) : null, child: Text('common.save'.tr())),
+              ],
+            ),
           ),
         );
       },
@@ -148,9 +176,15 @@ Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async 
     final repo = ref.read(carRepositoryProvider);
     final p = plate.text.trim().isEmpty ? null : plate.text.trim();
     if (car == null) {
-      await repo.createCar(name: name.text.trim(), brand: brand.text.trim(), modelYear: int.parse(year.text), plate: p);
+      await repo.createCar(name: name.text.trim(), brand: brand.text.trim(), modelYear: int.parse(asciiDigits(year.text)), plate: p);
     } else {
-      await repo.updateCar(car.id, name: name.text.trim(), brand: brand.text.trim(), modelYear: int.parse(year.text), plate: p);
+      await repo.updateCar(
+        car.id,
+        name: name.text.trim(),
+        brand: brand.text.trim(),
+        modelYear: int.parse(asciiDigits(year.text)),
+        plate: p,
+      );
     }
   }
 }
@@ -192,7 +226,10 @@ class CarDetailsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(c.car.name),
         actions: [
-          IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => showCarForm(context, ref, car: c.car)),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () => showCarForm(context, ref, car: c.car),
+          ),
           IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _deleteCar(context, ref)),
         ],
       ),
@@ -207,53 +244,91 @@ class CarDetailsScreen extends ConsumerWidget {
         children: [
           AppCard(
             color: theme.colorScheme.primaryContainer,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('${c.car.brand} · ${c.car.modelYear}${c.car.plate == null ? '' : ' · ${c.car.plate}'}', style: theme.textTheme.bodyMedium),
-              const SizedBox(height: 10),
-              Row(children: [
-                _stat(context, 'cars.totalSpent'.tr(), AmountText(c.total, size: 17, weight: FontWeight.w800)),
-                _stat(context, 'cars.totalLiters'.tr(), Text(NumberFormat('#,##0.#').format(c.totalLiters), style: theme.textTheme.titleMedium)),
-              ]),
-              const SizedBox(height: 8),
-              Row(children: [
-                _stat(context, 'cars.odometer'.tr(),
-                    Text(c.lastOdometer == null ? '—' : NumberFormat.decimalPattern().format(c.lastOdometer), style: theme.textTheme.titleMedium)),
-                _stat(context, 'cars.consumption'.tr(),
-                    Text(c.litersPer100Km == null ? '—' : 'cars.per100'.tr(namedArgs: {'l': c.litersPer100Km!.toStringAsFixed(1)}),
-                        style: theme.textTheme.titleMedium)),
-              ]),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${c.car.brand} · ${c.car.modelYear}${c.car.plate == null ? '' : ' · ${c.car.plate}'}',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _stat(context, 'cars.totalSpent'.tr(), AmountText(c.total, size: 17, weight: FontWeight.w800)),
+                    _stat(
+                      context,
+                      'cars.totalLiters'.tr(),
+                      Text(NumberFormat('#,##0.#').format(c.totalLiters), style: theme.textTheme.titleMedium),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _stat(
+                      context,
+                      'cars.odometer'.tr(),
+                      Text(
+                        c.lastOdometer == null ? '—' : NumberFormat.decimalPattern().format(c.lastOdometer),
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                    _stat(
+                      context,
+                      'cars.consumption'.tr(),
+                      Text(
+                        c.litersPer100Km == null ? '—' : 'cars.per100'.tr(namedArgs: {'l': c.litersPer100Km!.toStringAsFixed(1)}),
+                        style: theme.textTheme.titleMedium,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           SectionHeader('cars.expenses'.tr()),
           if (c.expenses.isEmpty)
-            Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('cars.noExpenses'.tr())))
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(child: Text('cars.noExpenses'.tr())),
+            )
           else
             for (final e in c.expenses)
               AppCard(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 onTap: () => _showExpense(context, ref, e),
-                child: Row(children: [
-                  IconBubble(emoji: e.categoryIcon, color: DS.primary, size: 38),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(e.categoryPath, style: theme.textTheme.titleSmall),
-                      Text(
-                        [
-                          DateFormat.yMMMd(lang).format(e.transaction.date),
-                          if (e.expense.odometer != null) 'cars.odometerValue'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(e.expense.odometer)}),
-                          if (e.expense.liters != null) 'cars.litersValue'.tr(namedArgs: {'l': NumberFormat('#,##0.##').format(e.expense.liters)}),
-                        ].join(' · '),
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                child: Row(
+                  children: [
+                    IconBubble(emoji: e.categoryIcon, color: DS.primary, size: 38),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(e.categoryPath, style: theme.textTheme.titleSmall),
+                          Text(
+                            [
+                              DateFormat.yMMMd(lang).format(e.transaction.date),
+                              if (e.expense.odometer != null)
+                                'cars.odometerValue'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(e.expense.odometer)}),
+                              if (e.expense.liters != null)
+                                'cars.litersValue'.tr(namedArgs: {'l': NumberFormat('#,##0.##').format(e.expense.liters)}),
+                            ].join(' · '),
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ],
                       ),
-                    ]),
-                  ),
-                  Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                    AmountText(-e.transaction.amount, size: 14, signed: true, color: theme.colorScheme.error),
-                    if (e.expense.latitude != null) Icon(Icons.place_outlined, size: 14, color: theme.colorScheme.onSurfaceVariant),
-                  ]),
-                ]),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        AmountText(-e.transaction.amount, size: 14, signed: true, color: theme.colorScheme.error),
+                        if (e.expense.latitude != null) Icon(Icons.place_outlined, size: 14, color: theme.colorScheme.onSurfaceVariant),
+                      ],
+                    ),
+                  ],
+                ),
               ),
         ],
       ),
@@ -261,11 +336,14 @@ class CarDetailsScreen extends ConsumerWidget {
   }
 
   Widget _stat(BuildContext context, String label, Widget value) => Expanded(
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
-          value,
-        ]),
-      );
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        value,
+      ],
+    ),
+  );
 
   Future<void> _showExpense(BuildContext context, WidgetRef ref, CarExpenseItem e) async {
     final lang = context.locale.languageCode;
@@ -274,53 +352,63 @@ class CarDetailsScreen extends ConsumerWidget {
       builder: (ctx) {
         final theme = Theme.of(ctx);
         Widget row(String k, String v) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(children: [
-                Text(k, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                const SizedBox(width: 12),
-                Expanded(child: Text(v, textAlign: TextAlign.end, style: theme.textTheme.bodyMedium)),
-              ]),
-            );
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Text(k, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(v, textAlign: TextAlign.end, style: theme.textTheme.bodyMedium),
+              ),
+            ],
+          ),
+        );
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text(e.categoryPath, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              row('transactions.amount'.tr(), '${formatAmount(e.transaction.amount)} ${'common.egp'.tr()}'),
-              row('transactions.date'.tr(), DateFormat.yMMMd(lang).format(e.transaction.date)),
-              if (e.accountName != null) row('cars.paymentMethod'.tr(), e.accountName!),
-              if (e.expense.odometer != null) row('cars.odometer'.tr(), NumberFormat.decimalPattern().format(e.expense.odometer)),
-              if (e.fuelTypeName != null) row('fuel.type'.tr(), e.fuelTypeName!),
-              if (e.expense.liters != null) row('cars.liters'.tr(), NumberFormat('#,##0.##').format(e.expense.liters)),
-              if (e.expense.pricePerLiter != null) row('fuel.pricePerLiter'.tr(), formatAmount(e.expense.pricePerLiter!)),
-              if (e.transaction.beneficiaryName != null) row('cars.station'.tr(), e.transaction.beneficiaryName!),
-              if (e.expense.latitude != null)
-                row('cars.location'.tr(), '${e.expense.latitude!.toStringAsFixed(5)}, ${e.expense.longitude!.toStringAsFixed(5)}'),
-              const SizedBox(height: 12),
-              Row(children: [
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(e.categoryPath, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                row('transactions.amount'.tr(), '${formatAmount(e.transaction.amount)} ${'common.egp'.tr()}'),
+                row('transactions.date'.tr(), DateFormat.yMMMd(lang).format(e.transaction.date)),
+                if (e.accountName != null) row('cars.paymentMethod'.tr(), e.accountName!),
+                if (e.expense.odometer != null) row('cars.odometer'.tr(), NumberFormat.decimalPattern().format(e.expense.odometer)),
+                if (e.fuelTypeName != null) row('fuel.type'.tr(), e.fuelTypeName!),
+                if (e.expense.liters != null) row('cars.liters'.tr(), NumberFormat('#,##0.##').format(e.expense.liters)),
+                if (e.expense.pricePerLiter != null) row('fuel.pricePerLiter'.tr(), formatAmount(e.expense.pricePerLiter!)),
+                if (e.transaction.beneficiaryName != null) row('cars.station'.tr(), e.transaction.beneficiaryName!),
                 if (e.expense.latitude != null)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => openMap(e.expense.latitude!, e.expense.longitude!),
-                      icon: const Icon(Icons.map_outlined),
-                      label: Text('cars.openMap'.tr()),
+                  row('cars.location'.tr(), '${e.expense.latitude!.toStringAsFixed(5)}, ${e.expense.longitude!.toStringAsFixed(5)}'),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (e.expense.latitude != null)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => openMap(e.expense.latitude!, e.expense.longitude!),
+                          icon: const Icon(Icons.map_outlined),
+                          label: Text('cars.openMap'.tr()),
+                        ),
+                      ),
+                    if (e.expense.latitude != null) const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                        onPressed: () async {
+                          await ref.read(carRepositoryProvider).deleteExpense(e.expense);
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        },
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text('common.delete'.tr()),
+                      ),
                     ),
-                  ),
-                if (e.expense.latitude != null) const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(foregroundColor: theme.colorScheme.error),
-                    onPressed: () async {
-                      await ref.read(carRepositoryProvider).deleteExpense(e.expense);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                    },
-                    icon: const Icon(Icons.delete_outline),
-                    label: Text('common.delete'.tr()),
-                  ),
+                  ],
                 ),
-              ]),
-            ]),
+              ],
+            ),
           ),
         );
       },
@@ -421,26 +509,57 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
     _amount.text = liters > 0 ? (liters * fuel.pricePerLiter).toStringAsFixed(2) : '';
   }
 
+  void _toast(String text) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(text)));
+
   Future<void> _save(List<FuelType> types) async {
+    // Say what is missing instead of leaving the button silently disabled.
+    final missing = _categoryId == null
+        ? 'cars.missingCategory'
+        : _parse(_amount.text) <= 0
+        ? 'cars.missingAmount'
+        : _accountId == null
+        ? 'cars.missingAccount'
+        : null;
+    if (missing != null) {
+      _toast(missing.tr());
+      return;
+    }
     setState(() => _saving = true);
     final fuel = _fuel(types);
     final liters = _parse(_liters.text);
-    await ref.read(carRepositoryProvider).addExpense(CarExpenseInput(
-          carId: widget.carId,
-          categoryId: _categoryId!,
-          amount: _parse(_amount.text),
-          accountId: _accountId!,
-          date: _date,
-          odometer: int.tryParse(_odometer.text.trim()),
-          liters: liters > 0 ? liters : null,
-          fuelTypeId: liters > 0 ? fuel?.id : null,
-          pricePerLiter: liters > 0 ? fuel?.pricePerLiter : null,
-          latitude: _position?.latitude,
-          longitude: _position?.longitude,
-          note: _note.text,
-          beneficiary: _station.text,
-        ));
-    if (mounted) context.pop();
+    try {
+      await ref
+          .read(carRepositoryProvider)
+          .addExpense(
+            CarExpenseInput(
+              carId: widget.carId,
+              categoryId: _categoryId!,
+              amount: _parse(_amount.text),
+              accountId: _accountId!,
+              date: _date,
+              odometer: int.tryParse(asciiDigits(_odometer.text).trim()),
+              liters: liters > 0 ? liters : null,
+              fuelTypeId: liters > 0 ? fuel?.id : null,
+              pricePerLiter: liters > 0 ? fuel?.pricePerLiter : null,
+              latitude: _position?.latitude,
+              longitude: _position?.longitude,
+              note: _note.text,
+              beneficiary: _station.text,
+            ),
+          );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        _toast('${'cars.saveFailed'.tr()}: $e');
+      }
+      return;
+    }
+    if (mounted) {
+      _toast('cars.saved'.tr());
+      context.pop();
+    }
   }
 
   @override
@@ -454,7 +573,6 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
     _accountId ??= accounts.where((a) => a.account.type == AccountType.cash).firstOrNull?.account.id ?? accounts.firstOrNull?.account.id;
     final account = accounts.where((a) => a.account.id == _accountId).firstOrNull;
     final categoryPath = _categoryId == null ? null : ref.watch(categoryPathProvider(_categoryId!)).value;
-    final valid = _categoryId != null && _accountId != null && _parse(_amount.text) > 0;
     final lastOdo = car?.lastOdometer;
 
     return Scaffold(
@@ -484,15 +602,18 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
           TextField(
             controller: _odometer,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
             decoration: InputDecoration(
-              hintText: lastOdo == null ? 'cars.odometerHint'.tr() : 'cars.lastOdometer'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(lastOdo)}),
+              hintText: lastOdo == null
+                  ? 'cars.odometerHint'.tr()
+                  : 'cars.lastOdometer'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(lastOdo)}),
               suffixText: 'cars.km'.tr(),
             ),
           ),
           if (_isFuel || _liters.text.isNotEmpty) ...[
             FieldLabel('fuel.type'.tr()),
             DropdownButtonFormField<int>(
+              isExpanded: true,
               initialValue: _fuelTypeId,
               items: [
                 for (final f in types)
@@ -507,6 +628,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
             TextField(
               controller: _liters,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const [AsciiDigitsFormatter()],
               decoration: InputDecoration(suffixText: 'cars.litersUnit'.tr()),
               onChanged: (_) => setState(() => _recalc(types)),
             ),
@@ -532,41 +654,49 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
             },
           ),
           FieldLabel('${'cars.station'.tr()} (${'common.optional'.tr()})'),
-          TextField(controller: _station, decoration: InputDecoration(hintText: 'cars.stationHint'.tr())),
+          TextField(
+            controller: _station,
+            decoration: InputDecoration(hintText: 'cars.stationHint'.tr()),
+          ),
           FieldLabel('${'transactions.notes'.tr()} (${'common.optional'.tr()})'),
           TextField(controller: _note, maxLines: 2),
           const SizedBox(height: 12),
           AppCard(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(children: [
-              Icon(
-                _location == _LocationState.found ? Icons.place : Icons.location_off_outlined,
-                color: _location == _LocationState.found ? DS.success : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  switch (_location) {
+            child: Row(
+              children: [
+                Icon(
+                  _location == _LocationState.found ? Icons.place : Icons.location_off_outlined,
+                  color: _location == _LocationState.found ? DS.success : theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(switch (_location) {
                     _LocationState.locating => 'cars.locating'.tr(),
-                    _LocationState.found => 'cars.locationFound'
-                        .tr(namedArgs: {'lat': _position!.latitude.toStringAsFixed(5), 'lng': _position!.longitude.toStringAsFixed(5)}),
+                    _LocationState.found => 'cars.locationFound'.tr(
+                      namedArgs: {'lat': _position!.latitude.toStringAsFixed(5), 'lng': _position!.longitude.toStringAsFixed(5)},
+                    ),
                     _LocationState.denied => 'cars.locationDenied'.tr(),
                     _LocationState.off => 'cars.locationOff'.tr(),
                     _LocationState.failed => 'cars.locationFailed'.tr(),
-                  },
-                  style: theme.textTheme.bodySmall,
+                  }, style: theme.textTheme.bodySmall),
                 ),
-              ),
-              if (_location == _LocationState.locating)
-                const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              else if (_location == _LocationState.found)
-                IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_position!.latitude, _position!.longitude))
-              else
-                IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
-            ]),
+                if (_location == _LocationState.locating)
+                  const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                else if (_location == _LocationState.found)
+                  IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_position!.latitude, _position!.longitude))
+                else
+                  IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
-          FilledButton(onPressed: _saving || !valid ? null : () => _save(types), child: Text('common.save'.tr())),
+          FilledButton(
+            onPressed: _saving ? null : () => _save(types),
+            child: _saving
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                : Text('common.save'.tr()),
+          ),
         ],
       ),
     );
@@ -584,15 +714,22 @@ class FuelPricesScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text((f == null ? 'fuel.add' : 'fuel.edit').tr()),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: name, decoration: InputDecoration(labelText: 'fuel.type'.tr())),
-          const SizedBox(height: 8),
-          TextField(
-            controller: price,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(labelText: 'fuel.pricePerLiter'.tr(), suffixText: 'common.egp'.tr()),
-          ),
-        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: name,
+              decoration: InputDecoration(labelText: 'fuel.type'.tr()),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: price,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: const [AsciiDigitsFormatter()],
+              decoration: InputDecoration(labelText: 'fuel.pricePerLiter'.tr(), suffixText: 'common.egp'.tr()),
+            ),
+          ],
+        ),
         actions: [
           if (f != null)
             TextButton(
@@ -633,15 +770,17 @@ class FuelPricesScreen extends ConsumerWidget {
           ),
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(children: [
-              for (final f in types)
-                ListTile(
-                  leading: const Icon(Icons.local_gas_station_outlined),
-                  title: Text(f.name),
-                  trailing: Text('${formatAmount(f.pricePerLiter)} ${'fuel.perLiter'.tr()}', style: theme.textTheme.titleSmall),
-                  onTap: () => _edit(context, ref, f),
-                ),
-            ]),
+            child: Column(
+              children: [
+                for (final f in types)
+                  ListTile(
+                    leading: const Icon(Icons.local_gas_station_outlined),
+                    title: Text(f.name),
+                    trailing: Text('${formatAmount(f.pricePerLiter)} ${'fuel.perLiter'.tr()}', style: theme.textTheme.titleSmall),
+                    onTap: () => _edit(context, ref, f),
+                  ),
+              ],
+            ),
           ),
         ],
       ),

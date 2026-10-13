@@ -20,6 +20,7 @@ import '../../categories/presentation/category_providers.dart';
 import 'person_picker_sheet.dart';
 import 'transaction_form_state.dart';
 import 'transaction_providers.dart';
+import '../../../core/utils/currency.dart';
 
 /// Add / edit form for expenses, income and transfers (UI/UX document §8, TRX-04..06):
 /// amount first, then date, category and account, then description and attachment.
@@ -218,7 +219,7 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
         AmountField(
           controller: _amountController,
           autofocus: widget.initialValues.amount == 0,
-          onChanged: (text) => _update((v) => v.copyWith(amount: double.tryParse(text.replaceAll(',', '')) ?? 0)),
+          onChanged: (text) => _update((v) => v.copyWith(amount: parseAmount(text))),
         ),
         FieldLabel('transactions.date'.tr()),
         PickerField(

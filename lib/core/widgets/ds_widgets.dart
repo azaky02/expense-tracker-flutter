@@ -313,6 +313,7 @@ class AmountField extends StatelessWidget {
       autofocus: autofocus,
       onChanged: onChanged,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: const [AsciiDigitsFormatter()],
       textAlign: TextAlign.start,
       textDirection: ui.TextDirection.ltr,
       style: AppTheme.numbers(fontSize: 26, fontWeight: FontWeight.w700),

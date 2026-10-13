@@ -11,6 +11,7 @@ import '../../../core/sync/sync_api.dart';
 import '../../../core/sync/sync_controller.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/widgets/ds_widgets.dart';
+import '../../../core/utils/currency.dart';
 
 /// App mark: wallet in a soft gradient tile (used on welcome / login / register).
 class AppLogo extends StatelessWidget {
@@ -484,6 +485,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             autofocus: true,
             maxLength: 6,
             keyboardType: TextInputType.number,
+            inputFormatters: const [AsciiDigitsFormatter()],
             textAlign: TextAlign.center,
             onChanged: (_) => setState(() {}),
             style: theme.textTheme.headlineMedium?.copyWith(letterSpacing: 18, fontWeight: FontWeight.w700),

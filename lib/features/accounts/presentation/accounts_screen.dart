@@ -12,6 +12,7 @@ import '../../transactions/presentation/transaction_providers.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
 import 'account_providers.dart';
 import 'account_widgets.dart';
+import '../../../core/utils/currency.dart';
 
 /// Accounts (UI/UX §13, mockup 14): total, each account with its balance, add a new one.
 class AccountsScreen extends ConsumerWidget {
@@ -170,7 +171,7 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
   Future<void> _save() async {
     final name = _name.text.trim();
     if (name.isEmpty) return;
-    final opening = double.tryParse(_opening.text.replaceAll(',', '')) ?? 0;
+    final opening = parseAmount(_opening.text);
     final repo = ref.read(accountRepositoryProvider);
     if (widget.accountId == null) {
       await repo.create(name: name, type: _type, openingBalance: opening);

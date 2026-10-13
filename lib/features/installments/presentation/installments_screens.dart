@@ -14,6 +14,7 @@ import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_widgets.dart';
 import '../data/installment_reminders.dart';
 import '../data/installment_repository.dart';
+import '../../../core/utils/currency.dart';
 
 String _date(BuildContext context, DateTime d) => DateFormat.yMMMd(context.locale.languageCode).format(d);
 
@@ -304,7 +305,7 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
     for (final a in accounts) {
       if (a.account.id == _accountId) account = a;
     }
-    final amount = double.tryParse(_amount.text.replaceAll(',', '')) ?? 0;
+    final amount = parseAmount(_amount.text);
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: SafeArea(
@@ -398,8 +399,8 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
     super.dispose();
   }
 
-  double _num(TextEditingController c) => double.tryParse(c.text.trim().replaceAll(',', '')) ?? 0;
-  int get _monthsValue => int.tryParse(_months.text.trim()) ?? 0;
+  double _num(TextEditingController c) => parseAmount(c.text);
+  int get _monthsValue => int.tryParse(asciiDigits(_months.text).trim()) ?? 0;
 
   /// Suggests total / months until the user types their own installment amount.
   void _recalc() {
@@ -413,6 +414,10 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
       _title.text.trim().isNotEmpty && _provider.text.trim().isNotEmpty && _num(_total) > 0 && _num(_installment) > 0 && _monthsValue > 0 && _monthsValue <= 360;
 
   Future<void> _save() async {
+    if (!_valid) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('installments.missingFields'.tr())));
+      return;
+    }
     setState(() => _saving = true);
     final data = InstallmentsCompanion(
       title: Value(_title.text.trim()),
@@ -426,10 +431,18 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
       remindersEnabled: Value(_reminders),
     );
     final repo = ref.read(installmentRepositoryProvider);
-    if (widget.installmentId == null) {
-      await repo.create(data);
-    } else {
-      await repo.update(widget.installmentId!, data);
+    try {
+      if (widget.installmentId == null) {
+        await repo.create(data);
+      } else {
+        await repo.update(widget.installmentId!, data);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'cars.saveFailed'.tr()}: $e')));
+      }
+      return;
     }
     if (_reminders) await InstallmentReminders.instance.requestPermission();
     if (mounted) context.pop();
@@ -457,13 +470,14 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
                 TextField(
                   controller: _months,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
                   onChanged: (_) => setState(_recalc),
                 ),
                 FieldLabel('installments.installmentAmount'.tr()),
                 AmountField(controller: _installment, onChanged: (_) => setState(() => _installmentEdited = true)),
                 FieldLabel('installments.dueDayLabel'.tr()),
                 DropdownButtonFormField<int>(
+                  isExpanded: true,
                   initialValue: _dueDay,
                   items: [for (var d = 1; d <= 31; d++) DropdownMenuItem(value: d, child: Text('installments.dayOfMonth'.tr(namedArgs: {'day': '$d'})))],
                   onChanged: (v) => setState(() => _dueDay = v ?? _dueDay),
@@ -498,7 +512,7 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
                 FieldLabel('installments.notes'.tr()),
                 TextField(controller: _notes, maxLines: 2),
                 const SizedBox(height: 20),
-                FilledButton(onPressed: _saving || !_valid ? null : _save, child: Text('common.save'.tr())),
+                FilledButton(onPressed: _saving ? null : _save, child: Text('common.save'.tr())),
               ],
             ),
     );

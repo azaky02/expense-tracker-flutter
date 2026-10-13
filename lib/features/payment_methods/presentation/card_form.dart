@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db/tables.dart';
 import 'card_form_state.dart';
 import 'payment_method_providers.dart';
+import '../../../core/utils/currency.dart';
 
 class CardForm extends ConsumerStatefulWidget {
   const CardForm({
@@ -139,6 +140,7 @@ class _CardFormState extends ConsumerState<CardForm> {
         TextField(
           controller: _last4Controller,
           keyboardType: TextInputType.number,
+          inputFormatters: const [AsciiDigitsFormatter()],
           maxLength: 4,
           onChanged: (text) => _update((v) => v.copyWith(last4Digits: text)),
         ),
@@ -147,6 +149,7 @@ class _CardFormState extends ConsumerState<CardForm> {
           TextField(
             controller: _dueDateController,
             keyboardType: TextInputType.number,
+          inputFormatters: const [AsciiDigitsFormatter()],
             onChanged: (text) => _update((v) => v.copyWith(dueDateDay: int.tryParse(text))),
           ),
           const SizedBox(height: 16),
@@ -154,6 +157,7 @@ class _CardFormState extends ConsumerState<CardForm> {
           TextField(
             controller: _creditLimitController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: const [AsciiDigitsFormatter()],
             onChanged: (text) => _update((v) => v.copyWith(creditLimit: double.tryParse(text))),
           ),
         ],

@@ -12,6 +12,7 @@ import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
 import '../data/budget_repository.dart';
 import 'budget_providers.dart';
+import '../../../core/utils/currency.dart';
 
 final budgetsMonthProvider = NotifierProvider<MonthNotifier, DateTime>(MonthNotifier.new);
 
@@ -136,7 +137,7 @@ class _BudgetSheetState extends ConsumerState<_BudgetSheet> {
   @override
   Widget build(BuildContext context) {
     final tree = ref.watch(categoryTreeProvider(CategoryType.expense)).value ?? const <CategoryTreeNode>[];
-    final limit = double.tryParse(_limit.text.replaceAll(',', '')) ?? 0;
+    final limit = parseAmount(_limit.text);
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).viewInsets.bottom + 16),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [

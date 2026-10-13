@@ -16,6 +16,7 @@ import '../../../core/theme/ds_tokens.dart';
 import '../../../core/widgets/ds_widgets.dart';
 import '../../lock/presentation/pin_entry_screen.dart';
 import 'auth_screens.dart';
+import '../../../core/utils/currency.dart';
 
 enum SetupLock { pin, biometrics }
 
@@ -66,7 +67,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     super.dispose();
   }
 
-  bool get _valid => _name.text.trim().length >= 2 && isValidPhone(_phone.text);
+  bool get _valid => _name.text.trim().length >= 2 && isValidPhone(asciiDigits(_phone.text));
 
   Future<String?> _newPin() async {
     String? error;
@@ -179,7 +180,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             controller: _phone,
             keyboardType: TextInputType.phone,
             autofillHints: const [AutofillHints.telephoneNumber],
-            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')), LengthLimitingTextInputFormatter(16)],
+            inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')), LengthLimitingTextInputFormatter(16)],
             textDirection: ui.TextDirection.ltr,
             decoration: const InputDecoration(hintText: '01xxxxxxxxx', prefixIcon: Icon(Icons.phone_iphone)),
             onChanged: (_) => setState(() {}),
