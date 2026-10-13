@@ -23,12 +23,20 @@ class PinEntryScreen extends StatefulWidget {
 class _PinEntryScreenState extends State<PinEntryScreen> {
   String _pin = '';
 
+  bool _done = false;
+
+  void _submit() {
+    if (_done || _pin.length != pinLength) return;
+    _done = true;
+    Navigator.of(context).pop(_pin);
+  }
+
   void _digit(String d) {
     if (_pin.length >= pinLength) return;
     setState(() => _pin += d);
     if (_pin.length == pinLength) {
-      Future<void>.delayed(const Duration(milliseconds: 120), () {
-        if (mounted) Navigator.of(context).pop(_pin);
+      Future<void>.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) _submit();
       });
     }
   }
@@ -85,7 +93,7 @@ class _PinEntryScreenState extends State<PinEntryScreen> {
                 width: 260,
                 child: Wrap(alignment: WrapAlignment.center, children: [
                   for (final d in ['1', '2', '3', '4', '5', '6', '7', '8', '9']) _Key(d, () => _digit(d)),
-                  const SizedBox(width: 86, height: 64),
+                  PinOkKey(enabled: _pin.length == pinLength, onTap: _submit),
                   _Key('0', () => _digit('0')),
                   SizedBox(
                     width: 86,
@@ -120,4 +128,37 @@ class _Key extends StatelessWidget {
           child: Text(label, style: Theme.of(context).textTheme.headlineSmall),
         ),
       );
+}
+
+/// The "OK" key of the PIN pads (bottom-left). The PIN is also submitted automatically once all
+/// digits are in; the key makes that visible and works if the automatic step was missed.
+class PinOkKey extends StatelessWidget {
+  const PinOkKey({super.key, required this.enabled, required this.onTap, this.busy = false, this.width = 86});
+  final bool enabled;
+  final bool busy;
+  final VoidCallback onTap;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: width,
+      height: 64,
+      child: Center(
+        child: busy
+            ? const SizedBox(width: 26, height: 26, child: CircularProgressIndicator(strokeWidth: 2.5))
+            : IconButton.filled(
+                iconSize: 28,
+                style: IconButton.styleFrom(
+                  backgroundColor: enabled ? scheme.primary : scheme.surfaceContainerHighest,
+                  foregroundColor: enabled ? scheme.onPrimary : scheme.onSurfaceVariant,
+                ),
+                icon: const Icon(Icons.check_rounded),
+                tooltip: 'OK',
+                onPressed: enabled ? onTap : null,
+              ),
+      ),
+    );
+  }
 }

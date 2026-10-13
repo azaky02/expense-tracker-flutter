@@ -280,6 +280,11 @@ class Cars extends Table {
   IntColumn get modelYear => integer()();
   TextColumn get plate => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  /// Oil change every N km or N months, whichever comes first (reminders).
+  IntColumn get oilIntervalKm => integer().withDefault(const Constant(10000))();
+  IntColumn get oilIntervalMonths => integer().withDefault(const Constant(6))();
+  DateTimeColumn get licenseExpiry => dateTime().nullable()();
+  DateTimeColumn get insuranceExpiry => dateTime().nullable()();
 }
 
 /// Master data: fuel grades and their current price per litre.

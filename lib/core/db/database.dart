@@ -44,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -113,6 +113,13 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(cars);
             await m.createTable(fuelTypes);
             await m.createTable(carExpenses);
+          }
+          if (from >= 5 && from < 6) {
+            // v6: car maintenance reminders (a v5 database already has the cars table).
+            await m.addColumn(cars, cars.oilIntervalKm);
+            await m.addColumn(cars, cars.oilIntervalMonths);
+            await m.addColumn(cars, cars.licenseExpiry);
+            await m.addColumn(cars, cars.insuranceExpiry);
           }
         },
       );

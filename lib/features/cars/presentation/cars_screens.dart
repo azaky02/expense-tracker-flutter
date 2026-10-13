@@ -19,7 +19,9 @@ import '../../accounts/data/account_repository.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_widgets.dart';
 import '../../categories/presentation/category_picker_sheet.dart';
+import '../data/car_analytics.dart';
 import '../data/car_repository.dart';
+import 'car_report_screen.dart';
 
 double _parse(String s) => parseAmount(s);
 
@@ -48,19 +50,22 @@ class CarsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('cars.title'.tr()),
         actions: [
-          TextButton.icon(
+          IconButton(
+            tooltip: 'fuel.title'.tr(),
             onPressed: () => context.push('/fuel-prices'),
             icon: const Icon(Icons.local_gas_station_outlined),
-            label: Text('fuel.title'.tr()),
           ),
+          IconButton(tooltip: 'cars.add'.tr(), onPressed: () => showCarForm(context, ref), icon: const Icon(Icons.add_circle_outline)),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        shape: const StadiumBorder(),
-        onPressed: () => showCarForm(context, ref),
-        icon: const Icon(Icons.add),
-        label: Text('cars.add'.tr()),
-      ),
+      floatingActionButton: (async.value ?? const []).isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              shape: const StadiumBorder(),
+              onPressed: () => startCarExpense(context, ref),
+              icon: const Icon(Icons.add),
+              label: Text('cars.addExpense'.tr()),
+            ),
       body: async.when(
         loading: () => const SkeletonList(),
         error: (e, _) => ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(carsProvider)),
@@ -97,6 +102,8 @@ class CarsScreen extends ConsumerWidget {
                                     'cars.odometerValue'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(c.lastOdometer)}),
                                     style: theme.textTheme.bodySmall,
                                   ),
+                                for (final m in CarAnalytics(c).maintenance.where((m) => m.needsAttention))
+                                  Padding(padding: const EdgeInsets.only(top: 4), child: MaintenancePill(m)),
                               ],
                             ),
                           ),
@@ -117,11 +124,44 @@ class CarsScreen extends ConsumerWidget {
   }
 }
 
+/// "Add expense" from the cars list: pick the car first (skipped when there is only one).
+Future<void> startCarExpense(BuildContext context, WidgetRef ref) async {
+  final cars = ref.read(carsProvider).value ?? const <CarWithStats>[];
+  if (cars.isEmpty) return showCarForm(context, ref);
+  int? id = cars.length == 1 ? cars.single.car.id : null;
+  id ??= await showModalBottomSheet<int>(
+    context: context,
+    builder: (ctx) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text('cars.chooseCar'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
+          ),
+          for (final c in cars)
+            ListTile(
+              leading: const Icon(Icons.directions_car_filled_outlined),
+              title: Text(c.car.name),
+              subtitle: Text('${c.car.brand} · ${c.car.modelYear}'),
+              onTap: () => Navigator.pop(ctx, c.car.id),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (id != null && context.mounted) await context.push('/cars/$id/expense');
+}
+
 Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async {
   final name = TextEditingController(text: car?.name);
   final brand = TextEditingController(text: car?.brand);
   final year = TextEditingController(text: car == null ? '' : '${car.modelYear}');
   final plate = TextEditingController(text: car?.plate);
+  final oilKm = TextEditingController(text: '${car?.oilIntervalKm ?? 10000}');
+  final oilMonths = TextEditingController(text: '${car?.oilIntervalMonths ?? 6}');
+  DateTime? license = car?.licenseExpiry;
+  DateTime? insurance = car?.insuranceExpiry;
   final ok = await showModalBottomSheet<bool>(
     context: context,
     isScrollControlled: true,
@@ -132,40 +172,97 @@ Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async 
         return Padding(
           padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
           child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text((car == null ? 'cars.add' : 'cars.edit').tr(), style: Theme.of(ctx).textTheme.titleMedium),
-                FieldLabel('cars.name'.tr()),
-                TextField(
-                  controller: name,
-                  decoration: InputDecoration(hintText: 'cars.nameHint'.tr()),
-                  onChanged: (_) => setState(() {}),
-                ),
-                FieldLabel('cars.brand'.tr()),
-                TextField(
-                  controller: brand,
-                  decoration: InputDecoration(hintText: 'cars.brandHint'.tr()),
-                  onChanged: (_) => setState(() {}),
-                ),
-                FieldLabel('cars.modelYear'.tr()),
-                TextField(
-                  controller: year,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    const AsciiDigitsFormatter(),
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text((car == null ? 'cars.add' : 'cars.edit').tr(), style: Theme.of(ctx).textTheme.titleMedium),
+                    FieldLabel('cars.name'.tr()),
+                    TextField(
+                      controller: name,
+                      decoration: InputDecoration(hintText: 'cars.nameHint'.tr()),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    FieldLabel('cars.brand'.tr()),
+                    TextField(
+                      controller: brand,
+                      decoration: InputDecoration(hintText: 'cars.brandHint'.tr()),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    FieldLabel('cars.modelYear'.tr()),
+                    TextField(
+                      controller: year,
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        const AsciiDigitsFormatter(),
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(4),
+                      ],
+                      decoration: const InputDecoration(hintText: '2022'),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    FieldLabel('${'cars.plate'.tr()} (${'common.optional'.tr()})'),
+                    TextField(controller: plate),
+                    FieldLabel('cars.oilEvery'.tr()),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: oilKm,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+                            decoration: InputDecoration(suffixText: 'cars.km'.tr()),
+                          ),
+                        ),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Text('cars.or'.tr())),
+                        Expanded(
+                          child: TextField(
+                            controller: oilMonths,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+                            decoration: InputDecoration(suffixText: 'cars.monthsUnit'.tr()),
+                          ),
+                        ),
+                      ],
+                    ),
+                    FieldLabel('${'cars.licenseExpiry'.tr()} (${'common.optional'.tr()})'),
+                    PickerField(
+                      text: license == null ? 'cars.chooseDate'.tr() : DateFormat.yMMMd(ctx.locale.languageCode).format(license!),
+                      placeholder: license == null,
+                      trailingIcon: Icons.event_outlined,
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: ctx,
+                          initialDate: license ?? DateTime.now().add(const Duration(days: 365)),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (d != null) setState(() => license = d);
+                      },
+                    ),
+                    FieldLabel('${'cars.insuranceExpiry'.tr()} (${'common.optional'.tr()})'),
+                    PickerField(
+                      text: insurance == null ? 'cars.chooseDate'.tr() : DateFormat.yMMMd(ctx.locale.languageCode).format(insurance!),
+                      placeholder: insurance == null,
+                      trailingIcon: Icons.event_outlined,
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: ctx,
+                          initialDate: insurance ?? DateTime.now().add(const Duration(days: 365)),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (d != null) setState(() => insurance = d);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(onPressed: valid ? () => Navigator.pop(ctx, true) : null, child: Text('common.save'.tr())),
                   ],
-                  decoration: const InputDecoration(hintText: '2022'),
-                  onChanged: (_) => setState(() {}),
                 ),
-                FieldLabel('${'cars.plate'.tr()} (${'common.optional'.tr()})'),
-                TextField(controller: plate),
-                const SizedBox(height: 16),
-                FilledButton(onPressed: valid ? () => Navigator.pop(ctx, true) : null, child: Text('common.save'.tr())),
-              ],
+              ),
             ),
           ),
         );
@@ -175,8 +272,19 @@ Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async 
   if (ok == true) {
     final repo = ref.read(carRepositoryProvider);
     final p = plate.text.trim().isEmpty ? null : plate.text.trim();
+    final km = int.tryParse(asciiDigits(oilKm.text)) ?? 10000;
+    final months = int.tryParse(asciiDigits(oilMonths.text)) ?? 6;
     if (car == null) {
-      await repo.createCar(name: name.text.trim(), brand: brand.text.trim(), modelYear: int.parse(asciiDigits(year.text)), plate: p);
+      await repo.createCar(
+        name: name.text.trim(),
+        brand: brand.text.trim(),
+        modelYear: int.parse(asciiDigits(year.text)),
+        plate: p,
+        oilIntervalKm: km > 0 ? km : 10000,
+        oilIntervalMonths: months > 0 ? months : 6,
+        licenseExpiry: license,
+        insuranceExpiry: insurance,
+      );
     } else {
       await repo.updateCar(
         car.id,
@@ -184,6 +292,10 @@ Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async 
         brand: brand.text.trim(),
         modelYear: int.parse(asciiDigits(year.text)),
         plate: p,
+        oilIntervalKm: km > 0 ? km : 10000,
+        oilIntervalMonths: months > 0 ? months : 6,
+        licenseExpiry: license,
+        insuranceExpiry: insurance,
       );
     }
   }
@@ -226,6 +338,11 @@ class CarDetailsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(c.car.name),
         actions: [
+          IconButton(
+            tooltip: 'carReport.title'.tr(),
+            icon: const Icon(Icons.analytics_outlined),
+            onPressed: () => context.push('/cars/$carId/report'),
+          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => showCarForm(context, ref, car: c.car),
@@ -285,6 +402,15 @@ class CarDetailsScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+          for (final m in CarAnalytics(c).maintenance.where((m) => m.level != MaintenanceLevel.unknown || m.kind == MaintenanceKind.oil))
+            MaintenanceCard(m),
+          const SizedBox(height: 4),
+          OutlinedButton.icon(
+            onPressed: () => context.push('/cars/$carId/report'),
+            icon: const Icon(Icons.analytics_outlined),
+            label: Text('carReport.open'.tr()),
           ),
           SectionHeader('cars.expenses'.tr()),
           if (c.expenses.isEmpty)
@@ -429,6 +555,7 @@ class CarExpenseFormScreen extends ConsumerStatefulWidget {
 }
 
 class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
+  late int _carId = widget.carId;
   final _amount = TextEditingController();
   final _liters = TextEditingController();
   final _odometer = TextEditingController();
@@ -534,7 +661,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
           .read(carRepositoryProvider)
           .addExpense(
             CarExpenseInput(
-              carId: widget.carId,
+              carId: _carId,
               categoryId: _categoryId!,
               amount: _parse(_amount.text),
               accountId: _accountId!,
@@ -566,7 +693,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cars = ref.watch(carsProvider).value ?? const <CarWithStats>[];
-    final car = cars.where((c) => c.car.id == widget.carId).firstOrNull;
+    final car = cars.where((c) => c.car.id == _carId).firstOrNull;
     final types = ref.watch(fuelTypesProvider).value ?? const <FuelType>[];
     final accounts = ref.watch(accountsProvider).value ?? const <AccountWithBalance>[];
     if (_fuelTypeId == null && types.isNotEmpty) _fuelTypeId = (types.length > 1 ? types[1] : types.first).id;
@@ -580,6 +707,21 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
+          if (cars.any((c) => c.car.id == _carId)) ...[
+            FieldLabel('cars.car'.tr()),
+            DropdownButtonFormField<int>(
+              isExpanded: true,
+              initialValue: _carId,
+              items: [
+                for (final c in cars)
+                  DropdownMenuItem(
+                    value: c.car.id,
+                    child: Text('${c.car.name} · ${c.car.brand} ${c.car.modelYear}', overflow: TextOverflow.ellipsis),
+                  ),
+              ],
+              onChanged: cars.length < 2 ? null : (v) => setState(() => _carId = v ?? _carId),
+            ),
+          ],
           FieldLabel('transactions.category'.tr()),
           PickerField(
             text: categoryPath ?? 'transactions.chooseCategory'.tr(),

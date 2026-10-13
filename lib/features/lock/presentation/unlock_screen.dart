@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:local_auth/local_auth.dart';
 import '../../../core/security/lock_provider.dart';
 import '../../../core/security/secure_storage.dart';
 import '../../../core/settings/settings_provider.dart';
+import 'pin_entry_screen.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
   const UnlockScreen({super.key});
@@ -19,6 +22,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   String _pin = '';
   bool _wrongPin = false;
   final _localAuth = LocalAuthentication();
+
   /// False when the user chose Face ID / fingerprint only at sign-up (no PIN pad then).
   bool _hasPin = true;
 
@@ -34,8 +38,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   Future<void> _maybeTryBiometrics() async {
     if (!ref.read(settingsProvider).biometricEnabled) return;
     try {
-      final ok = await LockNotifier.runWithoutLock(
-          () => _localAuth.authenticate(localizedReason: 'security.unlockPrompt'.tr()));
+      final ok = await LockNotifier.runWithoutLock(() => _localAuth.authenticate(localizedReason: 'security.unlockPrompt'.tr()));
       if (ok) ref.read(lockProvider.notifier).unlock();
     } catch (_) {
       // Ignore — user can still fall back to the PIN pad.
@@ -43,7 +46,7 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   }
 
   void _onDigit(String digit) {
-    if (_pin.length >= _pinLength) return;
+    if (_checking || _pin.length >= _pinLength) return;
     setState(() {
       _pin += digit;
       _wrongPin = false;
@@ -56,12 +59,19 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
     setState(() => _pin = _pin.substring(0, _pin.length - 1));
   }
 
+  bool _checking = false;
+
+  /// Checking the PIN (PBKDF2) takes a moment on a phone, so show progress meanwhile.
   Future<void> _verify() async {
+    if (_checking || _pin.length != _pinLength) return;
+    setState(() => _checking = true);
     final ok = await SecureStorageService.instance.verifyPin(_pin);
+    if (!mounted) return;
     if (ok) {
       ref.read(lockProvider.notifier).unlock();
     } else {
       setState(() {
+        _checking = false;
         _wrongPin = true;
         _pin = '';
       });
@@ -97,59 +107,53 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
               if (_hasPin && _wrongPin)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text('security.wrongPin'.tr(),
-                      style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  child: Text('security.wrongPin'.tr(), style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ),
               if (_hasPin) ...[
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(_pinLength, (i) {
-                  final filled = i < _pin.length;
-                  final scheme = Theme.of(context).colorScheme;
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    width: 52,
-                    height: 56,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: scheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _wrongPin ? scheme.error : (i == _pin.length ? scheme.primary : scheme.outline),
-                        width: i == _pin.length ? 1.6 : 1,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(_pinLength, (i) {
+                    final filled = i < _pin.length;
+                    final scheme = Theme.of(context).colorScheme;
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 6),
+                      width: 52,
+                      height: 56,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: scheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _wrongPin ? scheme.error : (i == _pin.length ? scheme.primary : scheme.outline),
+                          width: i == _pin.length ? 1.6 : 1,
+                        ),
                       ),
-                    ),
-                    child: filled ? Icon(Icons.circle, size: 14, color: scheme.onSurface) : null,
-                  );
-                }),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: 240,
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: [
-                    for (final d in ['1', '2', '3', '4', '5', '6', '7', '8', '9'])
-                      _PadKey(label: d, onTap: () => _onDigit(d)),
-                    const SizedBox(width: 80, height: 64),
-                    _PadKey(label: '0', onTap: () => _onDigit('0')),
-                    SizedBox(
-                      width: 80,
-                      height: 64,
-                      child: IconButton(
-                        icon: const Icon(Icons.backspace_outlined),
-                        onPressed: _backspace,
-                      ),
-                    ),
-                  ],
+                      child: filled ? Icon(Icons.circle, size: 14, color: scheme.onSurface) : null,
+                    );
+                  }),
                 ),
-              ),
+                const SizedBox(height: 24),
+                Directionality(
+                  textDirection: ui.TextDirection.ltr,
+                  child: SizedBox(
+                    width: 240,
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      children: [
+                        for (final d in ['1', '2', '3', '4', '5', '6', '7', '8', '9']) _PadKey(label: d, onTap: () => _onDigit(d)),
+                        PinOkKey(width: 80, enabled: _pin.length == _pinLength && !_checking, busy: _checking, onTap: _verify),
+                        _PadKey(label: '0', onTap: () => _onDigit('0')),
+                        SizedBox(
+                          width: 80,
+                          height: 64,
+                          child: IconButton(icon: const Icon(Icons.backspace_outlined), onPressed: _backspace),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-              if (biometricEnabled && _hasPin)
-                TextButton(
-                  onPressed: _maybeTryBiometrics,
-                  child: Text('security.useBiometrics'.tr()),
-                ),
+              if (biometricEnabled && _hasPin) TextButton(onPressed: _maybeTryBiometrics, child: Text('security.useBiometrics'.tr())),
             ],
           ),
         ),

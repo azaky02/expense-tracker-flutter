@@ -88,7 +88,12 @@ Future<void> _demoData(AppDatabase db) async {
   final serviceCat = (await seededCategoryId(db, 'seed-cat-car-service'))!;
   await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: 770, accountId: cash, date: day(9), odometer: 41200, liters: 40, fuelTypeId: 2, pricePerLiter: 19.25, latitude: 30.03, longitude: 31.47, beneficiary: 'وطنية'));
   await cars.addExpense(CarExpenseInput(carId: carId, categoryId: serviceCat, amount: 1850, accountId: cib, date: day(5), odometer: 41500));
-  await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: 673.75, accountId: cash, date: day(1), odometer: 41720, liters: 35, fuelTypeId: 2, pricePerLiter: 19.25, latitude: 30.04, longitude: 31.48));
+  await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: 673.75, accountId: cash, date: day(1), odometer: 41720, liters: 35, fuelTypeId: 2, pricePerLiter: 19.25, latitude: 30.04, longitude: 31.48, beneficiary: 'موبيل'));
+  final oilCat = (await seededCategoryId(db, 'seed-cat-car-oil'))!;
+  await cars.addExpense(CarExpenseInput(carId: carId, categoryId: oilCat, amount: 950, accountId: cash, date: day(120), odometer: 33100));
+  for (final (back, odo, liters, st) in [(60, 38200, 38.0, 'وطنية'), (45, 38700, 41.0, 'توتال'), (30, 39250, 40.0, 'وطنية'), (20, 39800, 37.0, 'موبيل'), (14, 40400, 42.0, 'توتال')]) {
+    await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: liters * 19.25, accountId: cash, date: day(back), odometer: odo, liters: liters, fuelTypeId: 2, pricePerLiter: 19.25, beneficiary: st));
+  }
   final budgets = BudgetRepository(db);
   await budgets.setBudget(cats['أكل و شرب']!, 1500);
   await budgets.setBudget(cats['مواصلات']!, 4000);
@@ -204,6 +209,7 @@ void main() {
       '24_cars': '/cars',
       '25_car': '/cars/1',
       '27_fuel': '/fuel-prices',
+      '30_car_report': '/cars/1/report',
       '28_home_categories': '/home',
     });
   });

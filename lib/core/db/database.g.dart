@@ -9227,6 +9227,54 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _oilIntervalKmMeta = const VerificationMeta(
+    'oilIntervalKm',
+  );
+  @override
+  late final GeneratedColumn<int> oilIntervalKm = GeneratedColumn<int>(
+    'oil_interval_km',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(10000),
+  );
+  static const VerificationMeta _oilIntervalMonthsMeta = const VerificationMeta(
+    'oilIntervalMonths',
+  );
+  @override
+  late final GeneratedColumn<int> oilIntervalMonths = GeneratedColumn<int>(
+    'oil_interval_months',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(6),
+  );
+  static const VerificationMeta _licenseExpiryMeta = const VerificationMeta(
+    'licenseExpiry',
+  );
+  @override
+  late final GeneratedColumn<DateTime> licenseExpiry =
+      GeneratedColumn<DateTime>(
+        'license_expiry',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _insuranceExpiryMeta = const VerificationMeta(
+    'insuranceExpiry',
+  );
+  @override
+  late final GeneratedColumn<DateTime> insuranceExpiry =
+      GeneratedColumn<DateTime>(
+        'insurance_expiry',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -9235,6 +9283,10 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
     modelYear,
     plate,
     createdAt,
+    oilIntervalKm,
+    oilIntervalMonths,
+    licenseExpiry,
+    insuranceExpiry,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -9287,6 +9339,42 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('oil_interval_km')) {
+      context.handle(
+        _oilIntervalKmMeta,
+        oilIntervalKm.isAcceptableOrUnknown(
+          data['oil_interval_km']!,
+          _oilIntervalKmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('oil_interval_months')) {
+      context.handle(
+        _oilIntervalMonthsMeta,
+        oilIntervalMonths.isAcceptableOrUnknown(
+          data['oil_interval_months']!,
+          _oilIntervalMonthsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('license_expiry')) {
+      context.handle(
+        _licenseExpiryMeta,
+        licenseExpiry.isAcceptableOrUnknown(
+          data['license_expiry']!,
+          _licenseExpiryMeta,
+        ),
+      );
+    }
+    if (data.containsKey('insurance_expiry')) {
+      context.handle(
+        _insuranceExpiryMeta,
+        insuranceExpiry.isAcceptableOrUnknown(
+          data['insurance_expiry']!,
+          _insuranceExpiryMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -9320,6 +9408,22 @@ class $CarsTable extends Cars with TableInfo<$CarsTable, Car> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      oilIntervalKm: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}oil_interval_km'],
+      )!,
+      oilIntervalMonths: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}oil_interval_months'],
+      )!,
+      licenseExpiry: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}license_expiry'],
+      ),
+      insuranceExpiry: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}insurance_expiry'],
+      ),
     );
   }
 
@@ -9336,6 +9440,12 @@ class Car extends DataClass implements Insertable<Car> {
   final int modelYear;
   final String? plate;
   final DateTime createdAt;
+
+  /// Oil change every N km or N months, whichever comes first (reminders).
+  final int oilIntervalKm;
+  final int oilIntervalMonths;
+  final DateTime? licenseExpiry;
+  final DateTime? insuranceExpiry;
   const Car({
     required this.id,
     required this.name,
@@ -9343,6 +9453,10 @@ class Car extends DataClass implements Insertable<Car> {
     required this.modelYear,
     this.plate,
     required this.createdAt,
+    required this.oilIntervalKm,
+    required this.oilIntervalMonths,
+    this.licenseExpiry,
+    this.insuranceExpiry,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -9355,6 +9469,14 @@ class Car extends DataClass implements Insertable<Car> {
       map['plate'] = Variable<String>(plate);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['oil_interval_km'] = Variable<int>(oilIntervalKm);
+    map['oil_interval_months'] = Variable<int>(oilIntervalMonths);
+    if (!nullToAbsent || licenseExpiry != null) {
+      map['license_expiry'] = Variable<DateTime>(licenseExpiry);
+    }
+    if (!nullToAbsent || insuranceExpiry != null) {
+      map['insurance_expiry'] = Variable<DateTime>(insuranceExpiry);
+    }
     return map;
   }
 
@@ -9368,6 +9490,14 @@ class Car extends DataClass implements Insertable<Car> {
           ? const Value.absent()
           : Value(plate),
       createdAt: Value(createdAt),
+      oilIntervalKm: Value(oilIntervalKm),
+      oilIntervalMonths: Value(oilIntervalMonths),
+      licenseExpiry: licenseExpiry == null && nullToAbsent
+          ? const Value.absent()
+          : Value(licenseExpiry),
+      insuranceExpiry: insuranceExpiry == null && nullToAbsent
+          ? const Value.absent()
+          : Value(insuranceExpiry),
     );
   }
 
@@ -9383,6 +9513,10 @@ class Car extends DataClass implements Insertable<Car> {
       modelYear: serializer.fromJson<int>(json['modelYear']),
       plate: serializer.fromJson<String?>(json['plate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      oilIntervalKm: serializer.fromJson<int>(json['oilIntervalKm']),
+      oilIntervalMonths: serializer.fromJson<int>(json['oilIntervalMonths']),
+      licenseExpiry: serializer.fromJson<DateTime?>(json['licenseExpiry']),
+      insuranceExpiry: serializer.fromJson<DateTime?>(json['insuranceExpiry']),
     );
   }
   @override
@@ -9395,6 +9529,10 @@ class Car extends DataClass implements Insertable<Car> {
       'modelYear': serializer.toJson<int>(modelYear),
       'plate': serializer.toJson<String?>(plate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'oilIntervalKm': serializer.toJson<int>(oilIntervalKm),
+      'oilIntervalMonths': serializer.toJson<int>(oilIntervalMonths),
+      'licenseExpiry': serializer.toJson<DateTime?>(licenseExpiry),
+      'insuranceExpiry': serializer.toJson<DateTime?>(insuranceExpiry),
     };
   }
 
@@ -9405,6 +9543,10 @@ class Car extends DataClass implements Insertable<Car> {
     int? modelYear,
     Value<String?> plate = const Value.absent(),
     DateTime? createdAt,
+    int? oilIntervalKm,
+    int? oilIntervalMonths,
+    Value<DateTime?> licenseExpiry = const Value.absent(),
+    Value<DateTime?> insuranceExpiry = const Value.absent(),
   }) => Car(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -9412,6 +9554,14 @@ class Car extends DataClass implements Insertable<Car> {
     modelYear: modelYear ?? this.modelYear,
     plate: plate.present ? plate.value : this.plate,
     createdAt: createdAt ?? this.createdAt,
+    oilIntervalKm: oilIntervalKm ?? this.oilIntervalKm,
+    oilIntervalMonths: oilIntervalMonths ?? this.oilIntervalMonths,
+    licenseExpiry: licenseExpiry.present
+        ? licenseExpiry.value
+        : this.licenseExpiry,
+    insuranceExpiry: insuranceExpiry.present
+        ? insuranceExpiry.value
+        : this.insuranceExpiry,
   );
   Car copyWithCompanion(CarsCompanion data) {
     return Car(
@@ -9421,6 +9571,18 @@ class Car extends DataClass implements Insertable<Car> {
       modelYear: data.modelYear.present ? data.modelYear.value : this.modelYear,
       plate: data.plate.present ? data.plate.value : this.plate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      oilIntervalKm: data.oilIntervalKm.present
+          ? data.oilIntervalKm.value
+          : this.oilIntervalKm,
+      oilIntervalMonths: data.oilIntervalMonths.present
+          ? data.oilIntervalMonths.value
+          : this.oilIntervalMonths,
+      licenseExpiry: data.licenseExpiry.present
+          ? data.licenseExpiry.value
+          : this.licenseExpiry,
+      insuranceExpiry: data.insuranceExpiry.present
+          ? data.insuranceExpiry.value
+          : this.insuranceExpiry,
     );
   }
 
@@ -9432,13 +9594,28 @@ class Car extends DataClass implements Insertable<Car> {
           ..write('brand: $brand, ')
           ..write('modelYear: $modelYear, ')
           ..write('plate: $plate, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('oilIntervalKm: $oilIntervalKm, ')
+          ..write('oilIntervalMonths: $oilIntervalMonths, ')
+          ..write('licenseExpiry: $licenseExpiry, ')
+          ..write('insuranceExpiry: $insuranceExpiry')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, brand, modelYear, plate, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    brand,
+    modelYear,
+    plate,
+    createdAt,
+    oilIntervalKm,
+    oilIntervalMonths,
+    licenseExpiry,
+    insuranceExpiry,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -9448,7 +9625,11 @@ class Car extends DataClass implements Insertable<Car> {
           other.brand == this.brand &&
           other.modelYear == this.modelYear &&
           other.plate == this.plate &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.oilIntervalKm == this.oilIntervalKm &&
+          other.oilIntervalMonths == this.oilIntervalMonths &&
+          other.licenseExpiry == this.licenseExpiry &&
+          other.insuranceExpiry == this.insuranceExpiry);
 }
 
 class CarsCompanion extends UpdateCompanion<Car> {
@@ -9458,6 +9639,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
   final Value<int> modelYear;
   final Value<String?> plate;
   final Value<DateTime> createdAt;
+  final Value<int> oilIntervalKm;
+  final Value<int> oilIntervalMonths;
+  final Value<DateTime?> licenseExpiry;
+  final Value<DateTime?> insuranceExpiry;
   const CarsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -9465,6 +9650,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
     this.modelYear = const Value.absent(),
     this.plate = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.oilIntervalKm = const Value.absent(),
+    this.oilIntervalMonths = const Value.absent(),
+    this.licenseExpiry = const Value.absent(),
+    this.insuranceExpiry = const Value.absent(),
   });
   CarsCompanion.insert({
     this.id = const Value.absent(),
@@ -9473,6 +9662,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
     required int modelYear,
     this.plate = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.oilIntervalKm = const Value.absent(),
+    this.oilIntervalMonths = const Value.absent(),
+    this.licenseExpiry = const Value.absent(),
+    this.insuranceExpiry = const Value.absent(),
   }) : name = Value(name),
        brand = Value(brand),
        modelYear = Value(modelYear);
@@ -9483,6 +9676,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
     Expression<int>? modelYear,
     Expression<String>? plate,
     Expression<DateTime>? createdAt,
+    Expression<int>? oilIntervalKm,
+    Expression<int>? oilIntervalMonths,
+    Expression<DateTime>? licenseExpiry,
+    Expression<DateTime>? insuranceExpiry,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -9491,6 +9688,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
       if (modelYear != null) 'model_year': modelYear,
       if (plate != null) 'plate': plate,
       if (createdAt != null) 'created_at': createdAt,
+      if (oilIntervalKm != null) 'oil_interval_km': oilIntervalKm,
+      if (oilIntervalMonths != null) 'oil_interval_months': oilIntervalMonths,
+      if (licenseExpiry != null) 'license_expiry': licenseExpiry,
+      if (insuranceExpiry != null) 'insurance_expiry': insuranceExpiry,
     });
   }
 
@@ -9501,6 +9702,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
     Value<int>? modelYear,
     Value<String?>? plate,
     Value<DateTime>? createdAt,
+    Value<int>? oilIntervalKm,
+    Value<int>? oilIntervalMonths,
+    Value<DateTime?>? licenseExpiry,
+    Value<DateTime?>? insuranceExpiry,
   }) {
     return CarsCompanion(
       id: id ?? this.id,
@@ -9509,6 +9714,10 @@ class CarsCompanion extends UpdateCompanion<Car> {
       modelYear: modelYear ?? this.modelYear,
       plate: plate ?? this.plate,
       createdAt: createdAt ?? this.createdAt,
+      oilIntervalKm: oilIntervalKm ?? this.oilIntervalKm,
+      oilIntervalMonths: oilIntervalMonths ?? this.oilIntervalMonths,
+      licenseExpiry: licenseExpiry ?? this.licenseExpiry,
+      insuranceExpiry: insuranceExpiry ?? this.insuranceExpiry,
     );
   }
 
@@ -9533,6 +9742,18 @@ class CarsCompanion extends UpdateCompanion<Car> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (oilIntervalKm.present) {
+      map['oil_interval_km'] = Variable<int>(oilIntervalKm.value);
+    }
+    if (oilIntervalMonths.present) {
+      map['oil_interval_months'] = Variable<int>(oilIntervalMonths.value);
+    }
+    if (licenseExpiry.present) {
+      map['license_expiry'] = Variable<DateTime>(licenseExpiry.value);
+    }
+    if (insuranceExpiry.present) {
+      map['insurance_expiry'] = Variable<DateTime>(insuranceExpiry.value);
+    }
     return map;
   }
 
@@ -9544,7 +9765,11 @@ class CarsCompanion extends UpdateCompanion<Car> {
           ..write('brand: $brand, ')
           ..write('modelYear: $modelYear, ')
           ..write('plate: $plate, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('oilIntervalKm: $oilIntervalKm, ')
+          ..write('oilIntervalMonths: $oilIntervalMonths, ')
+          ..write('licenseExpiry: $licenseExpiry, ')
+          ..write('insuranceExpiry: $insuranceExpiry')
           ..write(')'))
         .toString();
   }
@@ -17217,6 +17442,10 @@ typedef $$CarsTableCreateCompanionBuilder =
       required int modelYear,
       Value<String?> plate,
       Value<DateTime> createdAt,
+      Value<int> oilIntervalKm,
+      Value<int> oilIntervalMonths,
+      Value<DateTime?> licenseExpiry,
+      Value<DateTime?> insuranceExpiry,
     });
 typedef $$CarsTableUpdateCompanionBuilder =
     CarsCompanion Function({
@@ -17226,6 +17455,10 @@ typedef $$CarsTableUpdateCompanionBuilder =
       Value<int> modelYear,
       Value<String?> plate,
       Value<DateTime> createdAt,
+      Value<int> oilIntervalKm,
+      Value<int> oilIntervalMonths,
+      Value<DateTime?> licenseExpiry,
+      Value<DateTime?> insuranceExpiry,
     });
 
 final class $$CarsTableReferences
@@ -17286,6 +17519,26 @@ class $$CarsTableFilterComposer extends Composer<_$AppDatabase, $CarsTable> {
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get oilIntervalKm => $composableBuilder(
+    column: $table.oilIntervalKm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get oilIntervalMonths => $composableBuilder(
+    column: $table.oilIntervalMonths,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get licenseExpiry => $composableBuilder(
+    column: $table.licenseExpiry,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get insuranceExpiry => $composableBuilder(
+    column: $table.insuranceExpiry,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -17352,6 +17605,26 @@ class $$CarsTableOrderingComposer extends Composer<_$AppDatabase, $CarsTable> {
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get oilIntervalKm => $composableBuilder(
+    column: $table.oilIntervalKm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get oilIntervalMonths => $composableBuilder(
+    column: $table.oilIntervalMonths,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get licenseExpiry => $composableBuilder(
+    column: $table.licenseExpiry,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get insuranceExpiry => $composableBuilder(
+    column: $table.insuranceExpiry,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$CarsTableAnnotationComposer
@@ -17380,6 +17653,26 @@ class $$CarsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get oilIntervalKm => $composableBuilder(
+    column: $table.oilIntervalKm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get oilIntervalMonths => $composableBuilder(
+    column: $table.oilIntervalMonths,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get licenseExpiry => $composableBuilder(
+    column: $table.licenseExpiry,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get insuranceExpiry => $composableBuilder(
+    column: $table.insuranceExpiry,
+    builder: (column) => column,
+  );
 
   Expression<T> carExpensesRefs<T extends Object>(
     Expression<T> Function($$CarExpensesTableAnnotationComposer a) f,
@@ -17441,6 +17734,10 @@ class $$CarsTableTableManager
                 Value<int> modelYear = const Value.absent(),
                 Value<String?> plate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> oilIntervalKm = const Value.absent(),
+                Value<int> oilIntervalMonths = const Value.absent(),
+                Value<DateTime?> licenseExpiry = const Value.absent(),
+                Value<DateTime?> insuranceExpiry = const Value.absent(),
               }) => CarsCompanion(
                 id: id,
                 name: name,
@@ -17448,6 +17745,10 @@ class $$CarsTableTableManager
                 modelYear: modelYear,
                 plate: plate,
                 createdAt: createdAt,
+                oilIntervalKm: oilIntervalKm,
+                oilIntervalMonths: oilIntervalMonths,
+                licenseExpiry: licenseExpiry,
+                insuranceExpiry: insuranceExpiry,
               ),
           createCompanionCallback:
               ({
@@ -17457,6 +17758,10 @@ class $$CarsTableTableManager
                 required int modelYear,
                 Value<String?> plate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> oilIntervalKm = const Value.absent(),
+                Value<int> oilIntervalMonths = const Value.absent(),
+                Value<DateTime?> licenseExpiry = const Value.absent(),
+                Value<DateTime?> insuranceExpiry = const Value.absent(),
               }) => CarsCompanion.insert(
                 id: id,
                 name: name,
@@ -17464,6 +17769,10 @@ class $$CarsTableTableManager
                 modelYear: modelYear,
                 plate: plate,
                 createdAt: createdAt,
+                oilIntervalKm: oilIntervalKm,
+                oilIntervalMonths: oilIntervalMonths,
+                licenseExpiry: licenseExpiry,
+                insuranceExpiry: insuranceExpiry,
               ),
           withReferenceMapper: (p0) => p0
               .map(

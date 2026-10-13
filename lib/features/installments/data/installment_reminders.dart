@@ -89,6 +89,57 @@ class InstallmentReminders {
     }
   }
 
+  static const _carDetails = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'car',
+      'Car reminders',
+      channelDescription: 'Oil change, licence and insurance reminders',
+      importance: Importance.high,
+      priority: Priority.high,
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
+
+  /// One-off reminder at [when] (ignored if it is in the past). Used by the car reminders.
+  Future<void> scheduleAt({required int id, required DateTime when, required String title, required String body}) async {
+    if (!_supported || !when.isAfter(DateTime.now())) return;
+    try {
+      await _init();
+      await _plugin.zonedSchedule(
+        id: id,
+        scheduledDate: tz.TZDateTime.from(when, tz.local),
+        notificationDetails: _carDetails,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        title: title,
+        body: body,
+      );
+    } catch (e) {
+      debugPrint('schedule reminder: $e');
+    }
+  }
+
+  Future<void> showNow({required int id, required String title, required String body}) async {
+    if (!_supported) return;
+    try {
+      await _init();
+      await _plugin.show(id: id, title: title, body: body, notificationDetails: _carDetails);
+    } catch (e) {
+      debugPrint('show reminder: $e');
+    }
+  }
+
+  Future<void> cancelIds(Iterable<int> ids) async {
+    if (!_supported) return;
+    try {
+      await _init();
+      for (final id in ids) {
+        await _plugin.cancel(id: id);
+      }
+    } catch (e) {
+      debugPrint('cancel reminders: $e');
+    }
+  }
+
   /// Cancels the previous reminders and schedules the current ones.
   Future<void> reschedule(List<InstallmentWithSchedule> plans) async {
     if (!_supported) return;

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/accounts/presentation/accounts_screen.dart';
 import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/auth/presentation/setup_screen.dart';
+import '../../features/cars/presentation/car_report_screen.dart';
 import '../../features/cars/presentation/cars_screens.dart';
 import '../../features/installments/presentation/installments_screens.dart';
 import '../../features/budgets/presentation/budgets_screen.dart';
@@ -98,6 +99,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cars/:id',
         builder: (context, state) => CarDetailsScreen(carId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/cars/:id/report',
+        builder: (context, state) => CarReportScreen(carId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/cars/:id/expense',

@@ -11,6 +11,7 @@ class CarExpenseItem {
     required this.transaction,
     required this.categoryName,
     required this.categoryIcon,
+    this.categorySyncId,
     this.parentCategoryName,
     this.accountName,
     this.fuelTypeName,
@@ -19,6 +20,9 @@ class CarExpenseItem {
   final Transaction transaction;
   final String categoryName;
   final String categoryIcon;
+
+  /// 'seed-cat-car-fuel', 'seed-cat-car-oil', ... for the built-in car categories.
+  final String? categorySyncId;
   final String? parentCategoryName;
   final String? accountName;
   final String? fuelTypeName;
@@ -29,6 +33,7 @@ class CarExpenseItem {
 class CarWithStats {
   const CarWithStats(this.car, this.expenses);
   final Car car;
+
   /// Newest first.
   final List<CarExpenseItem> expenses;
 
@@ -107,9 +112,7 @@ class CarRepository {
       leftOuterJoin(parents, parents.id.equalsExp(_db.categories.parentCategoryId)),
       leftOuterJoin(_db.accounts, _db.accounts.id.equalsExp(_db.transactions.accountId)),
       leftOuterJoin(_db.fuelTypes, _db.fuelTypes.id.equalsExp(_db.carExpenses.fuelTypeId)),
-    ])
-          ..orderBy([OrderingTerm.desc(_db.transactions.date), OrderingTerm.desc(_db.carExpenses.id)]))
-        .get();
+    ])..orderBy([OrderingTerm.desc(_db.transactions.date), OrderingTerm.desc(_db.carExpenses.id)])).get();
     final items = [
       for (final r in rows)
         CarExpenseItem(
@@ -117,6 +120,7 @@ class CarRepository {
           transaction: r.readTable(_db.transactions),
           categoryName: r.readTable(_db.categories).name,
           categoryIcon: r.readTable(_db.categories).icon,
+          categorySyncId: r.readTable(_db.categories).syncId,
           parentCategoryName: r.readTableOrNull(parents)?.name,
           accountName: r.readTableOrNull(_db.accounts)?.name,
           fuelTypeName: r.readTableOrNull(_db.fuelTypes)?.name,
@@ -125,12 +129,52 @@ class CarRepository {
     return [for (final c in cars) CarWithStats(c, items.where((i) => i.expense.carId == c.id).toList())];
   }
 
-  Future<int> createCar({required String name, required String brand, required int modelYear, String? plate}) =>
-      _db.into(_db.cars).insert(CarsCompanion.insert(name: name, brand: brand, modelYear: modelYear, plate: Value(plate)));
+  Future<int> createCar({
+    required String name,
+    required String brand,
+    required int modelYear,
+    String? plate,
+    int oilIntervalKm = 10000,
+    int oilIntervalMonths = 6,
+    DateTime? licenseExpiry,
+    DateTime? insuranceExpiry,
+  }) => _db
+      .into(_db.cars)
+      .insert(
+        CarsCompanion.insert(
+          name: name,
+          brand: brand,
+          modelYear: modelYear,
+          plate: Value(plate),
+          oilIntervalKm: Value(oilIntervalKm),
+          oilIntervalMonths: Value(oilIntervalMonths),
+          licenseExpiry: Value(licenseExpiry),
+          insuranceExpiry: Value(insuranceExpiry),
+        ),
+      );
 
-  Future<void> updateCar(int id, {required String name, required String brand, required int modelYear, String? plate}) =>
-      (_db.update(_db.cars)..where((c) => c.id.equals(id)))
-          .write(CarsCompanion(name: Value(name), brand: Value(brand), modelYear: Value(modelYear), plate: Value(plate)));
+  Future<void> updateCar(
+    int id, {
+    required String name,
+    required String brand,
+    required int modelYear,
+    String? plate,
+    required int oilIntervalKm,
+    required int oilIntervalMonths,
+    DateTime? licenseExpiry,
+    DateTime? insuranceExpiry,
+  }) => (_db.update(_db.cars)..where((c) => c.id.equals(id))).write(
+    CarsCompanion(
+      name: Value(name),
+      brand: Value(brand),
+      modelYear: Value(modelYear),
+      plate: Value(plate),
+      oilIntervalKm: Value(oilIntervalKm),
+      oilIntervalMonths: Value(oilIntervalMonths),
+      licenseExpiry: Value(licenseExpiry),
+      insuranceExpiry: Value(insuranceExpiry),
+    ),
+  );
 
   /// Deletes the car, its expense rows and their transactions.
   Future<void> deleteCar(int id) async {
@@ -149,27 +193,35 @@ class CarRepository {
       final account = await (_db.select(_db.accounts)..where((a) => a.id.equals(input.accountId))).getSingle();
       final car = await (_db.select(_db.cars)..where((c) => c.id.equals(input.carId))).getSingle();
       final note = [car.name, if (input.note != null && input.note!.trim().isNotEmpty) input.note!.trim()].join(' – ');
-      final txId = await _db.into(_db.transactions).insert(TransactionsCompanion.insert(
-            amount: input.amount,
-            type: TransactionType.expense,
-            categoryId: input.categoryId,
-            paymentMethodType: account.cardId != null ? PaymentMethodType.card : PaymentMethodType.cash,
-            cardId: Value(account.cardId),
-            date: input.date,
-            note: Value(note),
-            beneficiaryName: Value(input.beneficiary?.trim().isEmpty ?? true ? null : input.beneficiary!.trim()),
-            accountId: Value(input.accountId),
-          ));
-      return _db.into(_db.carExpenses).insert(CarExpensesCompanion.insert(
-            carId: input.carId,
-            transactionId: txId,
-            odometer: Value(input.odometer),
-            liters: Value(input.liters),
-            fuelTypeId: Value(input.fuelTypeId),
-            pricePerLiter: Value(input.pricePerLiter),
-            latitude: Value(input.latitude),
-            longitude: Value(input.longitude),
-          ));
+      final txId = await _db
+          .into(_db.transactions)
+          .insert(
+            TransactionsCompanion.insert(
+              amount: input.amount,
+              type: TransactionType.expense,
+              categoryId: input.categoryId,
+              paymentMethodType: account.cardId != null ? PaymentMethodType.card : PaymentMethodType.cash,
+              cardId: Value(account.cardId),
+              date: input.date,
+              note: Value(note),
+              beneficiaryName: Value(input.beneficiary?.trim().isEmpty ?? true ? null : input.beneficiary!.trim()),
+              accountId: Value(input.accountId),
+            ),
+          );
+      return _db
+          .into(_db.carExpenses)
+          .insert(
+            CarExpensesCompanion.insert(
+              carId: input.carId,
+              transactionId: txId,
+              odometer: Value(input.odometer),
+              liters: Value(input.liters),
+              fuelTypeId: Value(input.fuelTypeId),
+              pricePerLiter: Value(input.pricePerLiter),
+              latitude: Value(input.latitude),
+              longitude: Value(input.longitude),
+            ),
+          );
     });
   }
 
@@ -187,7 +239,9 @@ class CarRepository {
     if (id == null) {
       await _db.into(_db.fuelTypes).insert(FuelTypesCompanion.insert(name: name, pricePerLiter: price));
     } else {
-      await (_db.update(_db.fuelTypes)..where((f) => f.id.equals(id))).write(FuelTypesCompanion(name: Value(name), pricePerLiter: Value(price)));
+      await (_db.update(
+        _db.fuelTypes,
+      )..where((f) => f.id.equals(id))).write(FuelTypesCompanion(name: Value(name), pricePerLiter: Value(price)));
     }
   }
 
