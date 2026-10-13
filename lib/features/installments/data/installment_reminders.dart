@@ -1,0 +1,144 @@
+import 'dart:io';
+
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:timezone/data/latest_all.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
+
+import '../../../core/utils/currency.dart';
+import 'installment_repository.dart';
+
+/// Reminder rule: from 5 days before an installment's due date until the due day itself, twice a
+/// day at 12:00 and 22:00, while it is unpaid.
+const reminderDaysBefore = 5;
+const reminderHours = [12, 22];
+
+/// iOS keeps at most 64 pending local notifications per app; stay below that.
+const _maxScheduled = 60;
+const _idBase = 7100;
+
+class ReminderSlot {
+  const ReminderSlot(this.when, this.item, this.due);
+  final DateTime when;
+  final InstallmentWithSchedule item;
+  final InstallmentDue due;
+}
+
+/// The next reminder times for every unpaid installment (pure, for tests).
+List<ReminderSlot> upcomingReminderSlots(List<InstallmentWithSchedule> plans, DateTime now, {int limit = _maxScheduled}) {
+  final slots = <ReminderSlot>[];
+  for (final item in plans) {
+    if (!item.plan.remindersEnabled) continue;
+    // The next two unpaid installments are enough: the list is rebuilt every time the app opens.
+    final unpaid = item.schedule.where((d) => !d.isPaid && !d.dueDate.isBefore(DateTime(now.year, now.month, now.day))).take(2);
+    for (final due in unpaid) {
+      for (var back = reminderDaysBefore; back >= 0; back--) {
+        final day = DateTime(due.dueDate.year, due.dueDate.month, due.dueDate.day - back);
+        for (final h in reminderHours) {
+          final when = DateTime(day.year, day.month, day.day, h);
+          if (when.isAfter(now)) slots.add(ReminderSlot(when, item, due));
+        }
+      }
+    }
+  }
+  slots.sort((a, b) => a.when.compareTo(b.when));
+  return slots.take(limit).toList();
+}
+
+class InstallmentReminders {
+  InstallmentReminders._();
+  static final instance = InstallmentReminders._();
+
+  final _plugin = FlutterLocalNotificationsPlugin();
+  bool _ready = false;
+
+  bool get _supported => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+  Future<void> _init() async {
+    if (_ready) return;
+    tzdata.initializeTimeZones();
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(info.identifier));
+    } catch (_) {
+      tz.setLocalLocation(tz.getLocation('Africa/Cairo'));
+    }
+    await _plugin.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false),
+      ),
+    );
+    _ready = true;
+  }
+
+  /// Asks for notification permission (Android 13+ / iOS). Safe to call repeatedly.
+  Future<void> requestPermission() async {
+    if (!_supported) return;
+    try {
+      await _init();
+      await _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+      await _plugin
+          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (e) {
+      debugPrint('notification permission: $e');
+    }
+  }
+
+  /// Cancels the previous reminders and schedules the current ones.
+  Future<void> reschedule(List<InstallmentWithSchedule> plans) async {
+    if (!_supported) return;
+    try {
+      await _init();
+      for (var i = 0; i < _maxScheduled; i++) {
+        await _plugin.cancel(id: _idBase + i);
+      }
+      final slots = upcomingReminderSlots(plans, DateTime.now());
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'installments',
+          'Installment reminders',
+          channelDescription: 'Reminders before an installment is due',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      );
+      for (var i = 0; i < slots.length; i++) {
+        final s = slots[i];
+        final daysLeft = DateTime(s.due.dueDate.year, s.due.dueDate.month, s.due.dueDate.day)
+            .difference(DateTime(s.when.year, s.when.month, s.when.day))
+            .inDays;
+        final amount = s.item.plan.installmentAmount;
+        await _plugin.zonedSchedule(
+          id: _idBase + i,
+          scheduledDate: tz.TZDateTime.from(s.when, tz.local),
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          title: 'installments.reminderTitle'.tr(namedArgs: {'title': s.item.plan.title}),
+          body: (daysLeft == 0 ? 'installments.reminderToday' : 'installments.reminderBody').tr(namedArgs: {
+            'amount': formatAmount(amount),
+            'provider': s.item.plan.provider,
+            'days': '$daysLeft',
+            'date': DateFormat.yMMMd('ar').format(s.due.dueDate),
+            'number': '${s.due.number}/${s.item.plan.months}',
+          }),
+        );
+      }
+    } catch (e) {
+      debugPrint('installment reminders: $e');
+    }
+  }
+}
+
+/// Keeps the scheduled reminders in step with the installments (watched by the app root).
+final installmentRemindersProvider = Provider<void>((ref) {
+  ref.listen(installmentsProvider, (_, next) {
+    final plans = next.value;
+    if (plans != null) InstallmentReminders.instance.reschedule(plans);
+  }, fireImmediately: true);
+});

@@ -9,6 +9,7 @@ import 'core/settings/settings_provider.dart';
 import 'core/settings/settings_state.dart';
 import 'core/sync/sync_controller.dart';
 import 'core/theme/app_theme.dart';
+import 'features/installments/data/installment_reminders.dart';
 
 class ExpenseTrackerApp extends ConsumerStatefulWidget {
   const ExpenseTrackerApp({super.key});
@@ -67,6 +68,8 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
       data: (_) {
         // Starts background sync (when signed in) for the whole app lifetime.
         ref.watch(syncControllerProvider);
+        // Keeps installment reminders scheduled as plans and payments change.
+        ref.watch(installmentRemindersProvider);
         final router = ref.watch(routerProvider);
         return MaterialApp.router(
           routerConfig: router,

@@ -5,6 +5,7 @@ enum CalendarSystem { gregorian, hijri }
 class SettingsState {
   const SettingsState({
     this.userName = '',
+    this.userPhone = '',
     this.languageCode = 'ar',
     this.calendar = CalendarSystem.gregorian,
     this.themeMode = AppThemeMode.system,
@@ -14,6 +15,7 @@ class SettingsState {
   });
 
   final String userName;
+  final String userPhone;
   final String languageCode;
   final CalendarSystem calendar;
   final AppThemeMode themeMode;
@@ -23,6 +25,7 @@ class SettingsState {
 
   SettingsState copyWith({
     String? userName,
+    String? userPhone,
     String? languageCode,
     CalendarSystem? calendar,
     AppThemeMode? themeMode,
@@ -32,6 +35,7 @@ class SettingsState {
   }) {
     return SettingsState(
       userName: userName ?? this.userName,
+      userPhone: userPhone ?? this.userPhone,
       languageCode: languageCode ?? this.languageCode,
       calendar: calendar ?? this.calendar,
       themeMode: themeMode ?? this.themeMode,

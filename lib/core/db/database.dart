@@ -28,6 +28,11 @@ part 'database.g.dart';
     LedgerOutbox,
     AppNotifications,
     Accounts,
+    Installments,
+    InstallmentPayments,
+    Cars,
+    FuelTypes,
+    CarExpenses,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -37,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -98,6 +103,14 @@ class AppDatabase extends _$AppDatabase {
             // The change trigger must now also watch the new account columns.
             await customStatement('DROP TRIGGER IF EXISTS sync_au_transactions');
             await createSyncObjects(this);
+          }
+          if (from < 5) {
+            // v5: installments, cars and fuel prices (on-device only, not synced).
+            await m.createTable(installments);
+            await m.createTable(installmentPayments);
+            await m.createTable(cars);
+            await m.createTable(fuelTypes);
+            await m.createTable(carExpenses);
           }
         },
       );

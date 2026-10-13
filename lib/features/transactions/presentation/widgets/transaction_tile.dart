@@ -41,7 +41,6 @@ class TransactionTile extends StatelessWidget {
             ? t.beneficiaryName!
             : item.categoryName;
     final subtitle = [
-      if (!isTransfer) item.categoryName,
       if (!isTransfer && item.accountName != null) item.accountName!,
       if (showDate) DateFormat.MMMd(context.locale.languageCode).format(t.date),
     ].where((s) => s.isNotEmpty && s != title).join(' · ');
@@ -74,6 +73,14 @@ class TransactionTile extends StatelessWidget {
             const SizedBox(width: 8),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
               AmountText(amount, color: color, size: 14, signed: !isTransfer),
+              if (!isTransfer)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 170),
+                  child: Text(item.categoryPath,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelSmall?.copyWith(color: colorFromHex(item.categoryColor), fontWeight: FontWeight.w600)),
+                ),
               Row(mainAxisSize: MainAxisSize.min, children: [
                 if (t.note != null && t.note!.isNotEmpty)
                   Icon(Icons.sticky_note_2_outlined, size: 13, color: theme.colorScheme.onSurfaceVariant),

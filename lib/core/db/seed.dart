@@ -117,6 +117,7 @@ Future<void> seedIfNeeded(AppDatabase db) async {
 /// so databases created before amanat existed get it too. Fixed sync id: it merges across devices.
 Future<void> ensureTrustCategory(AppDatabase db) async {
   await _ensureTransferCategory(db);
+  await _ensureCarAndInstallmentData(db);
   final existing = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-trust')))
       .getSingleOrNull();
   if (existing != null) return;
@@ -150,3 +151,48 @@ Future<void> _ensureTransferCategory(AppDatabase db) async {
       );
   await db.customStatement("UPDATE categories SET updated_at = 1 WHERE sync_id = 'seed-cat-transfer'");
 }
+
+/// v5 master data: the car category tree, the installments category and fuel prices.
+Future<void> _ensureCarAndInstallmentData(AppDatabase db) async {
+  Future<int> ensure(String syncId, String name, String icon, Color color, {int? parent}) async {
+    final existing = await (db.select(db.categories)..where((c) => c.syncId.equals(syncId))).getSingleOrNull();
+    if (existing != null) return existing.id;
+    final id = await db.into(db.categories).insert(CategoriesCompanion.insert(
+          name: name,
+          icon: icon,
+          color: colorToHex(color),
+          type: CategoryType.expense,
+          parentCategoryId: Value(parent),
+          isDefault: const Value(true),
+          syncId: Value(syncId),
+        ));
+    await db.customStatement("UPDATE categories SET updated_at = 1 WHERE sync_id = '$syncId'");
+    return id;
+  }
+
+  final car = await ensure('seed-cat-car', 'السيارة', '🚘', AppColors.navy600);
+  const subs = [
+    ('fuel', 'بنزين', '⛽'),
+    ('service', 'صيانة', '🔧'),
+    ('oil', 'تغيير زيت', '🛢️'),
+    ('wash', 'غسيل', '🧽'),
+    ('tires', 'إطارات', '🛞'),
+    ('license', 'ترخيص', '📄'),
+    ('insurance', 'تأمين', '🛡️'),
+    ('parking', 'ركن', '🅿️'),
+  ];
+  for (final (key, name, icon) in subs) {
+    await ensure('seed-cat-car-$key', name, icon, AppColors.navy600, parent: car);
+  }
+  await ensure('seed-cat-installments', 'أقساط', '📅', AppColors.teal700);
+
+  if (await db.select(db.fuelTypes).get().then((r) => r.isEmpty)) {
+    for (final (name, price) in const [('بنزين 80', 17.75), ('بنزين 92', 19.25), ('بنزين 95', 21.0), ('سولار', 17.5)]) {
+      await db.into(db.fuelTypes).insert(FuelTypesCompanion.insert(name: name, pricePerLiter: price));
+    }
+  }
+}
+
+/// Category ids of the seeded car tree / installments category.
+Future<int?> seededCategoryId(AppDatabase db, String syncId) async =>
+    (await (db.select(db.categories)..where((c) => c.syncId.equals(syncId))).getSingleOrNull())?.id;

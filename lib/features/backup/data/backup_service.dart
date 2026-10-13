@@ -33,6 +33,11 @@ class BackupService {
         _db.ledgerEntries,
         _db.ledgerOutbox,
         _db.appNotifications,
+        _db.installments,
+        _db.installmentPayments,
+        _db.cars,
+        _db.fuelTypes,
+        _db.carExpenses,
       ];
 
   Future<SecretKey> _key(String password, List<int> salt) => Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: _iterations, bits: 256)

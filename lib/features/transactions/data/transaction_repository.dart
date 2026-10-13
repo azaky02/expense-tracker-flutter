@@ -103,6 +103,7 @@ class TransactionRepository {
   final AppDatabase _db;
 
   late final _toAccounts = _db.alias(_db.accounts, 'to_acc');
+  late final _parents = _db.alias(_db.categories, 'parent_cat');
 
   JoinedSelectStatement<HasResultSet, dynamic> _baseQuery() {
     return _db.select(_db.transactions).join([
@@ -110,6 +111,7 @@ class TransactionRepository {
       leftOuterJoin(_db.cards, _db.cards.id.equalsExp(_db.transactions.cardId)),
       leftOuterJoin(_db.accounts, _db.accounts.id.equalsExp(_db.transactions.accountId)),
       leftOuterJoin(_toAccounts, _toAccounts.id.equalsExp(_db.transactions.toAccountId)),
+      leftOuterJoin(_parents, _parents.id.equalsExp(_db.categories.parentCategoryId)),
     ]);
   }
 
@@ -126,6 +128,7 @@ class TransactionRepository {
       accountName: row.readTableOrNull(_db.accounts)?.name,
       toAccountName: row.readTableOrNull(_toAccounts)?.name,
       parentCategoryId: category.parentCategoryId,
+      parentCategoryName: row.readTableOrNull(_parents)?.name,
     );
   }
 

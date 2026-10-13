@@ -10,6 +10,7 @@ class TransactionWithDetails {
     this.accountName,
     this.toAccountName,
     this.parentCategoryId,
+    this.parentCategoryName,
   });
 
   final Transaction transaction;
@@ -20,6 +21,11 @@ class TransactionWithDetails {
   final String? accountName;
   final String? toAccountName;
   final int? parentCategoryId;
+  /// Main category of a sub-category (null when the transaction sits on a main category).
+  final String? parentCategoryName;
+
+  /// "Main › Sub", or just the category name.
+  String get categoryPath => parentCategoryName == null ? categoryName : '$parentCategoryName › $categoryName';
 }
 
 class MonthSummary {

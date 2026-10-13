@@ -46,8 +46,16 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     }
   }
 
-  /// Verifies the current PIN (three tries).
+  /// Verifies the current PIN (three tries), or Face ID / fingerprint when no PIN was set.
   Future<bool> _checkPin() async {
+    if (!await _store.hasPinSet()) {
+      try {
+        return await LockNotifier.runWithoutLock(
+            () => LocalAuthentication().authenticate(localizedReason: 'security.unlockPrompt'.tr()));
+      } catch (_) {
+        return false;
+      }
+    }
     String? error;
     for (var i = 0; i < 3; i++) {
       final pin = await _ask('security.enterCurrentPin'.tr(), error: error);
@@ -89,6 +97,12 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
 
   Future<void> _toggleBiometrics(bool on) async {
     if (!on) {
+      // Biometrics-only lock: a PIN has to replace it before it can be turned off.
+      if (!await _store.hasPinSet()) {
+        final pin = await _newPin();
+        if (pin == null) return;
+        await _store.setPin(pin);
+      }
       await ref.read(settingsProvider.notifier).setBiometricEnabled(false);
       return;
     }

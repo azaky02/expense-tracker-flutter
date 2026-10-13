@@ -29,7 +29,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
         children: [
           AppCard(
-            onTap: () => context.push(sync.signedIn ? '/account' : '/login'),
+            onTap: () => sync.signedIn ? context.push('/account') : _editName(context, ref, settings.userName),
             child: Row(children: [
               PersonAvatar(name: settings.userName.isEmpty ? '؟' : settings.userName, color: DS.primary, size: 52),
               const SizedBox(width: 12),
@@ -37,18 +37,23 @@ class SettingsScreen extends ConsumerWidget {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(settings.userName.isEmpty ? 'settings.noName'.tr() : settings.userName, style: theme.textTheme.titleMedium),
                   Text(
-                    sync.signedIn ? sync.session!.email : 'settings.notSignedIn'.tr(),
+                    sync.signedIn
+                        ? sync.session!.email
+                        : (settings.userPhone.isNotEmpty ? settings.userPhone : 'settings.notSignedIn'.tr()),
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                   ),
                 ]),
               ),
-              if (sync.signedIn) const SyncStatusBadge() else Text('auth.signIn'.tr(), style: TextStyle(color: theme.colorScheme.primary)),
+              if (sync.signedIn) const SyncStatusBadge() else const Icon(Icons.phone_android, size: 20),
             ]),
           ),
           _Section('settings.sectionManage'.tr(), [
             _Item(Icons.account_balance_wallet_outlined, 'accounts.title'.tr(), () => context.push('/accounts')),
             _Item(Icons.credit_card, 'settings.cards'.tr(), () => context.push('/cards')),
             _Item(Icons.category_outlined, 'categories.manageCategories'.tr(), () => context.push('/categories')),
+            _Item(Icons.event_repeat, 'installments.title'.tr(), () => context.push('/installments')),
+            _Item(Icons.directions_car_outlined, 'cars.title'.tr(), () => context.push('/cars')),
+            _Item(Icons.local_gas_station_outlined, 'fuel.title'.tr(), () => context.push('/fuel-prices')),
             _Item(Icons.pie_chart_outline, 'budgets.screenTitle'.tr(), () => context.push('/budgets')),
             _Item(Icons.bar_chart_rounded, 'reports.title'.tr(), () => context.push('/reports')),
             _Item(Icons.notifications_outlined, 'notifications.title'.tr(), () => context.push('/notifications')),
@@ -57,6 +62,7 @@ class SettingsScreen extends ConsumerWidget {
             _Item(Icons.cloud_sync_outlined, 'settings.accountSync'.tr(), () => context.push(sync.signedIn ? '/account' : '/login')),
             _Item(Icons.person_outline, 'settings.yourName'.tr(), () => _editName(context, ref, settings.userName),
                 trailing: settings.userName),
+            _Item(Icons.phone_iphone, 'setup.phone'.tr(), null, trailing: settings.userPhone),
           ]),
           _Section('settings.sectionPreferences'.tr(), [
             _Item(Icons.language, 'settings.language'.tr(), () async {

@@ -14,6 +14,7 @@ import '../../transactions/data/transaction_models.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/presentation/transaction_providers.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
+import 'report_export_sheet.dart';
 
 final reportsMonthProvider = NotifierProvider<MonthNotifier, DateTime>(MonthNotifier.new);
 
@@ -48,7 +49,16 @@ class ReportsScreen extends ConsumerWidget {
     final accountRows = byAccount.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
     return Scaffold(
-      appBar: AppBar(title: Text('reports.title'.tr())),
+      appBar: AppBar(
+        title: Text('reports.title'.tr()),
+        actions: [
+          IconButton(
+            tooltip: 'export.title'.tr(),
+            icon: const Icon(Icons.ios_share),
+            onPressed: () => showReportExportSheet(context, month),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

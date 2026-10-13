@@ -17,6 +17,8 @@ import 'package:expense_tracker_flutter/core/sync/sync_controller.dart';
 import 'package:expense_tracker_flutter/core/theme/app_theme.dart';
 import 'package:expense_tracker_flutter/features/accounts/data/account_repository.dart';
 import 'package:expense_tracker_flutter/features/budgets/data/budget_repository.dart';
+import 'package:expense_tracker_flutter/features/cars/data/car_repository.dart';
+import 'package:expense_tracker_flutter/features/installments/data/installment_repository.dart';
 import 'package:expense_tracker_flutter/features/payment_methods/data/card_repository.dart';
 import 'package:expense_tracker_flutter/features/people/data/ledger_repository.dart';
 import 'package:flutter/material.dart';
@@ -71,6 +73,22 @@ Future<void> _demoData(AppDatabase db) async {
   final mohamed = await ledger.createPerson(name: 'محمد');
   await ledger.createEntry(personId: mohamed, kind: LedgerKind.loan, direction: LedgerDirection.gave, amount: 15000, date: day(8));
   await ledger.createPerson(name: 'سامي');
+  final plans = InstallmentRepository(db);
+  final fridge = await plans.create(InstallmentsCompanion.insert(
+      title: 'تلاجة', provider: 'valU', totalAmount: 24000, installmentAmount: 2000, months: 12, dueDay: (now.day + 3).clamp(1, 28),
+      startMonth: DateTime(now.year, now.month - 2)));
+  final fridgePlan = (await plans.loadAll()).firstWhere((p) => p.plan.id == fridge).plan;
+  await plans.markPaid(fridgePlan, 1, amount: 2000, accountId: cash);
+  await plans.markPaid(fridgePlan, 2, amount: 2000, accountId: cash);
+  await plans.create(InstallmentsCompanion.insert(
+      title: 'موبايل', provider: 'بنك مصر', totalAmount: 18000, installmentAmount: 1500, months: 12, dueDay: 25, startMonth: DateTime(now.year, now.month)));
+  final cars = CarRepository(db);
+  final carId = await cars.createCar(name: 'عربيتي', brand: 'تويوتا كورولا', modelYear: 2022);
+  final fuelCat = (await seededCategoryId(db, 'seed-cat-car-fuel'))!;
+  final serviceCat = (await seededCategoryId(db, 'seed-cat-car-service'))!;
+  await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: 770, accountId: cash, date: day(9), odometer: 41200, liters: 40, fuelTypeId: 2, pricePerLiter: 19.25, latitude: 30.03, longitude: 31.47, beneficiary: 'وطنية'));
+  await cars.addExpense(CarExpenseInput(carId: carId, categoryId: serviceCat, amount: 1850, accountId: cib, date: day(5), odometer: 41500));
+  await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: 673.75, accountId: cash, date: day(1), odometer: 41720, liters: 35, fuelTypeId: 2, pricePerLiter: 19.25, latitude: 30.04, longitude: 31.48));
   final budgets = BudgetRepository(db);
   await budgets.setBudget(cats['أكل و شرب']!, 1500);
   await budgets.setBudget(cats['مواصلات']!, 4000);
@@ -175,6 +193,22 @@ void main() {
       '19_security': '/security',
       '20_backup': '/backup',
     });
+  });
+
+  testWidgets('v5 screens', (tester) async {
+    await shoot(tester, onboarded: true, shots: {
+      '21_installments': '/installments',
+      '22_installment': '/installments/1',
+      '23_installment_form': '/installments/new',
+      '24_cars': '/cars',
+      '25_car': '/cars/1',
+      '27_fuel': '/fuel-prices',
+      '28_home_categories': '/home',
+    });
+  });
+
+  testWidgets('setup screen', (tester) async {
+    await shoot(tester, onboarded: false, shots: {'29_setup': '/setup', '01_welcome': '/onboarding'});
   });
 
   testWidgets('dark home', (tester) async {

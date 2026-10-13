@@ -236,3 +236,69 @@ class Accounts extends Table with SyncColumns {
   IntColumn get cardId => integer().nullable().references(Cards, #id)();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
 }
+
+/// Installment plans (on this device only): who is financing it, total, monthly amount, number of
+/// months and the day of the month each installment is due. Reminders are local notifications.
+class Installments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  /// What was bought on installments (e.g. "ثلاجة").
+  TextColumn get title => text()();
+  /// جهة التقسيط (valU, a bank, a shop...).
+  TextColumn get provider => text()();
+  RealColumn get totalAmount => real()();
+  RealColumn get installmentAmount => real()();
+  IntColumn get months => integer()();
+  /// 1-31, clamped to each month's last day.
+  IntColumn get dueDay => integer()();
+  /// Month of the first installment (the day part is ignored).
+  DateTimeColumn get startMonth => dateTime()();
+  TextColumn get notes => text().nullable()();
+  BoolColumn get remindersEnabled => boolean().withDefault(const Constant(true))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// One paid installment (number 1..months). The optional expense it created is kept so deleting
+/// the payment can remove it again.
+class InstallmentPayments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get installmentId => integer().references(Installments, #id, onDelete: KeyAction.cascade)();
+  IntColumn get number => integer()();
+  RealColumn get amount => real()();
+  DateTimeColumn get paidAt => dateTime()();
+  IntColumn get transactionId => integer().nullable()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+        {installmentId, number},
+      ];
+}
+
+class Cars extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get brand => text()();
+  IntColumn get modelYear => integer()();
+  TextColumn get plate => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Master data: fuel grades and their current price per litre.
+class FuelTypes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  RealColumn get pricePerLiter => real()();
+}
+
+/// A car expense: the money side is an ordinary transaction (category, amount, account), this row
+/// adds the odometer, litres and where it was recorded.
+class CarExpenses extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get carId => integer().references(Cars, #id, onDelete: KeyAction.cascade)();
+  IntColumn get transactionId => integer().references(Transactions, #id, onDelete: KeyAction.cascade)();
+  IntColumn get odometer => integer().nullable()();
+  RealColumn get liters => real().nullable()();
+  IntColumn get fuelTypeId => integer().nullable()();
+  RealColumn get pricePerLiter => real().nullable()();
+  RealColumn get latitude => real().nullable()();
+  RealColumn get longitude => real().nullable()();
+}

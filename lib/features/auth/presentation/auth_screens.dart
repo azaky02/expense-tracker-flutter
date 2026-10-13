@@ -99,14 +99,8 @@ class WelcomeScreen extends ConsumerWidget {
                 const Spacer(),
                 FilledButton(
                   style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2F6BEA)),
-                  onPressed: () => ref.read(settingsProvider.notifier).completeOnboarding(),
-                  child: Text('welcome.start'.tr()),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
-                  onPressed: () => context.push('/login'),
-                  child: Text('auth.signIn'.tr()),
+                  onPressed: () => context.push('/setup'),
+                  child: Text('setup.create'.tr()),
                 ),
                 const SizedBox(height: 8),
                 Text('welcome.offlineNote'.tr(),

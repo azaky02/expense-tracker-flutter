@@ -11,6 +11,8 @@
 	<string>لتصوير الفاتورة وإرفاقها بالمصروف.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>لاختيار صورة الفاتورة من المعرض.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>يسجّل التطبيق موقع مصروف السيارة (مثل محطة البنزين) عند تسجيله.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>لفتح التطبيق ببصمة الوجه بدل رمز PIN.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

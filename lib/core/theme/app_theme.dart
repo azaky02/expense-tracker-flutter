@@ -164,6 +164,9 @@ class AppTheme {
         backgroundColor: scheme.primary,
         foregroundColor: scheme.onPrimary,
         shape: const CircleBorder(),
+        // Extended buttons ("+ إضافة ...") keep a pill shape instead of the round centre button's.
+        extendedSizeConstraints: const BoxConstraints.tightFor(height: 52),
+        extendedPadding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
         elevation: 4,
       ),
       bottomAppBarTheme: BottomAppBarThemeData(color: scheme.surface, elevation: 8, shadowColor: Colors.black26),

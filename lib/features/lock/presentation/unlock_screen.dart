@@ -19,10 +19,15 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
   String _pin = '';
   bool _wrongPin = false;
   final _localAuth = LocalAuthentication();
+  /// False when the user chose Face ID / fingerprint only at sign-up (no PIN pad then).
+  bool _hasPin = true;
 
   @override
   void initState() {
     super.initState();
+    SecureStorageService.instance.hasPinSet().then((v) {
+      if (mounted) setState(() => _hasPin = v);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _maybeTryBiometrics());
   }
 
@@ -79,16 +84,23 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                 child: Icon(Icons.verified_user_rounded, size: 52, color: Theme.of(context).colorScheme.primary),
               ),
               const SizedBox(height: 20),
-              Text('security.enterPin'.tr(), style: Theme.of(context).textTheme.titleLarge),
+              Text((_hasPin ? 'security.enterPin' : 'security.useBiometrics').tr(), style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 6),
               Text('security.unlockPrompt'.tr(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               const SizedBox(height: 20),
-              if (_wrongPin)
+              if (!_hasPin)
+                FilledButton.icon(
+                  onPressed: _maybeTryBiometrics,
+                  icon: const Icon(Icons.face_retouching_natural),
+                  label: Text('security.useBiometrics'.tr()),
+                ),
+              if (_hasPin && _wrongPin)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text('security.wrongPin'.tr(),
                       style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 ),
+              if (_hasPin) ...[
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(_pinLength, (i) {
@@ -132,7 +144,8 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                   ],
                 ),
               ),
-              if (biometricEnabled)
+              ],
+              if (biometricEnabled && _hasPin)
                 TextButton(
                   onPressed: _maybeTryBiometrics,
                   child: Text('security.useBiometrics'.tr()),

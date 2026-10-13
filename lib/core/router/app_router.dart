@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
 import '../../features/auth/presentation/auth_screens.dart';
+import '../../features/auth/presentation/setup_screen.dart';
+import '../../features/cars/presentation/cars_screens.dart';
+import '../../features/installments/presentation/installments_screens.dart';
 import '../../features/budgets/presentation/budgets_screen.dart';
 import '../../features/categories/presentation/category_management_screen.dart';
 import '../../features/transactions/presentation/transaction_filters_screen.dart';
@@ -52,7 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final settings = ref.read(settingsProvider);
       final isUnlocked = ref.read(lockProvider);
       // Welcome, sign-in and registration are all reachable before onboarding is complete.
-      final goingToOnboarding = const {'/onboarding', '/login', '/register'}.contains(state.matchedLocation);
+      final goingToOnboarding = const {'/onboarding', '/login', '/register', '/setup'}.contains(state.matchedLocation);
       final goingToUnlock = state.matchedLocation == '/unlock';
 
       if (!settings.hasOnboarded) {
@@ -69,6 +72,36 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding', builder: (context, state) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(path: '/setup', builder: (context, state) => const SetupScreen()),
+      GoRoute(path: '/installments', builder: (context, state) => const InstallmentsScreen()),
+      GoRoute(
+        path: '/installments/new',
+        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: InstallmentFormScreen()),
+      ),
+      GoRoute(
+        path: '/installments/:id',
+        builder: (context, state) => InstallmentDetailsScreen(installmentId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/installments/:id/edit',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: InstallmentFormScreen(installmentId: int.parse(state.pathParameters['id']!)),
+        ),
+      ),
+      GoRoute(path: '/cars', builder: (context, state) => const CarsScreen()),
+      GoRoute(path: '/fuel-prices', builder: (context, state) => const FuelPricesScreen()),
+      GoRoute(
+        path: '/cars/:id',
+        builder: (context, state) => CarDetailsScreen(carId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/cars/:id/expense',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: CarExpenseFormScreen(carId: int.parse(state.pathParameters['id']!)),
+        ),
+      ),
       GoRoute(path: '/unlock', builder: (context, state) => const UnlockScreen()),
       GoRoute(
         path: '/reports',

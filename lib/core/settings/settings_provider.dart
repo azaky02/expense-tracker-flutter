@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'settings_state.dart';
 
 const _kUserName = 'settings.userName';
+const _kUserPhone = 'settings.userPhone';
 const _kLanguage = 'settings.languageCode';
 const _kCalendar = 'settings.calendar';
 const _kThemeMode = 'settings.themeMode';
@@ -26,6 +27,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     _prefs = await SharedPreferences.getInstance();
     state = SettingsState(
       userName: _prefs.getString(_kUserName) ?? '',
+      userPhone: _prefs.getString(_kUserPhone) ?? '',
       languageCode: _prefs.getString(_kLanguage) ?? 'ar',
       calendar: CalendarSystem.values[_prefs.getInt(_kCalendar) ?? 0],
       themeMode: AppThemeMode.values[_prefs.getInt(_kThemeMode) ?? 0],
@@ -38,6 +40,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setUserName(String name) async {
     state = state.copyWith(userName: name);
     await _prefs.setString(_kUserName, name);
+  }
+
+  Future<void> setUserPhone(String phone) async {
+    state = state.copyWith(userPhone: phone);
+    await _prefs.setString(_kUserPhone, phone);
   }
 
   Future<void> setLanguage(String code) async {
