@@ -115,6 +115,7 @@ void main() {
     SharedPreferences.setMockInitialValues({
       'settings.hasOnboarded': onboarded,
       'settings.userName': 'عمرو',
+      'settings.userPhone': '01001234567',
       'settings.languageCode': 'ar',
     });
     await EasyLocalization.ensureInitialized();

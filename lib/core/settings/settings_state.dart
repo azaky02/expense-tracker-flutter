@@ -6,6 +6,7 @@ class SettingsState {
   const SettingsState({
     this.userName = '',
     this.userPhone = '',
+    this.loaded = false,
     this.languageCode = 'ar',
     this.calendar = CalendarSystem.gregorian,
     this.themeMode = AppThemeMode.system,
@@ -16,6 +17,8 @@ class SettingsState {
 
   final String userName;
   final String userPhone;
+  /// False until the stored preferences have been read.
+  final bool loaded;
   final String languageCode;
   final CalendarSystem calendar;
   final AppThemeMode themeMode;
@@ -36,6 +39,7 @@ class SettingsState {
     return SettingsState(
       userName: userName ?? this.userName,
       userPhone: userPhone ?? this.userPhone,
+      loaded: loaded,
       languageCode: languageCode ?? this.languageCode,
       calendar: calendar ?? this.calendar,
       themeMode: themeMode ?? this.themeMode,

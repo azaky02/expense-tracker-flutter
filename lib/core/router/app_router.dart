@@ -64,6 +64,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (settings.appLockEnabled && !isUnlocked) {
         return goingToUnlock ? null : '/unlock';
       }
+      // Users from before on-device sign-up (no mobile number yet) complete it once.
+      if (settings.loaded && settings.userPhone.isEmpty) {
+        return state.matchedLocation == '/setup' ? null : '/setup';
+      }
       // Login/register stay reachable later (e.g. from More); only the welcome page is one-time.
       if (state.matchedLocation == '/onboarding' || goingToUnlock) return '/home';
       return null;

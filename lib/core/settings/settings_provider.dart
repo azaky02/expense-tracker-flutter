@@ -28,6 +28,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = SettingsState(
       userName: _prefs.getString(_kUserName) ?? '',
       userPhone: _prefs.getString(_kUserPhone) ?? '',
+      loaded: true,
       languageCode: _prefs.getString(_kLanguage) ?? 'ar',
       calendar: CalendarSystem.values[_prefs.getInt(_kCalendar) ?? 0],
       themeMode: AppThemeMode.values[_prefs.getInt(_kThemeMode) ?? 0],
