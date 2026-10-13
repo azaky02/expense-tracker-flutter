@@ -513,7 +513,8 @@
     "bioUnavailable": "Not available on this device",
     "biometricsReason": "Confirm it is you to protect the app",
     "create": "Create account",
-    "localNote": "The account lives on this device only and needs no internet."
+    "localNote": "The account lives on this device only and needs no internet.",
+    "recoveredNotice": "The previous data on this phone could not be opened (its encryption key was lost, usually after uninstalling and reinstalling), so the app started fresh. If you have a backup, restore it from More → Backup."
   },
   "installments": {
     "title": "Installments",

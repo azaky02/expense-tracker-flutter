@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/db/database.dart' show unreadableDbRecoveredKey;
 
 import '../../../core/security/lock_provider.dart';
 import '../../../core/security/secure_storage.dart';
@@ -46,6 +49,15 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   SetupLock _lock = SetupLock.pin;
   bool _busy = false;
   String? _error;
+  bool _recovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SharedPreferences.getInstance().then((p) {
+      if (mounted && (p.getBool(unreadableDbRecoveredKey) ?? false)) setState(() => _recovered = true);
+    });
+  }
 
   @override
   void dispose() {
@@ -94,6 +106,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
       await settings.setBiometricEnabled(_lock == SetupLock.biometrics);
       await settings.setAppLockEnabled(true);
       ref.read(lockProvider.notifier).unlock();
+      (await SharedPreferences.getInstance()).remove(unreadableDbRecoveredKey);
       // Router redirect takes the user to Home once onboarding is complete.
       await settings.completeOnboarding();
     } catch (_) {
@@ -141,6 +154,18 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           Text('setup.title'.tr(), textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
           Text('setup.subtitle'.tr(),
               textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          if (_recovered)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: AppCard(
+                color: DS.warningSoft,
+                child: Row(children: [
+                  const Icon(Icons.info_outline, color: DS.warning),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('setup.recoveredNotice'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.text))),
+                ]),
+              ),
+            ),
           FieldLabel('setup.name'.tr()),
           TextField(
             controller: _name,
