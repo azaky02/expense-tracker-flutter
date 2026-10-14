@@ -186,23 +186,32 @@ Future<void> showCarForm(BuildContext context, WidgetRef ref, {Car? car}) async 
                       decoration: InputDecoration(hintText: 'cars.nameHint'.tr()),
                       onChanged: (_) => setState(() {}),
                     ),
-                    FieldLabel('cars.brand'.tr()),
-                    TextField(
-                      controller: brand,
-                      decoration: InputDecoration(hintText: 'cars.brandHint'.tr()),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                    FieldLabel('cars.modelYear'.tr()),
-                    TextField(
-                      controller: year,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        const AsciiDigitsFormatter(),
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(4),
+                    FieldRow(
+                      flex: const [5, 3],
+                      [
+                        (
+                          'cars.brand'.tr(),
+                          TextField(
+                            controller: brand,
+                            decoration: InputDecoration(hintText: 'cars.brandHint'.tr()),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        (
+                          'cars.modelYear'.tr(),
+                          TextField(
+                            controller: year,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              const AsciiDigitsFormatter(),
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(4),
+                            ],
+                            decoration: const InputDecoration(hintText: '2022'),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
                       ],
-                      decoration: const InputDecoration(hintText: '2022'),
-                      onChanged: (_) => setState(() {}),
                     ),
                     FieldLabel('${'cars.plate'.tr()} (${'common.optional'.tr()})'),
                     TextField(controller: plate),
@@ -731,50 +740,73 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
               if (id != null) setState(() => _categoryId = id);
             },
           ),
-          FieldLabel('transactions.date'.tr()),
-          PickerField(
-            text: DateFormat.yMMMMd(context.locale.languageCode).format(_date),
-            trailingIcon: Icons.calendar_today_outlined,
-            onTap: () async {
-              final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2000), lastDate: DateTime(2100));
-              if (d != null) setState(() => _date = d);
-            },
+          FieldRow(
+            flex: const [5, 4],
+            [
+              (
+                'transactions.date'.tr(),
+                PickerField(
+                  text: DateFormat.yMMMd(context.locale.languageCode).format(_date),
+                  trailingIcon: Icons.calendar_today_outlined,
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: context,
+                      initialDate: _date,
+                      firstDate: DateTime(2000),
+                      lastDate: DateTime(2100),
+                    );
+                    if (d != null) setState(() => _date = d);
+                  },
+                ),
+              ),
+              (
+                'cars.odometer'.tr(),
+                TextField(
+                  controller: _odometer,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+                  decoration: InputDecoration(
+                    hintText: lastOdo == null ? 'cars.km'.tr() : NumberFormat.decimalPattern().format(lastOdo),
+                    suffixText: 'cars.km'.tr(),
+                  ),
+                ),
+              ),
+            ],
           ),
-          FieldLabel('cars.odometer'.tr()),
-          TextField(
-            controller: _odometer,
-            keyboardType: TextInputType.number,
-            inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              hintText: lastOdo == null
-                  ? 'cars.odometerHint'.tr()
-                  : 'cars.lastOdometer'.tr(namedArgs: {'km': NumberFormat.decimalPattern().format(lastOdo)}),
-              suffixText: 'cars.km'.tr(),
-            ),
-          ),
-          if (_isFuel || _liters.text.isNotEmpty) ...[
-            FieldLabel('fuel.type'.tr()),
-            DropdownButtonFormField<int>(
-              isExpanded: true,
-              initialValue: _fuelTypeId,
-              items: [
-                for (final f in types)
-                  DropdownMenuItem(value: f.id, child: Text('${f.name} — ${formatAmount(f.pricePerLiter)} ${'fuel.perLiter'.tr()}')),
+          if (_isFuel || _liters.text.isNotEmpty)
+            FieldRow(
+              flex: const [5, 4],
+              [
+                (
+                  'fuel.type'.tr(),
+                  DropdownButtonFormField<int>(
+                    isExpanded: true,
+                    initialValue: _fuelTypeId,
+                    items: [
+                      for (final f in types)
+                        DropdownMenuItem(
+                          value: f.id,
+                          child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (v) => setState(() {
+                      _fuelTypeId = v;
+                      _recalc(types);
+                    }),
+                  ),
+                ),
+                (
+                  'cars.liters'.tr(),
+                  TextField(
+                    controller: _liters,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: const [AsciiDigitsFormatter()],
+                    decoration: InputDecoration(suffixText: 'cars.litersUnit'.tr()),
+                    onChanged: (_) => setState(() => _recalc(types)),
+                  ),
+                ),
               ],
-              onChanged: (v) => setState(() {
-                _fuelTypeId = v;
-                _recalc(types);
-              }),
             ),
-            FieldLabel('cars.liters'.tr()),
-            TextField(
-              controller: _liters,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: const [AsciiDigitsFormatter()],
-              decoration: InputDecoration(suffixText: 'cars.litersUnit'.tr()),
-              onChanged: (_) => setState(() => _recalc(types)),
-            ),
-          ],
           FieldLabel('cars.amountPaid'.tr()),
           AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
           if (_isFuel && _fuel(types) != null && _parse(_amount.text) > 0 && _parse(_liters.text) == 0)
@@ -785,23 +817,29 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
                 child: Text('cars.calcLiters'.tr()),
               ),
             ),
-          FieldLabel('cars.paymentMethod'.tr()),
-          PickerField(
-            text: account?.account.name ?? 'accounts.choose'.tr(),
-            placeholder: account == null,
-            leading: account == null ? null : AccountBubble(account, size: 28),
-            onTap: () async {
-              final id = await showAccountPicker(context, selectedId: _accountId);
-              if (id != null) setState(() => _accountId = id);
-            },
-          ),
-          FieldLabel('${'cars.station'.tr()} (${'common.optional'.tr()})'),
-          TextField(
-            controller: _station,
-            decoration: InputDecoration(hintText: 'cars.stationHint'.tr()),
-          ),
+          FieldRow([
+            (
+              'cars.paymentMethod'.tr(),
+              PickerField(
+                text: account?.account.name ?? 'accounts.choose'.tr(),
+                placeholder: account == null,
+                leading: account == null ? null : AccountBubble(account, size: 22),
+                onTap: () async {
+                  final id = await showAccountPicker(context, selectedId: _accountId);
+                  if (id != null) setState(() => _accountId = id);
+                },
+              ),
+            ),
+            (
+              'cars.station'.tr(),
+              TextField(
+                controller: _station,
+                decoration: InputDecoration(hintText: 'cars.stationHintShort'.tr()),
+              ),
+            ),
+          ]),
           FieldLabel('${'transactions.notes'.tr()} (${'common.optional'.tr()})'),
-          TextField(controller: _note, maxLines: 2),
+          TextField(controller: _note, minLines: 1, maxLines: 3),
           const SizedBox(height: 12),
           AppCard(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

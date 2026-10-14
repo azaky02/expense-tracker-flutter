@@ -617,7 +617,8 @@
     "monthsUnit": "months",
     "licenseExpiry": "Licence expiry",
     "insuranceExpiry": "Insurance expiry",
-    "chooseDate": "Choose a date"
+    "chooseDate": "Choose a date",
+    "stationHintShort": "e.g. Wataniya"
   },
   "fuel": {
     "title": "Fuel prices",
@@ -710,6 +711,15 @@
     "insightFuelShare": "Fuel is {p}% of all car spending.",
     "insightFuelType": "Most economical fuel for your car: {name} ({l} L/100km).",
     "insightNeedTwoFills": "At least two fill-ups with odometer readings are needed to work out consumption.",
-    "insightNoFills": "Record fuel with litres and the odometer to see consumption and the best station."
+    "insightNoFills": "Record fuel with litres and the odometer to see consumption and the best station.",
+    "month": "Month",
+    "distance": "Distance (km)",
+    "stationsSheet": "Stations",
+    "monthlySheet": "Monthly",
+    "exportTitle": "Export car report",
+    "exportHint": "Summary, insights, maintenance, best station, monthly spend, fill-up log and every expense.",
+    "l100": "L/100km",
+    "status": "Item",
+    "due": "Due"
   }
 }

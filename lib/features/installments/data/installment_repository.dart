@@ -48,34 +48,25 @@ class InstallmentRepository {
 
   List<InstallmentDue> _schedule(Installment plan, List<InstallmentPayment> payments) {
     final byNumber = {for (final p in payments) p.number: p};
-    return [
-      for (var n = 1; n <= plan.months; n++) InstallmentDue(number: n, dueDate: installmentDueDate(plan, n), payment: byNumber[n]),
-    ];
+    return [for (var n = 1; n <= plan.months; n++) InstallmentDue(number: n, dueDate: installmentDueDate(plan, n), payment: byNumber[n])];
   }
 
   /// Re-emits whenever a plan or a payment changes.
   Stream<List<InstallmentWithSchedule>> watchAllWithPayments() {
-    return _db
-        .customSelect('SELECT 1', readsFrom: {_db.installments, _db.installmentPayments})
-        .watch()
-        .asyncMap((_) => loadAll());
+    return _db.customSelect('SELECT 1', readsFrom: {_db.installments, _db.installmentPayments}).watch().asyncMap((_) => loadAll());
   }
 
   Future<List<InstallmentWithSchedule>> loadAll() async {
     final plans = await (_db.select(_db.installments)..orderBy([(i) => OrderingTerm.desc(i.createdAt)])).get();
     final payments = await _db.select(_db.installmentPayments).get();
-    return [
-      for (final p in plans) InstallmentWithSchedule(p, _schedule(p, payments.where((x) => x.installmentId == p.id).toList())),
-    ];
+    return [for (final p in plans) InstallmentWithSchedule(p, _schedule(p, payments.where((x) => x.installmentId == p.id).toList()))];
   }
 
-  Stream<InstallmentWithSchedule?> watchOne(int id) =>
-      watchAllWithPayments().map((all) => all.where((x) => x.plan.id == id).firstOrNull);
+  Stream<InstallmentWithSchedule?> watchOne(int id) => watchAllWithPayments().map((all) => all.where((x) => x.plan.id == id).firstOrNull);
 
   Future<int> create(InstallmentsCompanion data) => _db.into(_db.installments).insert(data);
 
-  Future<void> update(int id, InstallmentsCompanion data) =>
-      (_db.update(_db.installments)..where((i) => i.id.equals(id))).write(data);
+  Future<void> update(int id, InstallmentsCompanion data) => (_db.update(_db.installments)..where((i) => i.id.equals(id))).write(data);
 
   Future<void> delete(int id) async {
     await _db.transaction(() async {
@@ -94,22 +85,33 @@ class InstallmentRepository {
         final account = await (_db.select(_db.accounts)..where((a) => a.id.equals(accountId))).getSingleOrNull();
         final categoryId = await seededCategoryId(_db, 'seed-cat-installments');
         if (account != null && categoryId != null) {
-          txId = await _db.into(_db.transactions).insert(TransactionsCompanion.insert(
-                amount: amount,
-                type: TransactionType.expense,
-                categoryId: categoryId,
-                paymentMethodType: account.cardId != null ? PaymentMethodType.card : PaymentMethodType.cash,
-                cardId: Value(account.cardId),
-                date: DateTime(when.year, when.month, when.day),
-                note: Value('${plan.title} – $number/${plan.months}'),
-                beneficiaryName: Value(plan.provider),
-                accountId: Value(accountId),
-              ));
+          txId = await _db
+              .into(_db.transactions)
+              .insert(
+                TransactionsCompanion.insert(
+                  amount: amount,
+                  type: TransactionType.expense,
+                  categoryId: categoryId,
+                  paymentMethodType: account.cardId != null ? PaymentMethodType.card : PaymentMethodType.cash,
+                  cardId: Value(account.cardId),
+                  date: DateTime(when.year, when.month, when.day),
+                  note: Value('${plan.title} – $number/${plan.months}'),
+                  beneficiaryName: Value(plan.provider),
+                  accountId: Value(accountId),
+                ),
+              );
         }
       }
-      await _db.into(_db.installmentPayments).insert(
+      await _db
+          .into(_db.installmentPayments)
+          .insert(
             InstallmentPaymentsCompanion.insert(
-                installmentId: plan.id, number: number, amount: amount, paidAt: when, transactionId: Value(txId)),
+              installmentId: plan.id,
+              number: number,
+              amount: amount,
+              paidAt: when,
+              transactionId: Value(txId),
+            ),
             mode: InsertMode.insertOrReplace,
           );
     });

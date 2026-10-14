@@ -81,9 +81,11 @@ class InstallmentReminders {
     try {
       await _init();
       await _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
-      await _plugin
-          .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(alert: true, badge: true, sound: true);
+      await _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
     } catch (e) {
       debugPrint('notification permission: $e');
     }
@@ -161,9 +163,11 @@ class InstallmentReminders {
       );
       for (var i = 0; i < slots.length; i++) {
         final s = slots[i];
-        final daysLeft = DateTime(s.due.dueDate.year, s.due.dueDate.month, s.due.dueDate.day)
-            .difference(DateTime(s.when.year, s.when.month, s.when.day))
-            .inDays;
+        final daysLeft = DateTime(
+          s.due.dueDate.year,
+          s.due.dueDate.month,
+          s.due.dueDate.day,
+        ).difference(DateTime(s.when.year, s.when.month, s.when.day)).inDays;
         final amount = s.item.plan.installmentAmount;
         await _plugin.zonedSchedule(
           id: _idBase + i,
@@ -171,13 +175,15 @@ class InstallmentReminders {
           notificationDetails: details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           title: 'installments.reminderTitle'.tr(namedArgs: {'title': s.item.plan.title}),
-          body: (daysLeft == 0 ? 'installments.reminderToday' : 'installments.reminderBody').tr(namedArgs: {
-            'amount': formatAmount(amount),
-            'provider': s.item.plan.provider,
-            'days': '$daysLeft',
-            'date': DateFormat.yMMMd('ar').format(s.due.dueDate),
-            'number': '${s.due.number}/${s.item.plan.months}',
-          }),
+          body: (daysLeft == 0 ? 'installments.reminderToday' : 'installments.reminderBody').tr(
+            namedArgs: {
+              'amount': formatAmount(amount),
+              'provider': s.item.plan.provider,
+              'days': '$daysLeft',
+              'date': DateFormat.yMMMd('ar').format(s.due.dueDate),
+              'number': '${s.due.number}/${s.item.plan.months}',
+            },
+          ),
         );
       }
     } catch (e) {

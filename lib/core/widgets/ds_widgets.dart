@@ -43,7 +43,15 @@ class AppCard extends StatelessWidget {
 
 /// Money is always shown with its currency, in Inter, with an optional sign and colour.
 class AmountText extends StatelessWidget {
-  const AmountText(this.amount, {super.key, this.currency = 'EGP', this.color, this.size = 15, this.signed = false, this.weight = FontWeight.w700});
+  const AmountText(
+    this.amount, {
+    super.key,
+    this.currency = 'EGP',
+    this.color,
+    this.size = 15,
+    this.signed = false,
+    this.weight = FontWeight.w700,
+  });
   final double amount;
   final String currency;
   final Color? color;
@@ -53,15 +61,26 @@ class AmountText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sign = signed ? (amount > 0 ? '+' : amount < 0 ? '-' : '') : (amount < 0 ? '-' : '');
+    final sign = signed
+        ? (amount > 0
+              ? '+'
+              : amount < 0
+              ? '-'
+              : '')
+        : (amount < 0 ? '-' : '');
     final style = AppTheme.numbers(fontSize: size, fontWeight: weight, color: color ?? Theme.of(context).colorScheme.onSurface);
     return Directionality(
       textDirection: ui.TextDirection.ltr,
       child: Text.rich(
-        TextSpan(children: [
-          TextSpan(text: '$sign${formatAmount(amount.abs())}', style: style),
-          TextSpan(text: ' $currency', style: style.copyWith(fontSize: size * 0.62, fontWeight: FontWeight.w600)),
-        ]),
+        TextSpan(
+          children: [
+            TextSpan(text: '$sign${formatAmount(amount.abs())}', style: style),
+            TextSpan(
+              text: ' $currency',
+              style: style.copyWith(fontSize: size * 0.62, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -124,10 +143,16 @@ class StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (icon != null) ...[Icon(icon, size: 12, color: color), const SizedBox(width: 4)],
-        Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[Icon(icon, size: 12, color: color), const SizedBox(width: 4)],
+          Text(
+            text,
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -154,7 +179,11 @@ class EmptyState extends StatelessWidget {
           Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
           if (message != null) ...[
             const SizedBox(height: 6),
-            Text(message!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant), textAlign: TextAlign.center),
+            Text(
+              message!,
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              textAlign: TextAlign.center,
+            ),
           ],
           if (actionLabel != null) ...[
             const SizedBox(height: 16),
@@ -182,19 +211,22 @@ class ErrorState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          IconBubble(icon: Icons.error_outline, color: theme.colorScheme.error, size: 64),
-          const SizedBox(height: 12),
-          Text(message, textAlign: TextAlign.center),
-          if (onRetry != null) ...[
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconBubble(icon: Icons.error_outline, color: theme.colorScheme.error, size: 64),
             const SizedBox(height: 12),
-            OutlinedButton(
-              style: OutlinedButton.styleFrom(minimumSize: const Size(140, 44)),
-              onPressed: onRetry,
-              child: Text('common.retry'.tr(context: context)),
-            ),
+            Text(message, textAlign: TextAlign.center),
+            if (onRetry != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(minimumSize: const Size(140, 44)),
+                onPressed: onRetry,
+                child: Text('common.retry'.tr(context: context)),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -232,10 +264,10 @@ class SyncStatusBadge extends ConsumerWidget {
     final (icon, color, label) = switch (s.status) {
       SyncStatus.syncing => (Icons.sync, DS.primary, 'sync.syncing'),
       SyncStatus.error => (
-          s.errorCode == 'network' ? Icons.cloud_off_outlined : Icons.error_outline,
-          DS.warning,
-          s.errorCode == 'network' ? 'sync.offline' : 'sync.failed'
-        ),
+        s.errorCode == 'network' ? Icons.cloud_off_outlined : Icons.error_outline,
+        DS.warning,
+        s.errorCode == 'network' ? 'sync.offline' : 'sync.failed',
+      ),
       _ => (Icons.cloud_done_outlined, DS.success, 'sync.synced'),
     };
     return Tooltip(
@@ -255,14 +287,44 @@ class FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 14, bottom: 6),
-        child: Text(text, style: Theme.of(context).textTheme.labelLarge),
-      );
+    padding: const EdgeInsets.only(top: 10, bottom: 4),
+    child: Text(text, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge),
+  );
+}
+
+/// Two (or more) labelled fields side by side, e.g. date | odometer. Each entry is (label, field).
+class FieldRow extends StatelessWidget {
+  const FieldRow(this.fields, {super.key, this.flex});
+  final List<(String, Widget)> fields;
+
+  /// Optional relative widths, one per field.
+  final List<int>? flex;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      for (var i = 0; i < fields.length; i++) ...[
+        if (i > 0) const SizedBox(width: 10),
+        Expanded(
+          flex: flex?[i] ?? 1,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [FieldLabel(fields[i].$1), fields[i].$2]),
+        ),
+      ],
+    ],
+  );
 }
 
 /// Tappable box that looks like an input with a trailing chevron (pickers).
 class PickerField extends StatelessWidget {
-  const PickerField({super.key, required this.text, this.placeholder = false, this.leading, this.trailingIcon = Icons.keyboard_arrow_down, required this.onTap});
+  const PickerField({
+    super.key,
+    required this.text,
+    this.placeholder = false,
+    this.leading,
+    this.trailingIcon = Icons.keyboard_arrow_down,
+    required this.onTap,
+  });
   final String text;
   final bool placeholder;
   final Widget? leading;
@@ -276,23 +338,25 @@ class PickerField extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(DS.radius),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(DS.radius),
           border: Border.all(color: theme.colorScheme.outline),
         ),
-        child: Row(children: [
-          if (leading != null) ...[leading!, const SizedBox(width: 10)],
-          Expanded(
-            child: Text(
-              text,
-              overflow: TextOverflow.ellipsis,
-              style: placeholder ? TextStyle(color: theme.colorScheme.onSurfaceVariant) : null,
+        child: Row(
+          children: [
+            if (leading != null) ...[leading!, const SizedBox(width: 10)],
+            Expanded(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                style: placeholder ? TextStyle(color: theme.colorScheme.onSurfaceVariant) : null,
+              ),
             ),
-          ),
-          Icon(trailingIcon, color: theme.colorScheme.onSurfaceVariant, size: 20),
-        ]),
+            Icon(trailingIcon, color: theme.colorScheme.onSurfaceVariant, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -300,11 +364,13 @@ class PickerField extends StatelessWidget {
 
 /// Big centred amount input with the currency (amount is always the first field, UX §19).
 class AmountField extends StatelessWidget {
-  const AmountField({super.key, required this.controller, this.onChanged, this.autofocus = false, this.currency = 'EGP'});
+  const AmountField({super.key, required this.controller, this.onChanged, this.autofocus = false, this.currency = 'EGP', this.compact = false});
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
   final bool autofocus;
   final String currency;
+  /// Normal-height version for use next to other fields in a [FieldRow].
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -316,11 +382,11 @@ class AmountField extends StatelessWidget {
       inputFormatters: const [AsciiDigitsFormatter()],
       textAlign: TextAlign.start,
       textDirection: ui.TextDirection.ltr,
-      style: AppTheme.numbers(fontSize: 26, fontWeight: FontWeight.w700),
+      style: AppTheme.numbers(fontSize: compact ? 16 : 22, fontWeight: FontWeight.w700),
       decoration: InputDecoration(
         hintText: '0.00',
         suffixText: currency,
-        suffixStyle: AppTheme.numbers(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        suffixStyle: AppTheme.numbers(fontSize: compact ? 12 : 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }

@@ -1,13 +1,20 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../core/security/lock_provider.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/widgets/ds_widgets.dart';
 import '../data/car_analytics.dart';
 import '../data/car_repository.dart';
+import 'car_report_export.dart';
 
 String _n1(double v) => NumberFormat('#,##0.0', 'en').format(v);
 String _km(int v) => NumberFormat.decimalPattern('en').format(v);
@@ -26,27 +33,56 @@ IconData _maintenanceIcon(MaintenanceKind k) => switch (k) {
 };
 
 /// One-line status, e.g. "تغيير الزيت بعد 800 كم أو 12 يوم".
-String maintenanceText(MaintenanceStatus m) {
-  final title = 'carMaint.${m.kind.name}'.tr();
+typedef Tr = String Function(String key, [Map<String, String>? args]);
+
+String trKey(String key, [Map<String, String>? args]) => key.tr(namedArgs: args);
+
+String maintenanceText(MaintenanceStatus m, [Tr t = trKey]) {
+  final title = t('carMaint.${m.kind.name}');
   if (m.level == MaintenanceLevel.unknown) {
-    return m.kind == MaintenanceKind.oil ? 'carMaint.oilUnknown'.tr() : 'carMaint.noDate'.tr(namedArgs: {'title': title});
+    return m.kind == MaintenanceKind.oil ? t('carMaint.oilUnknown') : t('carMaint.noDate', {'title': title});
   }
   final parts = <String>[];
   if (m.remainingKm != null) {
-    parts.add(
-      m.remainingKm! <= 0
-          ? 'carMaint.kmOver'.tr(namedArgs: {'km': _km(-m.remainingKm!)})
-          : 'carMaint.kmLeft'.tr(namedArgs: {'km': _km(m.remainingKm!)}),
-    );
+    parts.add(m.remainingKm! <= 0 ? t('carMaint.kmOver', {'km': _km(-m.remainingKm!)}) : t('carMaint.kmLeft', {'km': _km(m.remainingKm!)}));
   }
   if (m.remainingDays != null) {
     parts.add(
       m.remainingDays! < 0
-          ? 'carMaint.daysOver'.tr(namedArgs: {'days': '${-m.remainingDays!}'})
-          : 'carMaint.daysLeft'.tr(namedArgs: {'days': '${m.remainingDays}'}),
+          ? t('carMaint.daysOver', {'days': '${-m.remainingDays!}'})
+          : t('carMaint.daysLeft', {'days': '${m.remainingDays}'}),
     );
   }
   return '$title: ${parts.join(' · ')}';
+}
+
+/// Plain-language observations from the numbers.
+List<String> carInsights(CarAnalytics a, [Tr t = trKey]) {
+  final out = <String>[];
+  final stations = a.stations;
+  if (stations.length >= 2) {
+    final best = stations.first, worst = stations.last;
+    final diff = (worst.litersPer100Km - best.litersPer100Km) / worst.litersPer100Km * 100;
+    out.add(t('carReport.insightBestStation', {'best': best.name, 'l': _n1(best.litersPer100Km), 'worst': worst.name, 'p': _n1(diff)}));
+  } else if (stations.length == 1) {
+    out.add(t('carReport.insightOneStation', {'name': stations.first.name}));
+  }
+  final last = a.lastVsAveragePercent;
+  if (last != null && last.abs() >= 5) {
+    out.add(t(last > 0 ? 'carReport.insightLastWorse' : 'carReport.insightLastBetter', {'p': _n1(last.abs())}));
+  }
+  if (a.totalSpent > 0 && a.fuelSpent > 0) {
+    out.add(t('carReport.insightFuelShare', {'p': '${(a.fuelSpent / a.totalSpent * 100).round()}'}));
+  }
+  final types = a.fuelTypes;
+  if (types.length >= 2) {
+    out.add(t('carReport.insightFuelType', {'name': types.first.name, 'l': _n1(types.first.litersPer100Km)}));
+  }
+  final oil = a.oil;
+  if (oil.needsAttention) out.add(maintenanceText(oil, t));
+  if (a.segments.isEmpty && a.fills.isNotEmpty) out.add(t('carReport.insightNeedTwoFills'));
+  if (a.fills.isEmpty) out.add(t('carReport.insightNoFills'));
+  return out;
 }
 
 class MaintenancePill extends StatelessWidget {
@@ -160,10 +196,16 @@ class CarReportScreen extends ConsumerWidget {
     );
     String money(double? v) => v == null ? '—' : '${formatAmount(double.parse(v.toStringAsFixed(2)))} $egp';
 
-    final insights = _insights(a);
+    final insights = carInsights(a);
 
     return Scaffold(
-      appBar: AppBar(title: Text('carReport.titleFor'.tr(namedArgs: {'car': c.car.name}))),
+      appBar: AppBar(
+        title: Text('carReport.titleFor'.tr(namedArgs: {'car': c.car.name})),
+        actions: [
+          if (c.expenses.isNotEmpty)
+            IconButton(tooltip: 'export.title'.tr(), icon: const Icon(Icons.ios_share), onPressed: () => _showExport(context, a)),
+        ],
+      ),
       body: c.expenses.isEmpty
           ? EmptyState(icon: Icons.analytics_outlined, title: 'carReport.empty'.tr(), message: 'carReport.emptyHint'.tr())
           : ListView(
@@ -285,39 +327,6 @@ class CarReportScreen extends ConsumerWidget {
               ],
             ),
     );
-  }
-
-  /// Plain-language observations from the numbers.
-  List<String> _insights(CarAnalytics a) {
-    final out = <String>[];
-    final stations = a.stations;
-    if (stations.length >= 2) {
-      final best = stations.first, worst = stations.last;
-      final diff = (worst.litersPer100Km - best.litersPer100Km) / worst.litersPer100Km * 100;
-      out.add(
-        'carReport.insightBestStation'.tr(
-          namedArgs: {'best': best.name, 'l': _n1(best.litersPer100Km), 'worst': worst.name, 'p': _n1(diff)},
-        ),
-      );
-    } else if (stations.length == 1) {
-      out.add('carReport.insightOneStation'.tr(namedArgs: {'name': stations.first.name}));
-    }
-    final last = a.lastVsAveragePercent;
-    if (last != null && last.abs() >= 5) {
-      out.add((last > 0 ? 'carReport.insightLastWorse' : 'carReport.insightLastBetter').tr(namedArgs: {'p': _n1(last.abs())}));
-    }
-    if (a.totalSpent > 0 && a.fuelSpent > 0) {
-      out.add('carReport.insightFuelShare'.tr(namedArgs: {'p': '${(a.fuelSpent / a.totalSpent * 100).round()}'}));
-    }
-    final types = a.fuelTypes;
-    if (types.length >= 2) {
-      out.add('carReport.insightFuelType'.tr(namedArgs: {'name': types.first.name, 'l': _n1(types.first.litersPer100Km)}));
-    }
-    final oil = a.oil;
-    if (oil.needsAttention) out.add(maintenanceText(oil));
-    if (a.segments.isEmpty && a.fills.isNotEmpty) out.add('carReport.insightNeedTwoFills'.tr());
-    if (a.fills.isEmpty) out.add('carReport.insightNoFills'.tr());
-    return out;
   }
 }
 
@@ -559,6 +568,109 @@ class _FillLog extends StatelessWidget {
               );
             }(),
         ],
+      ),
+    );
+  }
+}
+
+/// PDF / Excel export of the car report, handed to the share sheet (WhatsApp, e-mail, ...).
+Future<void> _showExport(BuildContext context, CarAnalytics a) =>
+    showModalBottomSheet<void>(context: context, builder: (_) => _CarExportSheet(a));
+
+class _CarExportSheet extends StatefulWidget {
+  const _CarExportSheet(this.a);
+  final CarAnalytics a;
+
+  @override
+  State<_CarExportSheet> createState() => _CarExportSheetState();
+}
+
+class _CarExportSheetState extends State<_CarExportSheet> {
+  bool _busy = false;
+
+  Future<void> _export({required bool pdf}) async {
+    final lang = context.locale.languageCode;
+    final rtl = lang == 'ar';
+    final generated = 'export.generatedAt'.tr(namedArgs: {'date': DateFormat.yMMMd(lang).add_Hm().format(DateTime.now())});
+    final carName = widget.a.car.car.name;
+    final box = context.findRenderObject() as RenderBox?;
+    setState(() => _busy = true);
+    try {
+      final bytes = pdf
+          ? await buildCarReportPdf(widget.a, trKey, rtl: rtl, generatedAt: generated)
+          : buildCarReportXlsx(widget.a, trKey, rtl: rtl);
+      final dir = await getTemporaryDirectory();
+      final stamp = DateFormat('yyyyMMdd', 'en').format(DateTime.now());
+      final safe = carName.replaceAll(RegExp(r'[\/:*?"<>|]'), '_');
+      final file = File(p.join(dir.path, 'Masarefy_${safe}_$stamp.${pdf ? 'pdf' : 'xlsx'}'));
+      await file.writeAsBytes(bytes);
+      final title = 'carReport.titleFor'.tr(namedArgs: {'car': carName});
+      await LockNotifier.runWithoutLock(
+        () => SharePlus.instance.share(
+          ShareParams(
+            files: [
+              XFile(file.path, mimeType: pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+            ],
+            subject: title,
+            text: title,
+            sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'export.failed'.tr()}: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('carReport.exportTitle'.tr(), style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text('carReport.exportHint'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 16),
+            if (_busy)
+              const Center(
+                child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _export(pdf: true),
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('PDF'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1D6F42)),
+                      onPressed: () => _export(pdf: false),
+                      icon: const Icon(Icons.table_chart_outlined),
+                      label: const Text('Excel'),
+                    ),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 10),
+            Text(
+              'export.shareHint'.tr(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

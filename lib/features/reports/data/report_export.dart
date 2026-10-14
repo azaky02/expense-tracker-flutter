@@ -127,19 +127,24 @@ final _arabic = RegExp(r'[؀-ۿ]');
 
 /// The pdf package lays out a whole cell in the page direction, which mirrors Latin-only text
 /// (names, numbers, dates) inside an RTL table; give such cells their own LTR direction.
-pw.Widget _cell(String s, double size, {bool bold = false}) => pw.Text(
+pw.Widget pdfCell(String s, double size, {bool bold = false}) => pw.Text(
       s,
       textDirection: _arabic.hasMatch(s) ? pw.TextDirection.rtl : pw.TextDirection.ltr,
       style: pw.TextStyle(fontSize: size, fontWeight: bold ? pw.FontWeight.bold : null),
     );
 
-Future<Uint8List> buildReportPdf(ReportData data, ReportLabels l) async {
+/// Bundled Noto fonts: Arabic first, Latin as fallback (works offline).
+Future<pw.ThemeData> loadReportPdfTheme() async {
   Future<pw.Font> font(String file) async => pw.Font.ttf(await rootBundle.load('assets/fonts/$file'));
   final arabic = await font('NotoSansArabic-Regular.ttf');
   final arabicBold = await font('NotoSansArabic-Bold.ttf');
   final latin = await font('NotoSans-Regular.ttf');
   final latinBold = await font('NotoSans-Bold.ttf');
-  final theme = pw.ThemeData.withFont(base: arabic, bold: arabicBold, fontFallback: [latin, latinBold]);
+  return pw.ThemeData.withFont(base: arabic, bold: arabicBold, fontFallback: [latin, latinBold]);
+}
+
+Future<Uint8List> buildReportPdf(ReportData data, ReportLabels l) async {
+  final theme = await loadReportPdfTheme();
   final dir = l.isRtl ? pw.TextDirection.rtl : pw.TextDirection.ltr;
   const navy = PdfColor.fromInt(0xFF0A2A66);
   const light = PdfColor.fromInt(0xFFF0F3F8);
@@ -199,11 +204,11 @@ Future<Uint8List> buildReportPdf(ReportData data, ReportLabels l) async {
           data: [
             for (final c in data.byCategory)
               [
-                _cell(c.name, 9),
-                _cell(_money.format(c.total), 9),
-                _cell('${(data.expense == 0 ? 0 : c.total / data.expense * 100).toStringAsFixed(1)}%', 9),
+                pdfCell(c.name, 9),
+                pdfCell(_money.format(c.total), 9),
+                pdfCell('${(data.expense == 0 ? 0 : c.total / data.expense * 100).toStringAsFixed(1)}%', 9),
               ],
-            [_cell(l.total, 9, bold: true), _cell(_money.format(data.expense), 9, bold: true), _cell('100%', 9, bold: true)],
+            [pdfCell(l.total, 9, bold: true), pdfCell(_money.format(data.expense), 9, bold: true), pdfCell('100%', 9, bold: true)],
           ],
           tableDirection: dir,
           headerDirection: dir,
@@ -234,7 +239,7 @@ Future<Uint8List> buildReportPdf(ReportData data, ReportLabels l) async {
                   t.accountName ?? '',
                   _signed(t),
                 ])
-                  _cell(v, 8),
+                  pdfCell(v, 8),
               ];
             }(),
         ],

@@ -154,7 +154,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(DS.radius), borderSide: BorderSide(color: scheme.outline)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(DS.radius), borderSide: BorderSide(color: scheme.outline)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(DS.radius), borderSide: BorderSide(color: scheme.primary, width: 1.5)),

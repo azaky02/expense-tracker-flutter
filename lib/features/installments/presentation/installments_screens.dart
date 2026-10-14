@@ -30,8 +30,10 @@ Widget _duePill(BuildContext context, DateTime due) {
     return StatusPill('installments.overdue'.tr(namedArgs: {'days': '${-days}'}), color: Theme.of(context).colorScheme.error);
   }
   if (days == 0) return StatusPill('installments.dueToday'.tr(), color: DS.warning);
-  return StatusPill('installments.daysLeft'.tr(namedArgs: {'days': '$days'}),
-      color: days <= reminderDaysBefore ? DS.warning : Theme.of(context).colorScheme.primary);
+  return StatusPill(
+    'installments.daysLeft'.tr(namedArgs: {'days': '$days'}),
+    color: days <= reminderDaysBefore ? DS.warning : Theme.of(context).colorScheme.primary,
+  );
 }
 
 /// Installments list (one card per plan).
@@ -71,20 +73,28 @@ class InstallmentsScreen extends ConsumerWidget {
             children: [
               AppCard(
                 color: theme.colorScheme.primaryContainer,
-                child: Row(children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('installments.monthlyTotal'.tr(), style: theme.textTheme.bodySmall),
-                      AmountText(monthly, size: 20, weight: FontWeight.w800),
-                    ]),
-                  ),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      Text('installments.remainingTotal'.tr(), style: theme.textTheme.bodySmall),
-                      AmountText(remaining, size: 20, weight: FontWeight.w800, color: theme.colorScheme.error),
-                    ]),
-                  ),
-                ]),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('installments.monthlyTotal'.tr(), style: theme.textTheme.bodySmall),
+                          AmountText(monthly, size: 20, weight: FontWeight.w800),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text('installments.remainingTotal'.tr(), style: theme.textTheme.bodySmall),
+                          AmountText(remaining, size: 20, weight: FontWeight.w800, color: theme.colorScheme.error),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 8),
               for (final item in items) _PlanCard(item),
@@ -107,39 +117,54 @@ class _PlanCard extends StatelessWidget {
     return AppCard(
       margin: const EdgeInsets.only(bottom: 10),
       onTap: () => context.push('/installments/${item.plan.id}'),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          IconBubble(icon: Icons.event_repeat, color: item.isFinished ? DS.success : theme.colorScheme.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(item.plan.title, style: theme.textTheme.titleSmall),
-              Text(item.plan.provider, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-            ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              IconBubble(icon: Icons.event_repeat, color: item.isFinished ? DS.success : theme.colorScheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.plan.title, style: theme.textTheme.titleSmall),
+                    Text(item.plan.provider, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AmountText(item.plan.installmentAmount, size: 15),
+                  Text('installments.perMonth'.tr(), style: theme.textTheme.labelSmall),
+                ],
+              ),
+            ],
           ),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            AmountText(item.plan.installmentAmount, size: 15),
-            Text('installments.perMonth'.tr(), style: theme.textTheme.labelSmall),
-          ]),
-        ]),
-        const SizedBox(height: 10),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: LinearProgressIndicator(value: item.plan.months == 0 ? 0 : item.paidCount / item.plan.months, minHeight: 7),
-        ),
-        const SizedBox(height: 6),
-        Row(children: [
-          Text('installments.progress'.tr(namedArgs: {'paid': '${item.paidCount}', 'months': '${item.plan.months}'}),
-              style: theme.textTheme.bodySmall),
-          const Spacer(),
-          if (next != null) ...[
-            Text(_date(context, next.dueDate), style: theme.textTheme.bodySmall),
-            const SizedBox(width: 6),
-            _duePill(context, next.dueDate),
-          ] else
-            StatusPill('installments.finished'.tr(), color: DS.success, icon: Icons.check),
-        ]),
-      ]),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(value: item.plan.months == 0 ? 0 : item.paidCount / item.plan.months, minHeight: 7),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                'installments.progress'.tr(namedArgs: {'paid': '${item.paidCount}', 'months': '${item.plan.months}'}),
+                style: theme.textTheme.bodySmall,
+              ),
+              const Spacer(),
+              if (next != null) ...[
+                Text(_date(context, next.dueDate), style: theme.textTheme.bodySmall),
+                const SizedBox(width: 6),
+                _duePill(context, next.dueDate),
+              ] else
+                StatusPill('installments.finished'.tr(), color: DS.success, icon: Icons.check),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -217,44 +242,55 @@ class InstallmentDetailsScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
           AppCard(
-            child: Column(children: [
-              _kv(context, 'installments.provider'.tr(), Text(plan.provider, style: theme.textTheme.titleSmall)),
-              _kv(context, 'installments.total'.tr(), AmountText(plan.totalAmount)),
-              _kv(context, 'installments.installmentAmount'.tr(), AmountText(plan.installmentAmount)),
-              _kv(context, 'installments.paid'.tr(), AmountText(item.paidAmount, color: DS.success)),
-              _kv(context, 'installments.remaining'.tr(), AmountText(item.remainingAmount, color: theme.colorScheme.error)),
-              _kv(context, 'installments.dueDayLabel'.tr(), Text('installments.dayOfMonth'.tr(namedArgs: {'day': '${plan.dueDay}'}))),
-              _kv(context, 'installments.reminders'.tr(),
-                  Text((plan.remindersEnabled ? 'installments.remindersOn' : 'security.off').tr(), style: theme.textTheme.bodySmall)),
-              if (plan.notes != null && plan.notes!.isNotEmpty)
-                Padding(padding: const EdgeInsets.only(top: 8), child: Text(plan.notes!, style: theme.textTheme.bodySmall)),
-            ]),
+            child: Column(
+              children: [
+                _kv(context, 'installments.provider'.tr(), Text(plan.provider, style: theme.textTheme.titleSmall)),
+                _kv(context, 'installments.total'.tr(), AmountText(plan.totalAmount)),
+                _kv(context, 'installments.installmentAmount'.tr(), AmountText(plan.installmentAmount)),
+                _kv(context, 'installments.paid'.tr(), AmountText(item.paidAmount, color: DS.success)),
+                _kv(context, 'installments.remaining'.tr(), AmountText(item.remainingAmount, color: theme.colorScheme.error)),
+                _kv(context, 'installments.dueDayLabel'.tr(), Text('installments.dayOfMonth'.tr(namedArgs: {'day': '${plan.dueDay}'}))),
+                _kv(
+                  context,
+                  'installments.reminders'.tr(),
+                  Text((plan.remindersEnabled ? 'installments.remindersOn' : 'security.off').tr(), style: theme.textTheme.bodySmall),
+                ),
+                if (plan.notes != null && plan.notes!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(plan.notes!, style: theme.textTheme.bodySmall),
+                  ),
+              ],
+            ),
           ),
           SectionHeader('installments.schedule'.tr()),
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(children: [
-              for (final due in item.schedule)
-                ListTile(
-                  dense: true,
-                  leading: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: due.isPaid ? DS.success.withValues(alpha: 0.15) : theme.colorScheme.surfaceContainerHighest,
-                    child: due.isPaid
-                        ? const Icon(Icons.check, size: 18, color: DS.success)
-                        : Text('${due.number}', style: theme.textTheme.labelMedium),
+            child: Column(
+              children: [
+                for (final due in item.schedule)
+                  ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: due.isPaid ? DS.success.withValues(alpha: 0.15) : theme.colorScheme.surfaceContainerHighest,
+                      child: due.isPaid
+                          ? const Icon(Icons.check, size: 18, color: DS.success)
+                          : Text('${due.number}', style: theme.textTheme.labelMedium),
+                    ),
+                    title: Text(_date(context, due.dueDate)),
+                    subtitle: due.isPaid ? Text('installments.paidOn'.tr(namedArgs: {'date': _date(context, due.payment!.paidAt)})) : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AmountText(due.payment?.amount ?? plan.installmentAmount, size: 13),
+                        if (!due.isPaid) ...[const SizedBox(width: 6), _duePill(context, due.dueDate)],
+                      ],
+                    ),
+                    onTap: () => due.isPaid ? _undo(context, ref, due) : _pay(context, ref, plan, due),
                   ),
-                  title: Text(_date(context, due.dueDate)),
-                  subtitle: due.isPaid
-                      ? Text('installments.paidOn'.tr(namedArgs: {'date': _date(context, due.payment!.paidAt)}))
-                      : null,
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    AmountText(due.payment?.amount ?? plan.installmentAmount, size: 13),
-                    if (!due.isPaid) ...[const SizedBox(width: 6), _duePill(context, due.dueDate)],
-                  ]),
-                  onTap: () => due.isPaid ? _undo(context, ref, due) : _pay(context, ref, plan, due),
-                ),
-            ]),
+              ],
+            ),
           ),
         ],
       ),
@@ -262,13 +298,15 @@ class InstallmentDetailsScreen extends ConsumerWidget {
   }
 
   Widget _kv(BuildContext context, String k, Widget v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(children: [
-          Text(k, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          const Spacer(),
-          v,
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      children: [
+        Text(k, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        const Spacer(),
+        v,
+      ],
+    ),
+  );
 }
 
 class _PayResult {
@@ -309,33 +347,39 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
       child: SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('installments.payTitle'.tr(namedArgs: {'number': '${widget.due.number}', 'months': '${widget.plan.months}'}),
-              style: Theme.of(context).textTheme.titleMedium),
-          FieldLabel('transactions.amount'.tr()),
-          AmountField(controller: _amount, onChanged: (_) => setState(() {})),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _asExpense,
-            onChanged: (v) => setState(() => _asExpense = v),
-            title: Text('installments.recordExpense'.tr()),
-          ),
-          if (_asExpense)
-            PickerField(
-              text: account?.account.name ?? 'accounts.choose'.tr(),
-              placeholder: account == null,
-              leading: account == null ? null : AccountBubble(account, size: 28),
-              onTap: () async {
-                final id = await showAccountPicker(context, selectedId: _accountId);
-                if (id != null) setState(() => _accountId = id);
-              },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'installments.payTitle'.tr(namedArgs: {'number': '${widget.due.number}', 'months': '${widget.plan.months}'}),
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: amount <= 0 ? null : () => Navigator.pop(context, _PayResult(amount, _asExpense ? _accountId : null)),
-            child: Text('installments.markPaid'.tr()),
-          ),
-        ]),
+            FieldLabel('transactions.amount'.tr()),
+            AmountField(controller: _amount, onChanged: (_) => setState(() {})),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _asExpense,
+              onChanged: (v) => setState(() => _asExpense = v),
+              title: Text('installments.recordExpense'.tr()),
+            ),
+            if (_asExpense)
+              PickerField(
+                text: account?.account.name ?? 'accounts.choose'.tr(),
+                placeholder: account == null,
+                leading: account == null ? null : AccountBubble(account, size: 28),
+                onTap: () async {
+                  final id = await showAccountPicker(context, selectedId: _accountId);
+                  if (id != null) setState(() => _accountId = id);
+                },
+              ),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: amount <= 0 ? null : () => Navigator.pop(context, _PayResult(amount, _asExpense ? _accountId : null)),
+              child: Text('installments.markPaid'.tr()),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -411,7 +455,12 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
   }
 
   bool get _valid =>
-      _title.text.trim().isNotEmpty && _provider.text.trim().isNotEmpty && _num(_total) > 0 && _num(_installment) > 0 && _monthsValue > 0 && _monthsValue <= 360;
+      _title.text.trim().isNotEmpty &&
+      _provider.text.trim().isNotEmpty &&
+      _num(_total) > 0 &&
+      _num(_installment) > 0 &&
+      _monthsValue > 0 &&
+      _monthsValue <= 360;
 
   Future<void> _save() async {
     if (!_valid) {
@@ -461,26 +510,49 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
               children: [
                 FieldLabel('installments.itemTitle'.tr()),
-                TextField(controller: _title, decoration: InputDecoration(hintText: 'installments.itemHint'.tr()), onChanged: (_) => setState(() {})),
-                FieldLabel('installments.provider'.tr()),
-                TextField(controller: _provider, decoration: InputDecoration(hintText: 'installments.providerHint'.tr()), onChanged: (_) => setState(() {})),
-                FieldLabel('installments.total'.tr()),
-                AmountField(controller: _total, onChanged: (_) => setState(_recalc)),
-                FieldLabel('installments.months'.tr()),
                 TextField(
-                  controller: _months,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (_) => setState(_recalc),
+                  controller: _title,
+                  decoration: InputDecoration(hintText: 'installments.itemHint'.tr()),
+                  onChanged: (_) => setState(() {}),
                 ),
-                FieldLabel('installments.installmentAmount'.tr()),
-                AmountField(controller: _installment, onChanged: (_) => setState(() => _installmentEdited = true)),
-                FieldLabel('installments.dueDayLabel'.tr()),
-                DropdownButtonFormField<int>(
-                  isExpanded: true,
-                  initialValue: _dueDay,
-                  items: [for (var d = 1; d <= 31; d++) DropdownMenuItem(value: d, child: Text('installments.dayOfMonth'.tr(namedArgs: {'day': '$d'})))],
-                  onChanged: (v) => setState(() => _dueDay = v ?? _dueDay),
+                FieldLabel('installments.provider'.tr()),
+                TextField(
+                  controller: _provider,
+                  decoration: InputDecoration(hintText: 'installments.providerHint'.tr()),
+                  onChanged: (_) => setState(() {}),
+                ),
+                FieldRow(
+                  flex: const [3, 2],
+                  [
+                    ('installments.total'.tr(), AmountField(compact: true, controller: _total, onChanged: (_) => setState(_recalc))),
+                    (
+                      'installments.months'.tr(),
+                      TextField(
+                        controller: _months,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+                        onChanged: (_) => setState(_recalc),
+                      ),
+                    ),
+                  ],
+                ),
+                FieldRow(
+                  flex: const [3, 2],
+                  [
+                    (
+                      'installments.installmentAmount'.tr(),
+                      AmountField(compact: true, controller: _installment, onChanged: (_) => setState(() => _installmentEdited = true)),
+                    ),
+                    (
+                      'installments.dueDayLabel'.tr(),
+                      DropdownButtonFormField<int>(
+                        isExpanded: true,
+                        initialValue: _dueDay,
+                        items: [for (var d = 1; d <= 31; d++) DropdownMenuItem(value: d, child: Text('$d'))],
+                        onChanged: (v) => setState(() => _dueDay = v ?? _dueDay),
+                      ),
+                    ),
+                  ],
                 ),
                 FieldLabel('installments.startMonth'.tr()),
                 PickerField(
@@ -499,8 +571,10 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
-                  child: Text('installments.scheduleHint'.tr(namedArgs: {'first': _date(context, first), 'last': _date(context, last)}),
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                  child: Text(
+                    'installments.scheduleHint'.tr(namedArgs: {'first': _date(context, first), 'last': _date(context, last)}),
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -510,7 +584,7 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
                   subtitle: Text('installments.remindersHint'.tr(), style: theme.textTheme.bodySmall),
                 ),
                 FieldLabel('installments.notes'.tr()),
-                TextField(controller: _notes, maxLines: 2),
+                TextField(controller: _notes, minLines: 1, maxLines: 3),
                 const SizedBox(height: 20),
                 FilledButton(onPressed: _saving ? null : _save, child: Text('common.save'.tr())),
               ],

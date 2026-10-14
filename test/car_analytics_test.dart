@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:archive/archive.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:expense_tracker_flutter/core/db/database.dart';
@@ -5,9 +9,11 @@ import 'package:expense_tracker_flutter/core/db/seed.dart';
 import 'package:expense_tracker_flutter/features/accounts/data/account_repository.dart';
 import 'package:expense_tracker_flutter/features/cars/data/car_analytics.dart';
 import 'package:expense_tracker_flutter/features/cars/data/car_repository.dart';
+import 'package:expense_tracker_flutter/features/cars/presentation/car_report_export.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   test('consumption, best station, costs and oil-change status', () async {
@@ -76,6 +82,34 @@ void main() {
     expect(months[10].$2, a.fuelSpent);
     expect(months[10].$3, 900);
     expect(a.license.level, MaintenanceLevel.unknown);
+
+    // Exports (labels are the keys themselves here).
+    String t(String key, [Map<String, String>? args]) => args == null ? key : '$key ${args.values.join(' ')}';
+    final pdf = await buildCarReportPdf(a, t, rtl: true, generatedAt: '2026-10-01');
+    expect(String.fromCharCodes(pdf.take(5)), '%PDF-');
+    final xlsx = buildCarReportXlsx(a, t, rtl: true);
+    final zip = ZipDecoder().decodeBytes(xlsx);
+    expect(zip.files.where((f) => f.name.startsWith('xl/worksheets/')), hasLength(5));
+    final fillsSheet = String.fromCharCodes(zip.findFile('xl/worksheets/sheet2.xml')!.content);
+    expect(fillsSheet, contains('<v>11600</v>'), reason: 'odometer of the last fill-up');
+    if (const bool.fromEnvironment('WRITE_SAMPLES')) {
+      // Real Arabic labels from the translation file.
+      final ar = jsonDecode(File('assets/translations/ar.json').readAsStringSync()) as Map<String, dynamic>;
+      String tr(String key, [Map<String, String>? args]) {
+        dynamic v = ar;
+        for (final part in key.split('.')) {
+          v = v is Map ? v[part] : null;
+        }
+        var out = v is String ? v : key;
+        args?.forEach((k, val) => out = out.replaceAll('{$k}', val));
+        return out;
+      }
+
+      final arPdf = await buildCarReportPdf(a, tr, rtl: true, generatedAt: 'تاريخ الإصدار 2026/10/01');
+      File('test_screens/out/car_report_sample.pdf').writeAsBytesSync(arPdf);
+      File('test_screens/out/car_report_sample_ar.xlsx').writeAsBytesSync(buildCarReportXlsx(a, tr, rtl: true));
+      File('test_screens/out/car_report_sample.xlsx').writeAsBytesSync(xlsx);
+    }
     await db.close();
   });
 }

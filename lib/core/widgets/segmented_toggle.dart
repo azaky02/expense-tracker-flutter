@@ -9,13 +9,7 @@ class SegmentedOption<T> {
 
 /// Two-option toggle matching the wireframes' Expense/Income and Cash/Card segmented rows.
 class SegmentedToggle<T> extends StatelessWidget {
-  const SegmentedToggle({
-    super.key,
-    required this.options,
-    required this.value,
-    required this.onChanged,
-    this.selectedColor,
-  });
+  const SegmentedToggle({super.key, required this.options, required this.value, required this.onChanged, this.selectedColor});
 
   final List<SegmentedOption<T>> options;
   final T value;
@@ -38,25 +32,18 @@ class SegmentedToggle<T> extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: option.value == value
-                        ? accent
-                        : theme.colorScheme.surfaceContainerHighest,
+                    color: option.value == value ? accent : theme.colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (option.icon != null) ...[
-                        Text(option.icon!, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 6),
-                      ],
+                      if (option.icon != null) ...[Text(option.icon!, style: const TextStyle(fontSize: 16)), const SizedBox(width: 6)],
                       Text(
                         option.label,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: option.value == value
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurface,
+                          color: option.value == value ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                         ),
                       ),
                     ],
