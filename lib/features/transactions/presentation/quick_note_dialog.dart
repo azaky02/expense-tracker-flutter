@@ -9,14 +9,8 @@ Future<String?> showQuickNoteDialog(BuildContext context, String initialNote) {
       title: Text('transactions.quickNote'.tr()),
       content: TextField(controller: controller, maxLines: 3, autofocus: true),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('common.cancel'.tr()),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(controller.text),
-          child: Text('common.save'.tr()),
-        ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text('common.cancel'.tr())),
+        FilledButton(onPressed: () => Navigator.of(context).pop(controller.text), child: Text('common.save'.tr())),
       ],
     ),
   );

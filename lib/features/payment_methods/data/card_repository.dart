@@ -20,26 +20,15 @@ class CardRepository {
   final AppDatabase _db;
 
   Stream<List<CardWithBank>> watchActive() {
-    final query = _db.select(_db.cards).join([
-      innerJoin(_db.banks, _db.banks.id.equalsExp(_db.cards.bankId)),
-    ])
+    final query = _db.select(_db.cards).join([innerJoin(_db.banks, _db.banks.id.equalsExp(_db.cards.bankId))])
       ..where(_db.cards.isActive.equals(true));
     return query.watch().map(
-          (rows) => rows
-              .map(
-                (row) => CardWithBank(
-                  card: row.readTable(_db.cards),
-                  bankName: row.readTable(_db.banks).name,
-                ),
-              )
-              .toList(),
-        );
+      (rows) => rows.map((row) => CardWithBank(card: row.readTable(_db.cards), bankName: row.readTable(_db.banks).name)).toList(),
+    );
   }
 
   Future<CardWithBank?> getById(int id) async {
-    final query = _db.select(_db.cards).join([
-      innerJoin(_db.banks, _db.banks.id.equalsExp(_db.cards.bankId)),
-    ])
+    final query = _db.select(_db.cards).join([innerJoin(_db.banks, _db.banks.id.equalsExp(_db.cards.bankId))])
       ..where(_db.cards.id.equals(id));
     final row = await query.getSingleOrNull();
     if (row == null) return null;
@@ -57,9 +46,10 @@ class CardRepository {
     double? creditLimit,
   }) async {
     final existingCount = await (_db.select(_db.cards)).get().then((rows) => rows.length);
-    final color = AppSemanticColors.light.cardColorRotation[
-        existingCount % AppSemanticColors.light.cardColorRotation.length];
-    final id = await _db.into(_db.cards).insert(
+    final color = AppSemanticColors.light.cardColorRotation[existingCount % AppSemanticColors.light.cardColorRotation.length];
+    final id = await _db
+        .into(_db.cards)
+        .insert(
           CardsCompanion.insert(
             bankId: bankId,
             cardType: cardType,
@@ -88,10 +78,12 @@ class CardRepository {
     int? statementDateDay,
     double? creditLimit,
   }) async {
-    await (_db.update(_db.accounts)..where((a) => a.cardId.equals(id))).write(AccountsCompanion(
-          name: Value(nickname),
-          type: Value(cardCategory == CardCategory.credit ? AccountType.creditCard : AccountType.debitCard),
-        ));
+    await (_db.update(_db.accounts)..where((a) => a.cardId.equals(id))).write(
+      AccountsCompanion(
+        name: Value(nickname),
+        type: Value(cardCategory == CardCategory.credit ? AccountType.creditCard : AccountType.debitCard),
+      ),
+    );
     await (_db.update(_db.cards)..where((c) => c.id.equals(id))).write(
       CardsCompanion(
         bankId: Value(bankId),

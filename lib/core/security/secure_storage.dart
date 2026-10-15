@@ -70,10 +70,7 @@ class SecureStorageService {
   }
 
   Future<String> _hashPin(String pin, String saltHex) async {
-    final secretKey = await _pbkdf2.deriveKey(
-      secretKey: SecretKey(utf8.encode(pin)),
-      nonce: utf8.encode(saltHex),
-    );
+    final secretKey = await _pbkdf2.deriveKey(secretKey: SecretKey(utf8.encode(pin)), nonce: utf8.encode(saltHex));
     final bytes = await secretKey.extractBytes();
     return base64Encode(bytes);
   }

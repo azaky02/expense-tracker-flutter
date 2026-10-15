@@ -76,89 +76,96 @@ class _TransactionsListScreenState extends ConsumerState<TransactionsListScreen>
           ),
         ],
       ),
-      body: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: TextField(
-            controller: _search,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search),
-              hintText: 'transactions.searchHint'.tr(),
-              suffixIcon: _search.text.isEmpty
-                  ? null
-                  : IconButton(icon: const Icon(Icons.close), onPressed: () => setState(_search.clear)),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: TextField(
+              controller: _search,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'transactions.searchHint'.tr(),
+                suffixIcon: _search.text.isEmpty
+                    ? null
+                    : IconButton(icon: const Icon(Icons.close), onPressed: () => setState(_search.clear)),
+              ),
             ),
           ),
-        ),
-        SizedBox(
-          height: 44,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              for (final t in _Tab.values)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 8),
-                  child: ChoiceChip(
-                    label: Text('transactions.tab.${t.name}'.tr()),
-                    selected: _tab == t,
-                    onSelected: (_) => setState(() => _tab = t),
+          SizedBox(
+            height: 44,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                for (final t in _Tab.values)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(end: 8),
+                    child: ChoiceChip(
+                      label: Text('transactions.tab.${t.name}'.tr()),
+                      selected: _tab == t,
+                      onSelected: (_) => setState(() => _tab = t),
+                    ),
                   ),
-                ),
-              if (filtered)
-                ActionChip(
-                  avatar: const Icon(Icons.filter_alt_off_outlined, size: 16),
-                  label: Text('transactions.clearFilters'.tr()),
-                  onPressed: () => ref.read(transactionFiltersProvider.notifier).set(const TransactionFilters()),
-                ),
-            ],
+                if (filtered)
+                  ActionChip(
+                    avatar: const Icon(Icons.filter_alt_off_outlined, size: 16),
+                    label: Text('transactions.clearFilters'.tr()),
+                    onPressed: () => ref.read(transactionFiltersProvider.notifier).set(const TransactionFilters()),
+                  ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: async.when(
-            loading: () => const Padding(padding: EdgeInsets.all(16), child: SkeletonList()),
-            error: (e, _) => ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(transactionsListProvider)),
-            data: (items) {
-              if (items.isEmpty) {
-                return EmptyState(
-                  icon: Icons.receipt_long_outlined,
-                  title: filtered || _search.text.isNotEmpty ? 'transactions.noResults'.tr() : 'dashboard.noTransactions'.tr(),
-                  actionLabel: filtered ? null : 'add.expense'.tr(),
-                  onAction: () => context.push('/transactions/add'),
-                );
-              }
-              final groups = <DateTime, List<TransactionWithDetails>>{};
-              for (final t in items) {
-                (groups[dateOnly(t.transaction.date)] ??= []).add(t);
-              }
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                children: [
-                  for (final e in groups.entries) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 14, bottom: 6),
-                      child: Text(_dayLabel(e.key), style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                    ),
-                    AppCard(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                      child: Column(children: [
-                        for (final t in e.value)
-                          TransactionTile(
-                            item: t,
-                            onTap: () => context.push('/transactions/${t.transaction.id}/edit'),
-                            onLongPress: () => _quickNote(t),
-                            onDoubleTap: () => _monthTotal(t),
-                          ),
-                      ]),
-                    ),
+          Expanded(
+            child: async.when(
+              loading: () => const Padding(padding: EdgeInsets.all(16), child: SkeletonList()),
+              error: (e, _) => ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(transactionsListProvider)),
+              data: (items) {
+                if (items.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.receipt_long_outlined,
+                    title: filtered || _search.text.isNotEmpty ? 'transactions.noResults'.tr() : 'dashboard.noTransactions'.tr(),
+                    actionLabel: filtered ? null : 'add.expense'.tr(),
+                    onAction: () => context.push('/transactions/add'),
+                  );
+                }
+                final groups = <DateTime, List<TransactionWithDetails>>{};
+                for (final t in items) {
+                  (groups[dateOnly(t.transaction.date)] ??= []).add(t);
+                }
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                  children: [
+                    for (final e in groups.entries) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14, bottom: 6),
+                        child: Text(
+                          _dayLabel(e.key),
+                          style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        ),
+                      ),
+                      AppCard(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                        child: Column(
+                          children: [
+                            for (final t in e.value)
+                              TransactionTile(
+                                item: t,
+                                onTap: () => context.push('/transactions/${t.transaction.id}/edit'),
+                                onLongPress: () => _quickNote(t),
+                                onDoubleTap: () => _monthTotal(t),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
-                ],
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 
@@ -171,8 +178,10 @@ class _TransactionsListScreenState extends ConsumerState<TransactionsListScreen>
     final (start, end) = getMonthRange();
     final total = await ref.read(categoryMonthTotalProvider((item.transaction.categoryId, start, end)).future);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('transactions.monthTotalForCategory'.tr(namedArgs: {'category': item.categoryName, 'amount': formatAmount(total)})),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('transactions.monthTotalForCategory'.tr(namedArgs: {'category': item.categoryName, 'amount': formatAmount(total)})),
+      ),
+    );
   }
 }

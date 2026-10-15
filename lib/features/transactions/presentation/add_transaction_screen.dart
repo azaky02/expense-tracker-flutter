@@ -23,11 +23,15 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(switch (widget.type) {
-        TransactionType.income => 'transactions.addIncome',
-        TransactionType.transfer => 'transactions.addTransfer',
-        _ => 'transactions.addExpense',
-      }.tr())),
+      appBar: AppBar(
+        title: Text(
+          switch (widget.type) {
+            TransactionType.income => 'transactions.addIncome',
+            TransactionType.transfer => 'transactions.addTransfer',
+            _ => 'transactions.addExpense',
+          }.tr(),
+        ),
+      ),
       body: TransactionForm(
         initialValues: TransactionFormValues(
           amount: 0,

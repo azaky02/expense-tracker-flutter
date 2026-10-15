@@ -8,13 +8,7 @@ import 'payment_method_providers.dart';
 import '../../../core/utils/currency.dart';
 
 class CardForm extends ConsumerStatefulWidget {
-  const CardForm({
-    super.key,
-    required this.initialValues,
-    required this.onSubmit,
-    required this.submitLabel,
-    this.isSubmitting = false,
-  });
+  const CardForm({super.key, required this.initialValues, required this.onSubmit, required this.submitLabel, this.isSubmitting = false});
 
   final CardFormValues initialValues;
   final Future<void> Function(CardFormValues values) onSubmit;
@@ -87,10 +81,7 @@ class _CardFormState extends ConsumerState<CardForm> {
                 selected: _values.bankId == bank.id,
                 onSelected: (_) => _update((v) => v.copyWith(bankId: bank.id)),
               ),
-            ActionChip(
-              label: Text('+ ${'cards.bank'.tr()}'),
-              onPressed: () => setState(() => _showAddBank = !_showAddBank),
-            ),
+            ActionChip(label: Text('+ ${'cards.bank'.tr()}'), onPressed: () => setState(() => _showAddBank = !_showAddBank)),
           ],
         ),
         if (_showAddBank)
@@ -149,7 +140,7 @@ class _CardFormState extends ConsumerState<CardForm> {
           TextField(
             controller: _dueDateController,
             keyboardType: TextInputType.number,
-          inputFormatters: const [AsciiDigitsFormatter()],
+            inputFormatters: const [AsciiDigitsFormatter()],
             onChanged: (text) => _update((v) => v.copyWith(dueDateDay: int.tryParse(text))),
           ),
           const SizedBox(height: 16),
@@ -164,9 +155,7 @@ class _CardFormState extends ConsumerState<CardForm> {
         const SizedBox(height: 24),
         FilledButton(
           onPressed: widget.isSubmitting || !_values.isValid ? null : () => widget.onSubmit(_values),
-          child: widget.isSubmitting
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator())
-              : Text(widget.submitLabel),
+          child: widget.isSubmitting ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator()) : Text(widget.submitLabel),
         ),
       ],
     );

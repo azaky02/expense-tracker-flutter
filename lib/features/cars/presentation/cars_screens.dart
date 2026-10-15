@@ -769,8 +769,13 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
       appBar: AppBar(
         title: Text((widget.expenseId == null ? 'cars.addExpenseFor' : 'cars.editExpenseFor').tr(namedArgs: {'car': car?.car.name ?? ''})),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      body: StickySaveLayout(
+        button: FilledButton(
+          onPressed: _saving ? null : () => _save(types),
+          child: _saving
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : Text('common.save'.tr()),
+        ),
         children: [
           if (cars.any((c) => c.car.id == _carId)) ...[
             FieldLabel('cars.car'.tr()),
@@ -873,65 +878,58 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
                 child: Text('cars.calcLiters'.tr()),
               ),
             ),
-          FieldRow([
-            (
-              'cars.paymentMethod'.tr(),
-              PickerField(
-                text: account?.account.name ?? 'accounts.choose'.tr(),
-                placeholder: account == null,
-                leading: account == null ? null : AccountBubble(account, size: 22),
-                onTap: () async {
-                  final id = await showAccountPicker(context, selectedId: _accountId);
-                  if (id != null) setState(() => _accountId = id);
-                },
-              ),
-            ),
-            (
-              'cars.station'.tr(),
+          FieldLabel('cars.paymentMethod'.tr()),
+          PickerField(
+            text: account?.account.name ?? 'accounts.choose'.tr(),
+            placeholder: account == null,
+            leading: account == null ? null : AccountBubble(account, size: 22),
+            onTap: () async {
+              final id = await showAccountPicker(context, selectedId: _accountId);
+              if (id != null) setState(() => _accountId = id);
+            },
+          ),
+          OptionalSection(
+            initiallyExpanded: _station.text.isNotEmpty || _note.text.isNotEmpty,
+            summary: [if (_station.text.isNotEmpty) _station.text, if (_location == _LocationState.found) 'cars.location'.tr()].join(' · '),
+            children: [
+              FieldLabel('cars.station'.tr()),
               TextField(
                 controller: _station,
-                decoration: InputDecoration(hintText: 'cars.stationHintShort'.tr()),
+                decoration: InputDecoration(hintText: 'cars.stationHint'.tr()),
               ),
-            ),
-          ]),
-          FieldLabel('${'transactions.notes'.tr()} (${'common.optional'.tr()})'),
-          TextField(controller: _note, minLines: 1, maxLines: 3),
-          const SizedBox(height: 12),
-          AppCard(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                Icon(
-                  _location == _LocationState.found ? Icons.place : Icons.location_off_outlined,
-                  color: _location == _LocationState.found ? DS.success : theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(switch (_location) {
-                    _LocationState.locating => 'cars.locating'.tr(),
-                    _LocationState.found => 'cars.locationFound'.tr(
-                      namedArgs: {'lat': _lat!.toStringAsFixed(5), 'lng': _lng!.toStringAsFixed(5)},
+              FieldLabel('transactions.notes'.tr()),
+              TextField(controller: _note, minLines: 1, maxLines: 3),
+              const SizedBox(height: 12),
+              AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      _location == _LocationState.found ? Icons.place : Icons.location_off_outlined,
+                      color: _location == _LocationState.found ? DS.success : theme.colorScheme.onSurfaceVariant,
                     ),
-                    _LocationState.denied => 'cars.locationDenied'.tr(),
-                    _LocationState.off => 'cars.locationOff'.tr(),
-                    _LocationState.failed => 'cars.locationFailed'.tr(),
-                  }, style: theme.textTheme.bodySmall),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(switch (_location) {
+                        _LocationState.locating => 'cars.locating'.tr(),
+                        _LocationState.found => 'cars.locationFound'.tr(
+                          namedArgs: {'lat': _lat!.toStringAsFixed(5), 'lng': _lng!.toStringAsFixed(5)},
+                        ),
+                        _LocationState.denied => 'cars.locationDenied'.tr(),
+                        _LocationState.off => 'cars.locationOff'.tr(),
+                        _LocationState.failed => 'cars.locationFailed'.tr(),
+                      }, style: theme.textTheme.bodySmall),
+                    ),
+                    if (_location == _LocationState.locating)
+                      const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    else if (_location == _LocationState.found)
+                      IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_lat!, _lng!))
+                    else
+                      IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
+                  ],
                 ),
-                if (_location == _LocationState.locating)
-                  const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                else if (_location == _LocationState.found)
-                  IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_lat!, _lng!))
-                else
-                  IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _saving ? null : () => _save(types),
-            child: _saving
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : Text('common.save'.tr()),
+              ),
+            ],
           ),
         ],
       ),

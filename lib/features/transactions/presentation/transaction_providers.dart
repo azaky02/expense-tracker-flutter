@@ -14,8 +14,7 @@ final recentTransactionsProvider = StreamProvider.family<List<TransactionWithDet
   (ref, limit) => ref.watch(transactionRepositoryProvider).watchRecent(limit),
 );
 
-final transactionsListProvider =
-    StreamProvider.family<List<TransactionWithDetails>, TransactionFilters>(
+final transactionsListProvider = StreamProvider.family<List<TransactionWithDetails>, TransactionFilters>(
   (ref, filters) => ref.watch(transactionRepositoryProvider).watchList(filters),
 );
 
@@ -33,21 +32,15 @@ final monthSummaryProvider = StreamProvider.family<MonthSummary, (DateTime, Date
   (ref, range) => ref.watch(transactionRepositoryProvider).watchMonthSummary(range.$1, range.$2),
 );
 
-final expenseCategoryBreakdownProvider =
-    StreamProvider.family<List<CategoryBreakdownItem>, (DateTime, DateTime)>(
-  (ref, range) =>
-      ref.watch(transactionRepositoryProvider).watchExpenseCategoryBreakdown(range.$1, range.$2),
+final expenseCategoryBreakdownProvider = StreamProvider.family<List<CategoryBreakdownItem>, (DateTime, DateTime)>(
+  (ref, range) => ref.watch(transactionRepositoryProvider).watchExpenseCategoryBreakdown(range.$1, range.$2),
 );
 
-final categoryMonthTotalProvider =
-    FutureProvider.family<double, (int categoryId, DateTime start, DateTime end)>((ref, args) {
-  return ref
-      .watch(transactionRepositoryProvider)
-      .getCategoryMonthTotal(args.$1, args.$2, args.$3);
+final categoryMonthTotalProvider = FutureProvider.family<double, (int categoryId, DateTime start, DateTime end)>((ref, args) {
+  return ref.watch(transactionRepositoryProvider).getCategoryMonthTotal(args.$1, args.$2, args.$3);
 });
 
-final cardMonthSpendProvider =
-    StreamProvider.family<double, (int cardId, DateTime start, DateTime end)>((ref, args) {
+final cardMonthSpendProvider = StreamProvider.family<double, (int cardId, DateTime start, DateTime end)>((ref, args) {
   return ref.watch(transactionRepositoryProvider).watchCardMonthSpend(args.$1, args.$2, args.$3);
 });
 
@@ -55,32 +48,25 @@ final cashMonthSpendProvider = StreamProvider.family<double, (DateTime, DateTime
   (ref, range) => ref.watch(transactionRepositoryProvider).watchCashMonthSpend(range.$1, range.$2),
 );
 
-final expenseByPaymentMethodProvider =
-    StreamProvider.family<List<PaymentMethodBreakdownItem>, (DateTime, DateTime)>(
-  (ref, range) =>
-      ref.watch(transactionRepositoryProvider).watchExpenseByPaymentMethod(range.$1, range.$2),
+final expenseByPaymentMethodProvider = StreamProvider.family<List<PaymentMethodBreakdownItem>, (DateTime, DateTime)>(
+  (ref, range) => ref.watch(transactionRepositoryProvider).watchExpenseByPaymentMethod(range.$1, range.$2),
 );
 
 final monthOverMonthProvider = FutureProvider.family<List<MonthTotal>, int>(
   (ref, monthsBack) => ref.watch(transactionRepositoryProvider).getMonthOverMonthTotals(monthsBack),
 );
 
-final beneficiaryBreakdownProvider =
-    FutureProvider.family<List<BeneficiaryBreakdownItem>, (DateTime, DateTime)>(
+final beneficiaryBreakdownProvider = FutureProvider.family<List<BeneficiaryBreakdownItem>, (DateTime, DateTime)>(
   (ref, range) => ref.watch(transactionRepositoryProvider).getBeneficiaryBreakdown(range.$1, range.$2),
 );
 
-final trustBalancesProvider = StreamProvider<List<TrustBalance>>(
-  (ref) => ref.watch(transactionRepositoryProvider).watchTrustBalances(),
-);
+final trustBalancesProvider = StreamProvider<List<TrustBalance>>((ref) => ref.watch(transactionRepositoryProvider).watchTrustBalances());
 
 final trustTransactionsProvider = StreamProvider.family<List<TransactionWithDetails>, String>(
   (ref, name) => ref.watch(transactionRepositoryProvider).watchTrustTransactions(name),
 );
 
-final trustCategoryIdProvider = FutureProvider<int>(
-  (ref) => ref.watch(transactionRepositoryProvider).trustCategoryId(),
-);
+final trustCategoryIdProvider = FutureProvider<int>((ref) => ref.watch(transactionRepositoryProvider).trustCategoryId());
 
 final systemCategoryIdProvider = FutureProvider.family<int, CategoryType>(
   (ref, type) => ref.watch(transactionRepositoryProvider).systemCategoryId(type),

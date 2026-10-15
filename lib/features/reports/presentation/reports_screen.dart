@@ -7,6 +7,7 @@ import '../../../core/db/tables.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/color_utils.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/utils/currency.dart';
 import '../../../core/widgets/ds_widgets.dart';
 import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../people/presentation/people_providers.dart';
@@ -14,6 +15,8 @@ import '../../transactions/data/transaction_models.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/presentation/transaction_providers.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
+import '../../budgets/data/budget_repository.dart';
+import '../../budgets/presentation/budget_providers.dart';
 import 'report_export_sheet.dart';
 
 final reportsMonthProvider = NotifierProvider<MonthNotifier, DateTime>(MonthNotifier.new);
@@ -31,7 +34,10 @@ class ReportsScreen extends ConsumerWidget {
     final summary = ref.watch(monthSummaryProvider(range)).value;
     final prev = ref.watch(monthSummaryProvider(prevRange)).value;
     final breakdown = ref.watch(expenseCategoryBreakdownProvider(range)).value ?? const <CategoryBreakdownItem>[];
-    final expenses = ref.watch(transactionsListProvider(TransactionFilters(types: const {TransactionType.expense}, from: range.$1, to: range.$2))).value ??
+    final expenses =
+        ref
+            .watch(transactionsListProvider(TransactionFilters(types: const {TransactionType.expense}, from: range.$1, to: range.$2)))
+            .value ??
         const <TransactionWithDetails>[];
     final (receivable, payable) = ref.watch(outstandingTotalsProvider);
     final theme = Theme.of(context);
@@ -64,67 +70,107 @@ class ReportsScreen extends ConsumerWidget {
         children: [
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Center(child: MonthSelector(month: month, onChanged: (m) => ref.read(reportsMonthProvider.notifier).set(m))),
+            child: Center(
+              child: MonthSelector(month: month, onChanged: (m) => ref.read(reportsMonthProvider.notifier).set(m)),
+            ),
           ),
           const SizedBox(height: 12),
           AppCard(
-            child: Row(children: [
-              IconBubble(icon: Icons.shopping_bag_outlined, color: theme.colorScheme.error, size: 48),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('reports.totalExpenses'.tr(), style: theme.textTheme.bodySmall),
-                  AmountText(expense, size: 24, weight: FontWeight.w800),
-                ]),
-              ),
-              if (change != null)
-                Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Row(children: [
-                    Icon(change >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                        size: 14, color: change >= 0 ? theme.colorScheme.error : DS.success),
-                    Text('${change.abs().toStringAsFixed(1)}%',
-                        style: TextStyle(fontWeight: FontWeight.w700, color: change >= 0 ? theme.colorScheme.error : DS.success)),
-                  ]),
-                  Text('reports.vsLastMonth'.tr(), style: theme.textTheme.bodySmall),
-                ]),
-            ]),
+            child: Row(
+              children: [
+                IconBubble(icon: Icons.shopping_bag_outlined, color: theme.colorScheme.error, size: 48),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('reports.totalExpenses'.tr(), style: theme.textTheme.bodySmall),
+                      AmountText(expense, size: 24, weight: FontWeight.w800),
+                    ],
+                  ),
+                ),
+                if (change != null)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            change >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                            size: 14,
+                            color: change >= 0 ? theme.colorScheme.error : DS.success,
+                          ),
+                          Text(
+                            '${change.abs().toStringAsFixed(1)}%',
+                            style: TextStyle(fontWeight: FontWeight.w700, color: change >= 0 ? theme.colorScheme.error : DS.success),
+                          ),
+                        ],
+                      ),
+                      Text('reports.vsLastMonth'.tr(), style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          _Indicators(
+            month: month,
+            income: summary?.income ?? 0,
+            expense: expense,
+            prevIncome: prev?.income ?? 0,
+            prevExpense: prevExpense,
           ),
           SectionHeader('reports.byCategory'.tr()),
           AppCard(
             child: breakdown.isEmpty
                 ? EmptyState(icon: Icons.donut_large, title: 'dashboard.noSpending'.tr())
-                : Row(children: [
-                    SizedBox(
-                      width: 150,
-                      height: 150,
-                      child: Stack(alignment: Alignment.center, children: [
-                        PieChart(PieChartData(
-                          sectionsSpace: 2,
-                          centerSpaceRadius: 46,
-                          sections: [
-                            for (final i in breakdown)
-                              PieChartSectionData(value: i.total, color: colorFromHex(i.categoryColor), showTitle: false, radius: 22),
+                : Row(
+                    children: [
+                      SizedBox(
+                        width: 150,
+                        height: 150,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            PieChart(
+                              PieChartData(
+                                sectionsSpace: 2,
+                                centerSpaceRadius: 46,
+                                sections: [
+                                  for (final i in breakdown)
+                                    PieChartSectionData(value: i.total, color: colorFromHex(i.categoryColor), showTitle: false, radius: 22),
+                                ],
+                              ),
+                            ),
+                            AmountText(total, size: 14),
                           ],
-                        )),
-                        AmountText(total, size: 14),
-                      ]),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(children: [
-                        for (final i in breakdown.take(6))
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: Row(children: [
-                              Container(width: 10, height: 10, decoration: BoxDecoration(color: colorFromHex(i.categoryColor), shape: BoxShape.circle)),
-                              const SizedBox(width: 6),
-                              Expanded(child: Text(i.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis)),
-                              Text('${(i.total / total * 100).round()}%', style: theme.textTheme.labelMedium),
-                            ]),
-                          ),
-                      ]),
-                    ),
-                  ]),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            for (final i in breakdown.take(6))
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 3),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(color: colorFromHex(i.categoryColor), shape: BoxShape.circle),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(child: Text(i.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                                    Text('${(i.total / total * 100).round()}%', style: theme.textTheme.labelMedium),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
           ),
           SectionHeader('reports.incomeVsExpenses'.tr()),
           const AppCard(child: _IncomeExpenseBars()),
@@ -132,33 +178,45 @@ class ReportsScreen extends ConsumerWidget {
           AppCard(
             child: accountRows.isEmpty
                 ? Text('dashboard.noSpending'.tr())
-                : Column(children: [
-                    for (final r in accountRows)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(children: [
-                          Expanded(child: Text(r.key)),
-                          AmountText(r.value, size: 13),
-                        ]),
-                      ),
-                  ]),
+                : Column(
+                    children: [
+                      for (final r in accountRows)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Expanded(child: Text(r.key)),
+                              AmountText(r.value, size: 13),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
           ),
           SectionHeader('reports.people'.tr()),
           AppCard(
-            child: Row(children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('people.totalReceivable'.tr(), style: theme.textTheme.bodySmall),
-                  AmountText(receivable, color: DS.success),
-                ]),
-              ),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('people.totalPayable'.tr(), style: theme.textTheme.bodySmall),
-                  AmountText(payable, color: theme.colorScheme.error),
-                ]),
-              ),
-            ]),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('people.totalReceivable'.tr(), style: theme.textTheme.bodySmall),
+                      AmountText(receivable, color: DS.success),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('people.totalPayable'.tr(), style: theme.textTheme.bodySmall),
+                      AmountText(payable, color: theme.colorScheme.error),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -176,46 +234,59 @@ class _IncomeExpenseBars extends ConsumerWidget {
     if (data.isEmpty) return const SizedBox(height: 160, child: Center(child: CircularProgressIndicator()));
     final maxY = data.fold<double>(0, (m, d) => [m, d.income, d.expense].reduce((a, b) => a > b ? a : b));
     final scheme = Theme.of(context).colorScheme;
-    return Column(children: [
-      SizedBox(
-        height: 170,
-        child: BarChart(BarChartData(
-          maxY: maxY == 0 ? 1 : maxY * 1.15,
-          gridData: const FlGridData(show: false),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (v, _) {
-                  final i = v.toInt();
-                  if (i < 0 || i >= data.length) return const SizedBox.shrink();
-                  final parts = data[i].month.split('-');
-                  return Text(DateFormat.MMM(context.locale.languageCode).format(DateTime(int.parse(parts[0]), int.parse(parts[1]))),
-                      style: const TextStyle(fontSize: 10));
-                },
+    return Column(
+      children: [
+        SizedBox(
+          height: 170,
+          child: BarChart(
+            BarChartData(
+              maxY: maxY == 0 ? 1 : maxY * 1.15,
+              gridData: const FlGridData(show: false),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (v, _) {
+                      final i = v.toInt();
+                      if (i < 0 || i >= data.length) return const SizedBox.shrink();
+                      final parts = data[i].month.split('-');
+                      return Text(
+                        DateFormat.MMM(context.locale.languageCode).format(DateTime(int.parse(parts[0]), int.parse(parts[1]))),
+                        style: const TextStyle(fontSize: 10),
+                      );
+                    },
+                  ),
+                ),
               ),
+              barGroups: [
+                for (var i = 0; i < data.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barsSpace: 3,
+                    barRods: [
+                      BarChartRodData(toY: data[i].income, color: DS.success, width: 8, borderRadius: BorderRadius.circular(3)),
+                      BarChartRodData(toY: data[i].expense, color: scheme.error, width: 8, borderRadius: BorderRadius.circular(3)),
+                    ],
+                  ),
+              ],
             ),
           ),
-          barGroups: [
-            for (var i = 0; i < data.length; i++)
-              BarChartGroupData(x: i, barsSpace: 3, barRods: [
-                BarChartRodData(toY: data[i].income, color: DS.success, width: 8, borderRadius: BorderRadius.circular(3)),
-                BarChartRodData(toY: data[i].expense, color: scheme.error, width: 8, borderRadius: BorderRadius.circular(3)),
-              ]),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _Legend(color: DS.success, label: 'dashboard.income'.tr()),
+            const SizedBox(width: 16),
+            _Legend(color: scheme.error, label: 'dashboard.expenses'.tr()),
           ],
-        )),
-      ),
-      const SizedBox(height: 8),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        _Legend(color: DS.success, label: 'dashboard.income'.tr()),
-        const SizedBox(width: 16),
-        _Legend(color: scheme.error, label: 'dashboard.expenses'.tr()),
-      ]),
-    ]);
+        ),
+      ],
+    );
   }
 }
 
@@ -225,9 +296,114 @@ class _Legend extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
-        const SizedBox(width: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ]);
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 10,
+        height: 10,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+      ),
+      const SizedBox(width: 4),
+      Text(label, style: Theme.of(context).textTheme.bodySmall),
+    ],
+  );
+}
+
+/// Decision helpers for the month: savings rate, pace, projection, budget use, vs last month.
+class _Indicators extends ConsumerWidget {
+  const _Indicators({
+    required this.month,
+    required this.income,
+    required this.expense,
+    required this.prevIncome,
+    required this.prevExpense,
+  });
+  final DateTime month;
+  final double income;
+  final double expense;
+  final double prevIncome;
+  final double prevExpense;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final pace = MonthPace(month);
+    final budgets = ref.watch(budgetsForMonthProvider(DateTime(month.year, month.month))).value ?? const <BudgetStatus>[];
+    final budgetLimit = budgets.fold<double>(0, (s, b) => s + b.limit);
+    final budgetSpent = budgets.fold<double>(0, (s, b) => s + b.spent);
+    final savings = income == 0 ? null : (income - expense) / income * 100;
+    final projected = pace.projected(expense);
+    String pct(double v) => '${v.toStringAsFixed(0)}%';
+    Widget cell(String label, String value, {Color? color, String? hint}) => Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            Text(
+              value,
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: color),
+            ),
+            if (hint != null) Text(hint, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          ],
+        ),
+      ),
+    );
+    double? change(double now, double before) => before == 0 ? null : (now - before) / before * 100;
+    final expChange = change(expense, prevExpense);
+    final incChange = change(income, prevIncome);
+    String changeText(double? c) => c == null ? '—' : '${c >= 0 ? '+' : '−'}${c.abs().toStringAsFixed(0)}%';
+    final egp = 'common.egp'.tr();
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('reports.indicators'.tr(), style: theme.textTheme.titleSmall),
+          Row(
+            children: [
+              cell(
+                'stats.savingsRate'.tr(),
+                savings == null ? '—' : pct(savings),
+                color: savings == null ? null : (savings >= 0 ? theme.colorScheme.secondary : theme.colorScheme.error),
+              ),
+              cell('budgets.dailyRate'.tr(), '${formatAmount(pace.dailyRate(expense).roundToDouble())} $egp'),
+            ],
+          ),
+          Row(
+            children: [
+              cell(
+                'budgets.projected'.tr(),
+                pace.isCurrent ? '${formatAmount(projected.roundToDouble())} $egp' : '—',
+                color: pace.isCurrent && budgetLimit > 0 && projected > budgetLimit ? theme.colorScheme.error : null,
+                hint: pace.isCurrent ? 'reports.projectedHint'.tr() : null,
+              ),
+              cell(
+                'reports.budgetUse'.tr(),
+                budgetLimit == 0 ? '—' : pct(budgetSpent / budgetLimit * 100),
+                color: budgetLimit > 0 && budgetSpent > budgetLimit ? theme.colorScheme.error : null,
+                hint: budgetLimit == 0
+                    ? null
+                    : 'reports.budgetLeft'.tr(namedArgs: {'amount': formatAmount((budgetLimit - budgetSpent).roundToDouble())}),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              cell(
+                'reports.expensesVsLast'.tr(),
+                changeText(expChange),
+                color: expChange == null ? null : (expChange > 0 ? theme.colorScheme.error : theme.colorScheme.secondary),
+              ),
+              cell(
+                'reports.incomeVsLast'.tr(),
+                changeText(incChange),
+                color: incChange == null ? null : (incChange >= 0 ? theme.colorScheme.secondary : theme.colorScheme.error),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

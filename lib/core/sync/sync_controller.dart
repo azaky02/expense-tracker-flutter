@@ -40,15 +40,14 @@ class SyncState {
     String? errorCode,
     bool clearError = false,
     SyncReport? lastReport,
-  }) =>
-      SyncState(
-        loaded: loaded ?? this.loaded,
-        session: clearSession ? null : (session ?? this.session),
-        status: status ?? this.status,
-        lastSyncAt: lastSyncAt ?? this.lastSyncAt,
-        errorCode: clearError ? null : (errorCode ?? this.errorCode),
-        lastReport: lastReport ?? this.lastReport,
-      );
+  }) => SyncState(
+    loaded: loaded ?? this.loaded,
+    session: clearSession ? null : (session ?? this.session),
+    status: status ?? this.status,
+    lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+    errorCode: clearError ? null : (errorCode ?? this.errorCode),
+    lastReport: lastReport ?? this.lastReport,
+  );
 }
 
 final syncControllerProvider = NotifierProvider<SyncController, SyncState>(SyncController.new);
@@ -98,12 +97,12 @@ class SyncController extends Notifier<SyncState> with WidgetsBindingObserver {
     _dbWatch?.cancel();
     final db = _db;
     _dbWatch = db
-        .tableUpdates(TableUpdateQuery.onAllTables([
-          db.banks, db.categories, db.cards, db.beneficiaries, db.transactions, db.categoryBudgets,
-        ]))
+        .tableUpdates(
+          TableUpdateQuery.onAllTables([db.banks, db.categories, db.cards, db.beneficiaries, db.transactions, db.categoryBudgets]),
+        )
         .listen((_) {
-      if (!_running) _schedule(const Duration(seconds: 4));
-    });
+          if (!_running) _schedule(const Duration(seconds: 4));
+        });
   }
 
   void _schedule(Duration d) {
@@ -128,12 +127,7 @@ class SyncController extends Notifier<SyncState> with WidgetsBindingObserver {
           : await api.login(email.trim(), password);
       await session.save();
       await SyncService(_db, api).prepareForAccount(session.userId);
-      state = state.copyWith(
-        loaded: true,
-        session: session,
-        status: SyncStatus.idle,
-        clearError: true,
-      );
+      state = state.copyWith(loaded: true, session: session, status: SyncStatus.idle, clearError: true);
       _watchLocalChanges();
       unawaited(syncNow());
     } finally {
@@ -164,7 +158,13 @@ class SyncController extends Notifier<SyncState> with WidgetsBindingObserver {
     final api = SyncApi(normalizeServerUrl(serverUrl.trim().isEmpty ? defaultServerUrl : serverUrl));
     try {
       final session = await api.registerWithPhone(
-          phone: phone, otp: otp, password: password, name: name.trim(), email: email, signupCode: signupCode);
+        phone: phone,
+        otp: otp,
+        password: password,
+        name: name.trim(),
+        email: email,
+        signupCode: signupCode,
+      );
       await session.save();
       await SyncService(_db, api).prepareForAccount(session.userId);
       state = state.copyWith(loaded: true, session: session, status: SyncStatus.idle, clearError: true);

@@ -43,7 +43,9 @@ class _EditCardScreenState extends ConsumerState<EditCardScreen> {
             onSubmit: (values) async {
               setState(() => _isSubmitting = true);
               try {
-                await ref.read(cardRepositoryProvider).update(
+                await ref
+                    .read(cardRepositoryProvider)
+                    .update(
                       widget.cardId,
                       bankId: values.bankId!,
                       cardType: values.cardType,

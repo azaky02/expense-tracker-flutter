@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/db/tables.dart';
 import '../../../core/security/lock_provider.dart';
+import '../../../core/theme/ds_tokens.dart';
 import '../../../core/settings/settings_provider.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../transactions/data/transaction_repository.dart';
@@ -19,10 +20,10 @@ enum _Period { month, last3, year, custom }
 
 /// Export the report as PDF or Excel and hand it to the share sheet (WhatsApp, Gmail, ...).
 Future<void> showReportExportSheet(BuildContext context, DateTime month) => showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => _ExportSheet(month: month),
-    );
+  context: context,
+  isScrollControlled: true,
+  builder: (_) => _ExportSheet(month: month),
+);
 
 class _ExportSheet extends ConsumerStatefulWidget {
   const _ExportSheet({required this.month});
@@ -100,15 +101,18 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
       await file.writeAsBytes(bytes);
       if (!mounted) return;
       final box = context.findRenderObject() as RenderBox?;
-      await LockNotifier.runWithoutLock(() => SharePlus.instance.share(ShareParams(
+      await LockNotifier.runWithoutLock(
+        () => SharePlus.instance.share(
+          ShareParams(
             files: [
-              XFile(file.path,
-                  mimeType: pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+              XFile(file.path, mimeType: pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
             ],
             subject: '${labels.title} – ${labels.period}',
             text: '${labels.title}\n${labels.period}',
             sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-          )));
+          ),
+        ),
+      );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('export.failed'.tr())));
     } finally {
@@ -124,56 +128,72 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('export.title'.tr(), style: theme.textTheme.titleMedium),
-          const SizedBox(height: 12),
-          Wrap(spacing: 8, runSpacing: 4, children: [
-            for (final pr in _Period.values)
-              ChoiceChip(
-                label: Text('export.period.${pr.name}'.tr()),
-                selected: _period == pr,
-                onSelected: (_) async {
-                  if (pr == _Period.custom) {
-                    final r = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                      initialDateRange: _custom,
-                    );
-                    if (r == null) return;
-                    _custom = r;
-                  }
-                  setState(() => _period = pr);
-                },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('export.title'.tr(), style: theme.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                for (final pr in _Period.values)
+                  ChoiceChip(
+                    label: Text('export.period.${pr.name}'.tr()),
+                    selected: _period == pr,
+                    onSelected: (_) async {
+                      if (pr == _Period.custom) {
+                        final r = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          initialDateRange: _custom,
+                        );
+                        if (r == null) return;
+                        _custom = r;
+                      }
+                      setState(() => _period = pr);
+                    },
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('${fmt.format(range.$1)} – ${fmt.format(range.$2)}', style: theme.textTheme.bodySmall),
+            const SizedBox(height: 16),
+            if (_busy)
+              const Center(
+                child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()),
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: () => _export(pdf: true),
+                      icon: const Icon(Icons.picture_as_pdf_outlined),
+                      label: const Text('PDF'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      style: FilledButton.styleFrom(backgroundColor: DS.gold, foregroundColor: DS.navy),
+                      onPressed: () => _export(pdf: false),
+                      icon: const Icon(Icons.table_chart_outlined),
+                      label: const Text('Excel'),
+                    ),
+                  ),
+                ],
               ),
-          ]),
-          const SizedBox(height: 8),
-          Text('${fmt.format(range.$1)} – ${fmt.format(range.$2)}', style: theme.textTheme.bodySmall),
-          const SizedBox(height: 16),
-          if (_busy)
-            const Center(child: Padding(padding: EdgeInsets.all(12), child: CircularProgressIndicator()))
-          else
-            Row(children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => _export(pdf: true),
-                  icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('PDF'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1D6F42)),
-                  onPressed: () => _export(pdf: false),
-                  icon: const Icon(Icons.table_chart_outlined),
-                  label: const Text('Excel'),
-                ),
-              ),
-            ]),
-          const SizedBox(height: 10),
-          Text('export.shareHint'.tr(), textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-        ]),
+            const SizedBox(height: 10),
+            Text(
+              'export.shareHint'.tr(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
       ),
     );
   }

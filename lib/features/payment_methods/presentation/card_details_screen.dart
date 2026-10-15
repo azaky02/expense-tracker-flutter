@@ -30,24 +30,26 @@ class CardDetailsScreen extends ConsumerWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: colorFromHex(c.card.color),
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                decoration: BoxDecoration(color: colorFromHex(c.card.color), borderRadius: BorderRadius.circular(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.card.nickname,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text('${c.bankName} • ${c.card.cardType.name} ${c.card.cardCategory.name}',
-                        style: const TextStyle(color: Colors.white70)),
+                    Text(
+                      c.card.nickname,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${c.bankName} • ${c.card.cardType.name} ${c.card.cardCategory.name}',
+                      style: const TextStyle(color: Colors.white70),
+                    ),
                     const SizedBox(height: 12),
-                    Text('•••• •••• •••• ${c.card.last4Digits}',
-                        style: const TextStyle(color: Colors.white, letterSpacing: 2)),
+                    Text('•••• •••• •••• ${c.card.last4Digits}', style: const TextStyle(color: Colors.white, letterSpacing: 2)),
                     if (c.card.creditLimit != null) ...[
                       const SizedBox(height: 8),
-                      Text('${'cards.creditLimit'.tr()}: ${formatAmount(c.card.creditLimit!)}',
-                          style: const TextStyle(color: Colors.white70)),
+                      Text(
+                        '${'cards.creditLimit'.tr()}: ${formatAmount(c.card.creditLimit!)}',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
                     ],
                   ],
                 ),
@@ -60,10 +62,7 @@ class CardDetailsScreen extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(right: 8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.tertiaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        decoration: BoxDecoration(color: theme.colorScheme.tertiaryContainer, borderRadius: BorderRadius.circular(12)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -76,16 +75,12 @@ class CardDetailsScreen extends ConsumerWidget {
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('cards.spendThisMonth'.tr()),
-                          Text(formatAmount(spendAsync.value ?? 0),
-                              style: theme.textTheme.titleMedium),
+                          Text(formatAmount(spendAsync.value ?? 0), style: theme.textTheme.titleMedium),
                         ],
                       ),
                     ),
@@ -99,10 +94,7 @@ class CardDetailsScreen extends ConsumerWidget {
                 (t) => Container(
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -110,8 +102,7 @@ class CardDetailsScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(t.transaction.beneficiaryName ?? t.categoryName),
-                          Text(DateFormat.yMd(context.locale.languageCode).format(t.transaction.date),
-                              style: theme.textTheme.bodySmall),
+                          Text(DateFormat.yMd(context.locale.languageCode).format(t.transaction.date), style: theme.textTheme.bodySmall),
                         ],
                       ),
                       Text(
@@ -123,10 +114,7 @@ class CardDetailsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: () => context.push('/cards/$cardId/edit'),
-                child: Text('cards.editCard'.tr()),
-              ),
+              OutlinedButton(onPressed: () => context.push('/cards/$cardId/edit'), child: Text('cards.editCard'.tr())),
             ],
           );
         },

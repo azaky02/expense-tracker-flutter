@@ -25,10 +25,7 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
       builder: (context) => AlertDialog(
         content: Text('common.delete'.tr()),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('common.cancel'.tr()),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text('common.cancel'.tr())),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: Text('common.delete'.tr(), style: const TextStyle(color: Colors.red)),
@@ -51,10 +48,7 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
         title: Text('common.edit'.tr()),
         actions: [
           transactionAsync.maybeWhen(
-            data: (t) => IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _handleDelete(t?.transaction.attachmentUri),
-            ),
+            data: (t) => IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _handleDelete(t?.transaction.attachmentUri)),
             orElse: () => const SizedBox.shrink(),
           ),
         ],
@@ -82,9 +76,7 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
               if (!values.isValid) return;
               setState(() => _isSubmitting = true);
               try {
-                await ref
-                    .read(transactionRepositoryProvider)
-                    .update(widget.transactionId, values.toInput());
+                await ref.read(transactionRepositoryProvider).update(widget.transactionId, values.toInput());
                 if (context.mounted) context.pop();
               } finally {
                 if (mounted) setState(() => _isSubmitting = false);

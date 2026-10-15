@@ -41,34 +41,20 @@ class AppSemanticColors extends ThemeExtension<AppSemanticColors> {
     warningSurface: DS.warningSoft,
     dangerSurface: DS.dangerSoft,
     chartPalette: DS.palette,
-    cardColorRotation: [
-      Color(0xFF0A2A66),
-      Color(0xFF0E8C7F),
-      Color(0xFF7C3AED),
-      Color(0xFF1250C4),
-      Color(0xFFB45309),
-      Color(0xFF334155),
-    ],
+    cardColorRotation: [Color(0xFF0F5C3E), Color(0xFF8C6A1E), Color(0xFF1F5F6B), Color(0xFF3D4F3A), Color(0xFF6B3F22), Color(0xFF334155)],
   );
 
   static const dark = AppSemanticColors(
     expense: Color(0xFFF87171),
     income: Color(0xFF4ADE80),
-    cash: Color(0xFF13306B),
+    cash: Color(0xFF173A2B),
     chip: DS.surfaceAltDark,
     chipSelected: DS.primaryDark,
     chipSelectedText: Colors.white,
     warningSurface: Color(0xFF3A2A0A),
     dangerSurface: Color(0xFF3A1414),
     chartPalette: DS.palette,
-    cardColorRotation: [
-      Color(0xFF13306B),
-      Color(0xFF0E6E64),
-      Color(0xFF5B21B6),
-      Color(0xFF1E40AF),
-      Color(0xFF92400E),
-      Color(0xFF334155),
-    ],
+    cardColorRotation: [Color(0xFF173A2B), Color(0xFF6E5418), Color(0xFF184B55), Color(0xFF2F3D2D), Color(0xFF5A351C), Color(0xFF334155)],
   );
 
   @override

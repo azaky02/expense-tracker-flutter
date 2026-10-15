@@ -16,10 +16,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddMenu(context),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: FloatingActionButton(onPressed: () => _showAddMenu(context), child: const Icon(Icons.add)),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
@@ -60,12 +57,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
 
   final IconData icon;
   final String label;
@@ -74,9 +66,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected
-        ? Theme.of(context).colorScheme.secondary
-        : Theme.of(context).colorScheme.onSurfaceVariant;
+    final color = selected ? Theme.of(context).colorScheme.secondary : Theme.of(context).colorScheme.onSurfaceVariant;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -100,17 +90,17 @@ void _showAddMenu(BuildContext context) {
     context: context,
     builder: (ctx) {
       Widget item(IconData icon, Color color, String label, String hint, String route) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: ListTile(
-              leading: IconBubble(icon: icon, color: color, size: 46),
-              title: Text(label.tr(context: ctx), style: Theme.of(ctx).textTheme.titleSmall),
-              subtitle: Text(hint.tr(context: ctx)),
-              onTap: () {
-                Navigator.pop(ctx);
-                context.push(route);
-              },
-            ),
-          );
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: ListTile(
+          leading: IconBubble(icon: icon, color: color, size: 46),
+          title: Text(label.tr(context: ctx), style: Theme.of(ctx).textTheme.titleSmall),
+          subtitle: Text(hint.tr(context: ctx)),
+          onTap: () {
+            Navigator.pop(ctx);
+            context.push(route);
+          },
+        ),
+      );
       return SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -118,15 +108,22 @@ void _showAddMenu(BuildContext context) {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('add.title'.tr(context: ctx), textAlign: TextAlign.center, style: Theme.of(ctx).textTheme.titleMedium),
+              Text(
+                'add.title'.tr(context: ctx),
+                textAlign: TextAlign.center,
+                style: Theme.of(ctx).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               item(Icons.remove_circle_outline, DS.danger, 'add.expense', 'add.expenseHint', '/transactions/add'),
               item(Icons.add_circle_outline, DS.success, 'add.income', 'add.incomeHint', '/transactions/add?type=income'),
-              item(Icons.swap_horiz, const Color(0xFF8B5CF6), 'add.transfer', 'add.transferHint', '/transactions/add?type=transfer'),
-              item(Icons.handshake_outlined, DS.warning, 'add.ledger', 'add.ledgerHint', '/ledger/new'),
+              item(Icons.swap_horiz, DS.primary, 'add.transfer', 'add.transferHint', '/transactions/add?type=transfer'),
+              item(Icons.handshake_outlined, DS.primary, 'add.ledger', 'add.ledgerHint', '/ledger/new'),
               item(Icons.payments_outlined, DS.primary, 'add.settlement', 'add.settlementHint', '/ledger/new?kind=settlement'),
               const SizedBox(height: 8),
-              OutlinedButton(onPressed: () => Navigator.pop(ctx), child: Text('common.cancel'.tr(context: ctx))),
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('common.cancel'.tr(context: ctx)),
+              ),
             ],
           ),
         ),

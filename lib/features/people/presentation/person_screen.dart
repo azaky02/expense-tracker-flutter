@@ -19,11 +19,11 @@ String directionLabel(BuildContext context, LedgerDirection d) =>
     (d == LedgerDirection.gave ? 'ledger.gave' : 'ledger.received').tr(context: context);
 
 Color statusColor(BuildContext context, LedgerStatus s) => switch (s) {
-      LedgerStatus.confirmed => DS.success,
-      LedgerStatus.pending => DS.warning,
-      LedgerStatus.rejected => Theme.of(context).colorScheme.error,
-      LedgerStatus.cancelled => Theme.of(context).colorScheme.onSurfaceVariant,
-    };
+  LedgerStatus.confirmed => DS.success,
+  LedgerStatus.pending => DS.warning,
+  LedgerStatus.rejected => Theme.of(context).colorScheme.error,
+  LedgerStatus.cancelled => Theme.of(context).colorScheme.onSurfaceVariant,
+};
 
 /// Person details (PPL-02, mockup 11): current balance, settle / statement / new entry, latest
 /// transactions with their status.
@@ -47,45 +47,54 @@ class PersonScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
-          Center(child: PersonAvatar(name: person.name, color: DS.primary, size: 72, linked: person.linkedUserId != null)),
+          Center(
+            child: PersonAvatar(name: person.name, color: DS.primary, size: 72, linked: person.linkedUserId != null),
+          ),
           const SizedBox(height: 8),
           Text(person.name, textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
           AppCard(
-            child: Column(children: [
-              Text('people.currentBalance'.tr(), style: theme.textTheme.bodySmall),
-              const SizedBox(height: 4),
-              AmountText(net.abs(), size: 30, weight: FontWeight.w800, color: netColor(context, net)),
-              Text(netLabel(context, net), style: theme.textTheme.titleSmall?.copyWith(color: netColor(context, net))),
-              if (balance.heOwesMe > 0 && balance.iOweHim > 0) ...[
-                const Divider(height: 24),
-                Row(children: [
-                  Expanded(child: _Mini('people.heOwesMe'.tr(), balance.heOwesMe, DS.success)),
-                  Expanded(child: _Mini('people.iOweHim'.tr(), balance.iOweHim, theme.colorScheme.error)),
-                ]),
+            child: Column(
+              children: [
+                Text('people.currentBalance'.tr(), style: theme.textTheme.bodySmall),
+                const SizedBox(height: 4),
+                AmountText(net.abs(), size: 30, weight: FontWeight.w800, color: netColor(context, net)),
+                Text(netLabel(context, net), style: theme.textTheme.titleSmall?.copyWith(color: netColor(context, net))),
+                if (balance.heOwesMe > 0 && balance.iOweHim > 0) ...[
+                  const Divider(height: 24),
+                  Row(
+                    children: [
+                      Expanded(child: _Mini('people.heOwesMe'.tr(), balance.heOwesMe, DS.success)),
+                      Expanded(child: _Mini('people.iOweHim'.tr(), balance.iOweHim, theme.colorScheme.error)),
+                    ],
+                  ),
+                ],
+                if (balance.pendingCount > 0) ...[
+                  const SizedBox(height: 8),
+                  StatusPill(
+                    'people.pending'.tr(namedArgs: {'count': '${balance.pendingCount}'}),
+                    color: DS.warning,
+                    icon: Icons.schedule,
+                  ),
+                ],
               ],
-              if (balance.pendingCount > 0) ...[
-                const SizedBox(height: 8),
-                StatusPill('people.pending'.tr(namedArgs: {'count': '${balance.pendingCount}'}), color: DS.warning, icon: Icons.schedule),
-              ],
-            ]),
+            ),
           ),
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: FilledButton(
-                onPressed: () => context.push('/ledger/new?personId=$personId&kind=settlement'),
-                child: Text('people.settlement'.tr()),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  onPressed: () => context.push('/ledger/new?personId=$personId&kind=settlement'),
+                  child: Text('people.settlement'.tr()),
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => context.push('/people/$personId/statement'),
-                child: Text('people.statement'.tr()),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(onPressed: () => context.push('/people/$personId/statement'), child: Text('people.statement'.tr())),
               ),
-            ),
-          ]),
+            ],
+          ),
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: () => context.push('/ledger/new?personId=$personId'),
@@ -101,11 +110,15 @@ class PersonScreen extends ConsumerWidget {
           ),
           SectionHeader('people.latest'.tr()),
           if (entries.isEmpty)
-            AppCard(child: EmptyState(icon: Icons.handshake_outlined, title: 'people.noEntries'.tr()))
+            AppCard(
+              child: EmptyState(icon: Icons.handshake_outlined, title: 'people.noEntries'.tr()),
+            )
           else
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Column(children: [for (final e in entries) _EntryTile(entry: e, personName: person.name)]),
+              child: Column(
+                children: [for (final e in entries) _EntryTile(entry: e, personName: person.name)],
+              ),
             ),
         ],
       ),
@@ -120,10 +133,12 @@ class _Mini extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-        AmountText(amount, size: 14, color: color),
-      ]);
+  Widget build(BuildContext context) => Column(
+    children: [
+      Text(label, style: Theme.of(context).textTheme.bodySmall),
+      AmountText(amount, size: 14, color: color),
+    ],
+  );
 }
 
 /// Money in (received) shows as +green, money out (gave) as -red, like the mockups.
@@ -148,29 +163,45 @@ class _EntryTile extends ConsumerWidget {
       borderRadius: BorderRadius.circular(DS.radius),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-        child: Row(children: [
-          IconBubble(icon: inbound ? Icons.south_west : Icons.north_east, color: color, size: 40),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: theme.textTheme.titleSmall),
-              Text(
-                [DateFormat.yMMMd(context.locale.languageCode).format(entry.date), if (entry.description != null) entry.description!].join(' · '),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall,
+        child: Row(
+          children: [
+            IconBubble(icon: inbound ? Icons.south_west : Icons.north_east, color: color, size: 40),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.titleSmall),
+                  Text(
+                    [
+                      DateFormat.yMMMd(context.locale.languageCode).format(entry.date),
+                      if (entry.description != null) entry.description!,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
               ),
-            ]),
-          ),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Opacity(opacity: faded ? 0.45 : 1, child: AmountText(inbound ? entry.amount : -entry.amount, size: 14, color: color, signed: true)),
-            if (entry.status != LedgerStatus.confirmed || showQueued)
-              StatusPill(
-                showQueued && entry.status == LedgerStatus.confirmed ? 'ledger.queued'.tr() : statusLabel(context, entry.status),
-                color: showQueued && entry.status == LedgerStatus.confirmed ? theme.colorScheme.onSurfaceVariant : statusColor(context, entry.status),
-              ),
-          ]),
-        ]),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Opacity(
+                  opacity: faded ? 0.45 : 1,
+                  child: AmountText(inbound ? entry.amount : -entry.amount, size: 14, color: color, signed: true),
+                ),
+                if (entry.status != LedgerStatus.confirmed || showQueued)
+                  StatusPill(
+                    showQueued && entry.status == LedgerStatus.confirmed ? 'ledger.queued'.tr() : statusLabel(context, entry.status),
+                    color: showQueued && entry.status == LedgerStatus.confirmed
+                        ? theme.colorScheme.onSurfaceVariant
+                        : statusColor(context, entry.status),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -181,8 +212,8 @@ class _EntryTile extends ConsumerWidget {
 Future<void> showEntrySheet(BuildContext context, WidgetRef ref, LedgerEntry e) {
   final repo = ref.read(ledgerRepositoryProvider);
   final canAnswer = !e.createdByMe && e.status == LedgerStatus.pending;
-  final canCancel = e.createdByMe &&
-      (e.status == LedgerStatus.pending || (e.status == LedgerStatus.confirmed && e.counterpartUserId == null));
+  final canCancel =
+      e.createdByMe && (e.status == LedgerStatus.pending || (e.status == LedgerStatus.confirmed && e.counterpartUserId == null));
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -198,13 +229,22 @@ Future<void> showEntrySheet(BuildContext context, WidgetRef ref, LedgerEntry e) 
             Text('${kindLabel(ctx, e.kind)} · ${directionLabel(ctx, e.direction)}', textAlign: TextAlign.center),
             Text(DateFormat.yMMMd(ctx.locale.languageCode).format(e.date), textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text(statusLabel(ctx, e.status),
-                textAlign: TextAlign.center, style: TextStyle(color: statusColor(ctx, e.status), fontWeight: FontWeight.bold)),
+            Text(
+              statusLabel(ctx, e.status),
+              textAlign: TextAlign.center,
+              style: TextStyle(color: statusColor(ctx, e.status), fontWeight: FontWeight.bold),
+            ),
             if (!e.createdByMe && e.counterpartName != null)
-              Text('ledger.createdByOther'.tr(namedArgs: {'name': e.counterpartName!}, context: ctx), textAlign: TextAlign.center),
+              Text(
+                'ledger.createdByOther'.tr(namedArgs: {'name': e.counterpartName!}, context: ctx),
+                textAlign: TextAlign.center,
+              ),
             if (e.description != null) ...[const SizedBox(height: 8), Text(e.description!, textAlign: TextAlign.center)],
             if (e.rejectReason != null)
-              Text('ledger.rejectedBecause'.tr(namedArgs: {'reason': e.rejectReason!}, context: ctx), textAlign: TextAlign.center),
+              Text(
+                'ledger.rejectedBecause'.tr(namedArgs: {'reason': e.rejectReason!}, context: ctx),
+                textAlign: TextAlign.center,
+              ),
             const SizedBox(height: 16),
             if (canAnswer)
               Row(
@@ -238,7 +278,10 @@ Future<void> showEntrySheet(BuildContext context, WidgetRef ref, LedgerEntry e) 
                   await repo.cancel(e.entryId);
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
-                child: Text('ledger.cancel'.tr(context: ctx), style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+                child: Text(
+                  'ledger.cancel'.tr(context: ctx),
+                  style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+                ),
               ),
           ],
         ),
@@ -253,10 +296,19 @@ Future<String?> _askReason(BuildContext context) async {
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text('ledger.reject'.tr(context: ctx)),
-      content: TextField(controller: c, decoration: InputDecoration(labelText: 'ledger.rejectReason'.tr(context: ctx))),
+      content: TextField(
+        controller: c,
+        decoration: InputDecoration(labelText: 'ledger.rejectReason'.tr(context: ctx)),
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr(context: ctx))),
-        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text('ledger.reject'.tr(context: ctx))),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text('common.cancel'.tr(context: ctx)),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text('ledger.reject'.tr(context: ctx)),
+        ),
       ],
     ),
   );

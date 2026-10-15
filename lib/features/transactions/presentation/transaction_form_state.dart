@@ -19,6 +19,7 @@ class TransactionFormValues {
   final double amount;
   final TransactionType type;
   final int categoryId;
+
   /// Derived from the account (card accounts = card) and kept for older reports/filters.
   final PaymentMethodType paymentMethodType;
   final int? cardId;
@@ -72,16 +73,16 @@ class TransactionFormValues {
   }
 
   TransactionInput toInput() => TransactionInput(
-        amount: amount,
-        type: type,
-        categoryId: categoryId,
-        paymentMethodType: paymentMethodType,
-        cardId: paymentMethodType == PaymentMethodType.card ? cardId : null,
-        date: date,
-        note: note,
-        attachmentUri: attachmentUri,
-        beneficiaryName: beneficiaryName,
-        accountId: accountId,
-        toAccountId: isTransfer ? toAccountId : null,
-      );
+    amount: amount,
+    type: type,
+    categoryId: categoryId,
+    paymentMethodType: paymentMethodType,
+    cardId: paymentMethodType == PaymentMethodType.card ? cardId : null,
+    date: date,
+    note: note,
+    attachmentUri: attachmentUri,
+    beneficiaryName: beneficiaryName,
+    accountId: accountId,
+    toAccountId: isTransfer ? toAccountId : null,
+  );
 }

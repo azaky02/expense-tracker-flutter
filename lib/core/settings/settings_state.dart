@@ -22,6 +22,7 @@ class SettingsState {
 
   final String userName;
   final String userPhone;
+
   /// False until the stored preferences have been read.
   final bool loaded;
   final String languageCode;
@@ -30,9 +31,11 @@ class SettingsState {
   final bool hasOnboarded;
   final bool appLockEnabled;
   final bool biometricEnabled;
+
   /// "Record your expenses" reminder, up to three times a day (HH:mm, empty = off).
   final bool dailyReminder;
   final List<String> reminderTimes;
+
   /// Day of the month the salary arrives (1-31), 0 = not set.
   final int salaryDay;
 

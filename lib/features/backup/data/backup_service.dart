@@ -22,26 +22,29 @@ class BackupService {
 
   /// Tables in insert order (parents first).
   List<TableInfo<Table, dynamic>> get _tables => [
-        _db.banks,
-        _db.categories,
-        _db.cards,
-        _db.accounts,
-        _db.people,
-        _db.beneficiaries,
-        _db.transactions,
-        _db.categoryBudgets,
-        _db.ledgerEntries,
-        _db.ledgerOutbox,
-        _db.appNotifications,
-        _db.installments,
-        _db.installmentPayments,
-        _db.cars,
-        _db.fuelTypes,
-        _db.carExpenses,
-      ];
+    _db.banks,
+    _db.categories,
+    _db.cards,
+    _db.accounts,
+    _db.people,
+    _db.beneficiaries,
+    _db.transactions,
+    _db.categoryBudgets,
+    _db.ledgerEntries,
+    _db.ledgerOutbox,
+    _db.appNotifications,
+    _db.installments,
+    _db.installmentPayments,
+    _db.cars,
+    _db.fuelTypes,
+    _db.carExpenses,
+  ];
 
-  Future<SecretKey> _key(String password, List<int> salt) => Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: _iterations, bits: 256)
-      .deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: salt);
+  Future<SecretKey> _key(String password, List<int> salt) => Pbkdf2(
+    macAlgorithm: Hmac.sha256(),
+    iterations: _iterations,
+    bits: 256,
+  ).deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: salt);
 
   Future<Map<String, dynamic>> _dump() async {
     final tables = <String, List<Map<String, dynamic>>>{};
@@ -80,12 +83,19 @@ class BackupService {
     if (env['format'] != format) throw const BackupException('not_a_backup');
     final kdf = env['kdf'] as Map<String, dynamic>;
     final salt = base64Decode(kdf['salt'] as String);
-    final key = await Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: (kdf['iterations'] as num).toInt(), bits: 256)
-        .deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: salt);
+    final key = await Pbkdf2(
+      macAlgorithm: Hmac.sha256(),
+      iterations: (kdf['iterations'] as num).toInt(),
+      bits: 256,
+    ).deriveKey(secretKey: SecretKey(utf8.encode(password)), nonce: salt);
     List<int> plain;
     try {
       plain = await AesGcm.with256bits().decrypt(
-        SecretBox(base64Decode(env['data'] as String), nonce: base64Decode(env['nonce'] as String), mac: Mac(base64Decode(env['mac'] as String))),
+        SecretBox(
+          base64Decode(env['data'] as String),
+          nonce: base64Decode(env['nonce'] as String),
+          mac: Mac(base64Decode(env['mac'] as String)),
+        ),
         secretKey: key,
       );
     } on SecretBoxAuthenticationError {
@@ -110,7 +120,10 @@ class BackupService {
         final rows = tables[t.actualTableName] ?? const [];
         final columns = {for (final c in t.$columns) c.name};
         for (final row in rows) {
-          final data = {for (final e in row.entries) if (columns.contains(e.key)) e.key: e.value};
+          final data = {
+            for (final e in row.entries)
+              if (columns.contains(e.key)) e.key: e.value,
+          };
           if (data.isEmpty) continue;
           final names = data.keys.toList();
           await _db.customInsert(
@@ -130,13 +143,13 @@ class BackupService {
   }
 
   Variable _variable(Object? v) => switch (v) {
-        null => const Variable(null),
-        final int i => Variable.withInt(i),
-        final double d => Variable.withReal(d),
-        final bool b => Variable.withBool(b),
-        final String s => Variable.withString(s),
-        _ => Variable.withString(v.toString()),
-      };
+    null => const Variable(null),
+    final int i => Variable.withInt(i),
+    final double d => Variable.withReal(d),
+    final bool b => Variable.withBool(b),
+    final String s => Variable.withString(s),
+    _ => Variable.withString(v.toString()),
+  };
 }
 
 class BackupContents {

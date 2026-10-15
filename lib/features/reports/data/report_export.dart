@@ -74,7 +74,7 @@ class CategoryTotal {
 /// Everything a report file shows, computed once from the period's transactions.
 class ReportData {
   ReportData({required this.from, required this.to, required this.userName, required List<TransactionWithDetails> transactions})
-      : transactions = [...transactions]..sort((a, b) => a.transaction.date.compareTo(b.transaction.date)) {
+    : transactions = [...transactions]..sort((a, b) => a.transaction.date.compareTo(b.transaction.date)) {
     for (final t in this.transactions) {
       final amount = t.transaction.amount;
       switch (t.transaction.type) {
@@ -128,10 +128,10 @@ final _arabic = RegExp(r'[؀-ۿ]');
 /// The pdf package lays out a whole cell in the page direction, which mirrors Latin-only text
 /// (names, numbers, dates) inside an RTL table; give such cells their own LTR direction.
 pw.Widget pdfCell(String s, double size, {bool bold = false}) => pw.Text(
-      s,
-      textDirection: _arabic.hasMatch(s) ? pw.TextDirection.rtl : pw.TextDirection.ltr,
-      style: pw.TextStyle(fontSize: size, fontWeight: bold ? pw.FontWeight.bold : null),
-    );
+  s,
+  textDirection: _arabic.hasMatch(s) ? pw.TextDirection.rtl : pw.TextDirection.ltr,
+  style: pw.TextStyle(fontSize: size, fontWeight: bold ? pw.FontWeight.bold : null),
+);
 
 /// Bundled Noto fonts: Arabic first, Latin as fallback (works offline).
 Future<pw.ThemeData> loadReportPdfTheme() async {
@@ -150,116 +150,138 @@ Future<Uint8List> buildReportPdf(ReportData data, ReportLabels l) async {
   const light = PdfColor.fromInt(0xFFF0F3F8);
 
   pw.Widget kpi(String label, double value, PdfColor color) => pw.Expanded(
-        child: pw.Container(
-          padding: const pw.EdgeInsets.all(8),
-          margin: const pw.EdgeInsets.symmetric(horizontal: 3),
-          decoration: pw.BoxDecoration(color: light, borderRadius: pw.BorderRadius.circular(6)),
-          child: pw.Column(children: [
-            pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-            pw.Text('${_money.format(value)} ${l.currency}', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: color)),
-          ]),
-        ),
-      );
+    child: pw.Container(
+      padding: const pw.EdgeInsets.all(8),
+      margin: const pw.EdgeInsets.symmetric(horizontal: 3),
+      decoration: pw.BoxDecoration(color: light, borderRadius: pw.BorderRadius.circular(6)),
+      child: pw.Column(
+        children: [
+          pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+          pw.Text(
+            '${_money.format(value)} ${l.currency}',
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold, color: color),
+          ),
+        ],
+      ),
+    ),
+  );
 
   final doc = pw.Document(theme: theme, title: l.title, author: data.userName);
-  doc.addPage(pw.MultiPage(
-    pageFormat: PdfPageFormat.a4,
-    textDirection: dir,
-    margin: const pw.EdgeInsets.all(28),
-    header: (ctx) => pw.Container(
-      padding: const pw.EdgeInsets.only(bottom: 8),
-      decoration: const pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: navy, width: 1.2))),
-      child: pw.Row(children: [
-        pw.Expanded(
-          child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-            pw.Text(l.title, style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: navy)),
-            pw.Text(l.period, style: const pw.TextStyle(fontSize: 10)),
-          ]),
+  doc.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      textDirection: dir,
+      margin: const pw.EdgeInsets.all(28),
+      header: (ctx) => pw.Container(
+        padding: const pw.EdgeInsets.only(bottom: 8),
+        decoration: const pw.BoxDecoration(
+          border: pw.Border(bottom: pw.BorderSide(color: navy, width: 1.2)),
         ),
-        pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.end, children: [
-          if (data.userName.isNotEmpty) pw.Text(l.preparedFor, style: const pw.TextStyle(fontSize: 9)),
-          pw.Text(l.generatedAt, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-        ]),
-      ]),
-    ),
-    footer: (ctx) => pw.Align(
-      alignment: pw.Alignment.center,
-      child: pw.Text('${ctx.pageNumber} / ${ctx.pagesCount}', textDirection: pw.TextDirection.ltr, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
-    ),
-    build: (ctx) => [
-      pw.SizedBox(height: 10),
-      pw.Text(l.summary, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-      pw.SizedBox(height: 6),
-      pw.Row(children: [
-        kpi(l.income, data.income, PdfColors.green700),
-        kpi(l.expense, data.expense, PdfColors.red700),
-        kpi(l.net, data.net, data.net >= 0 ? PdfColors.green700 : PdfColors.red700),
-      ]),
-      if (data.byCategory.isNotEmpty) ...[
+        child: pw.Row(
+          children: [
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    l.title,
+                    style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: navy),
+                  ),
+                  pw.Text(l.period, style: const pw.TextStyle(fontSize: 10)),
+                ],
+              ),
+            ),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                if (data.userName.isNotEmpty) pw.Text(l.preparedFor, style: const pw.TextStyle(fontSize: 9)),
+                pw.Text(l.generatedAt, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+              ],
+            ),
+          ],
+        ),
+      ),
+      footer: (ctx) => pw.Align(
+        alignment: pw.Alignment.center,
+        child: pw.Text(
+          '${ctx.pageNumber} / ${ctx.pagesCount}',
+          textDirection: pw.TextDirection.ltr,
+          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+        ),
+      ),
+      build: (ctx) => [
+        pw.SizedBox(height: 10),
+        pw.Text(l.summary, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+        pw.SizedBox(height: 6),
+        pw.Row(
+          children: [
+            kpi(l.income, data.income, PdfColors.green700),
+            kpi(l.expense, data.expense, PdfColors.red700),
+            kpi(l.net, data.net, data.net >= 0 ? PdfColors.green700 : PdfColors.red700),
+          ],
+        ),
+        if (data.byCategory.isNotEmpty) ...[
+          pw.SizedBox(height: 14),
+          pw.Text(l.byCategory, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 6),
+          pw.TableHelper.fromTextArray(
+            headers: [l.mainCategory, l.amount, l.share],
+            data: [
+              for (final c in data.byCategory)
+                [
+                  pdfCell(c.name, 9),
+                  pdfCell(_money.format(c.total), 9),
+                  pdfCell('${(data.expense == 0 ? 0 : c.total / data.expense * 100).toStringAsFixed(1)}%', 9),
+                ],
+              [pdfCell(l.total, 9, bold: true), pdfCell(_money.format(data.expense), 9, bold: true), pdfCell('100%', 9, bold: true)],
+            ],
+            tableDirection: dir,
+            headerDirection: dir,
+            headerStyle: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+            headerDecoration: const pw.BoxDecoration(color: navy),
+            cellStyle: const pw.TextStyle(fontSize: 9),
+            oddRowDecoration: const pw.BoxDecoration(color: light),
+            border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+            cellAlignment: l.isRtl ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+          ),
+        ],
         pw.SizedBox(height: 14),
-        pw.Text(l.byCategory, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+        pw.Text(l.transactions, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
         pw.SizedBox(height: 6),
         pw.TableHelper.fromTextArray(
-          headers: [l.mainCategory, l.amount, l.share],
+          headers: [l.date, l.type, l.mainCategory, l.subCategory, l.beneficiary, l.account, l.amount],
           data: [
-            for (final c in data.byCategory)
-              [
-                pdfCell(c.name, 9),
-                pdfCell(_money.format(c.total), 9),
-                pdfCell('${(data.expense == 0 ? 0 : c.total / data.expense * 100).toStringAsFixed(1)}%', 9),
-              ],
-            [pdfCell(l.total, 9, bold: true), pdfCell(_money.format(data.expense), 9, bold: true), pdfCell('100%', 9, bold: true)],
+            for (final t in data.transactions)
+              () {
+                final (main, sub) = ReportData.categoryColumns(t);
+                return [
+                  for (final v in [
+                    _ymd(t.transaction.date, '/'),
+                    l.typeNames[t.transaction.type] ?? '',
+                    main,
+                    sub,
+                    t.transaction.beneficiaryName ?? '',
+                    t.accountName ?? '',
+                    _signed(t),
+                  ])
+                    pdfCell(v, 8),
+                ];
+              }(),
           ],
           tableDirection: dir,
           headerDirection: dir,
-          headerStyle: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+          headerStyle: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
           headerDecoration: const pw.BoxDecoration(color: navy),
-          cellStyle: const pw.TextStyle(fontSize: 9),
+          cellStyle: const pw.TextStyle(fontSize: 8),
           oddRowDecoration: const pw.BoxDecoration(color: light),
           border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
           cellAlignment: l.isRtl ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+          columnWidths: const {0: pw.FixedColumnWidth(56), 1: pw.FixedColumnWidth(40), 6: pw.FixedColumnWidth(62)},
+          defaultColumnWidth: const pw.FlexColumnWidth(),
         ),
       ],
-      pw.SizedBox(height: 14),
-      pw.Text(l.transactions, style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-      pw.SizedBox(height: 6),
-      pw.TableHelper.fromTextArray(
-        headers: [l.date, l.type, l.mainCategory, l.subCategory, l.beneficiary, l.account, l.amount],
-        data: [
-          for (final t in data.transactions)
-            () {
-              final (main, sub) = ReportData.categoryColumns(t);
-              return [
-                for (final v in [
-                  _ymd(t.transaction.date, '/'),
-                  l.typeNames[t.transaction.type] ?? '',
-                  main,
-                  sub,
-                  t.transaction.beneficiaryName ?? '',
-                  t.accountName ?? '',
-                  _signed(t),
-                ])
-                  pdfCell(v, 8),
-              ];
-            }(),
-        ],
-        tableDirection: dir,
-        headerDirection: dir,
-        headerStyle: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
-        headerDecoration: const pw.BoxDecoration(color: navy),
-        cellStyle: const pw.TextStyle(fontSize: 8),
-        oddRowDecoration: const pw.BoxDecoration(color: light),
-        border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
-        cellAlignment: l.isRtl ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
-        columnWidths: const {
-          0: pw.FixedColumnWidth(56),
-          1: pw.FixedColumnWidth(40),
-          6: pw.FixedColumnWidth(62),
-        },
-        defaultColumnWidth: const pw.FlexColumnWidth(),
-      ),
-    ],
-  ));
+    ),
+  );
   return doc.save();
 }
 
@@ -293,9 +315,11 @@ String _colName(int i) {
 }
 
 String _sheetXml(List<List<Object?>> rows, {required bool rtl, required List<double> widths}) {
-  final b = StringBuffer('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-      '<sheetViews><sheetView workbookViewId="0"${rtl ? ' rightToLeft="1"' : ''}/></sheetViews><cols>');
+  final b = StringBuffer(
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+    '<sheetViews><sheetView workbookViewId="0"${rtl ? ' rightToLeft="1"' : ''}/></sheetViews><cols>',
+  );
   for (var i = 0; i < widths.length; i++) {
     b.write('<col min="${i + 1}" max="${i + 1}" width="${widths[i]}" customWidth="1"/>');
   }
@@ -331,40 +355,55 @@ Uint8List buildXlsx(List<(String, List<List<Object?>>, List<double>)> sheets, {b
     archive.addFile(ArchiveFile(name, bytes.length, bytes));
   }
 
-  add('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-      '<Default Extension="xml" ContentType="application/xml"/>'
-      '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-      '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
-      '${[for (var i = 0; i < sheets.length; i++) '<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'].join()}'
-      '</Types>');
-  add('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
-      '</Relationships>');
-  add('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
-      '<sheets>${[for (var i = 0; i < sheets.length; i++) '<sheet name="${_esc(sheets[i].$1)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>'].join()}</sheets>'
-      '</workbook>');
-  add('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-      '${[for (var i = 0; i < sheets.length; i++) '<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>'].join()}'
-      '<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
-      '</Relationships>');
+  add(
+    '[Content_Types].xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        '<Default Extension="xml" ContentType="application/xml"/>'
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        '${[for (var i = 0; i < sheets.length; i++) '<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'].join()}'
+        '</Types>',
+  );
+  add(
+    '_rels/.rels',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        '</Relationships>',
+  );
+  add(
+    'xl/workbook.xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        '<sheets>${[for (var i = 0; i < sheets.length; i++) '<sheet name="${_esc(sheets[i].$1)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>'].join()}</sheets>'
+        '</workbook>',
+  );
+  add(
+    'xl/_rels/workbook.xml.rels',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        '${[for (var i = 0; i < sheets.length; i++) '<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>'].join()}'
+        '<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        '</Relationships>',
+  );
   // Styles: 0 normal, 1 bold text, 2 number #,##0.00, 3 bold number.
-  add('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-      '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
-      '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
-      '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
-      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-      '<cellXfs count="4">'
-      '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
-      '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
-      '<xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
-      '<xf numFmtId="4" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
-      '</cellXfs></styleSheet>');
+  add(
+    'xl/styles.xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>'
+        '<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>'
+        '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+        '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+        '<cellXfs count="4">'
+        '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+        '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
+        '<xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+        '<xf numFmtId="4" fontId="1" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyFont="1"/>'
+        '</cellXfs></styleSheet>',
+  );
   for (var i = 0; i < sheets.length; i++) {
     add('xl/worksheets/sheet${i + 1}.xml', _sheetXml(sheets[i].$2, rtl: rtl, widths: sheets[i].$3));
   }
@@ -385,7 +424,8 @@ Uint8List buildReportXlsx(ReportData data, ReportLabels l) {
     [],
     [h(l.byCategory)],
     [h(l.mainCategory), h(l.amount), h(l.share)],
-    for (final c in data.byCategory) [c.name, c.total, data.expense == 0 ? 0 : double.parse((c.total / data.expense * 100).toStringAsFixed(1))],
+    for (final c in data.byCategory)
+      [c.name, c.total, data.expense == 0 ? 0 : double.parse((c.total / data.expense * 100).toStringAsFixed(1))],
     [h(l.total), XCell(data.expense, bold: true)],
   ];
   final rows = <List<Object?>>[

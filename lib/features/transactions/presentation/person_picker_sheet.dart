@@ -6,12 +6,7 @@ import 'beneficiary_providers.dart';
 
 /// Dropdown-style list of known people with search and "add new". Returns the chosen name, an
 /// empty string when "none" is picked (only offered when [allowNone]), or null if dismissed.
-Future<String?> showPersonPicker(
-  BuildContext context, {
-  required String title,
-  String? selected,
-  bool allowNone = false,
-}) {
+Future<String?> showPersonPicker(BuildContext context, {required String title, String? selected, bool allowNone = false}) {
   return showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
@@ -47,9 +42,7 @@ class _PersonPickerSheetState extends ConsumerState<_PersonPickerSheet> {
     final names = ref.watch(allBeneficiariesProvider).value ?? const <String>[];
     final theme = Theme.of(context);
     final typed = _controller.text.trim();
-    final matches = typed.isEmpty
-        ? names
-        : names.where((n) => n.toLowerCase().contains(typed.toLowerCase())).toList();
+    final matches = typed.isEmpty ? names : names.where((n) => n.toLowerCase().contains(typed.toLowerCase())).toList();
     final exists = names.any((n) => n.toLowerCase() == typed.toLowerCase());
 
     return Padding(

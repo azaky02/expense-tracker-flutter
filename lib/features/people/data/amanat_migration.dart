@@ -17,9 +17,9 @@ Future<void> migrateAmanatToLedger(AppDatabase db) async {
   final done = await (db.select(db.meta)..where((m) => m.key.equals(_flag))).getSingleOrNull();
   if (done != null) return;
 
-  final legacy = await (db.select(db.transactions)
-        ..where((t) => t.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name])))
-      .get();
+  final legacy = await (db.select(
+    db.transactions,
+  )..where((t) => t.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]))).get();
 
   await db.transaction(() async {
     final people = <String, int>{};
@@ -32,37 +32,45 @@ Future<void> migrateAmanatToLedger(AppDatabase db) async {
       if (exists == null) {
         final direction = t.type == TransactionType.trustIn ? LedgerDirection.received : LedgerDirection.gave;
         final person = await (db.select(db.people)..where((p) => p.id.equals(personId))).getSingle();
-        await db.into(db.ledgerEntries).insert(LedgerEntriesCompanion.insert(
-              entryId: entryId,
-              personId: Value(personId),
-              // Money handed back is a settlement of what was held, so the balance nets correctly.
-              kind: t.type == TransactionType.trustOut ? LedgerKind.settlement : LedgerKind.other,
-              direction: direction,
-              amount: t.amount,
-              date: t.date,
-              description: Value(t.note),
-              status: LedgerStatus.confirmed,
-              counterpartName: Value(name),
-              queued: const Value(true),
-              createdAt: Value(t.createdAt),
-            ));
+        await db
+            .into(db.ledgerEntries)
+            .insert(
+              LedgerEntriesCompanion.insert(
+                entryId: entryId,
+                personId: Value(personId),
+                // Money handed back is a settlement of what was held, so the balance nets correctly.
+                kind: t.type == TransactionType.trustOut ? LedgerKind.settlement : LedgerKind.other,
+                direction: direction,
+                amount: t.amount,
+                date: t.date,
+                description: Value(t.note),
+                status: LedgerStatus.confirmed,
+                counterpartName: Value(name),
+                queued: const Value(true),
+                createdAt: Value(t.createdAt),
+              ),
+            );
         final d = t.date;
-        await db.into(db.ledgerOutbox).insert(LedgerOutboxCompanion.insert(
-              entryId: entryId,
-              op: 'create',
-              payload: jsonEncode({
-                'op': 'create',
-                'id': entryId,
-                'kind': t.type == TransactionType.trustOut ? 'SETTLEMENT' : 'OTHER',
-                'direction': direction.name.toUpperCase(),
-                'amount': t.amount,
-                'currency': 'EGP',
-                'date': '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
-                if (t.note != null && t.note!.isNotEmpty) 'description': t.note,
-                'personId': person.syncId,
-                'counterpartName': name,
-              }),
-            ));
+        await db
+            .into(db.ledgerOutbox)
+            .insert(
+              LedgerOutboxCompanion.insert(
+                entryId: entryId,
+                op: 'create',
+                payload: jsonEncode({
+                  'op': 'create',
+                  'id': entryId,
+                  'kind': t.type == TransactionType.trustOut ? 'SETTLEMENT' : 'OTHER',
+                  'direction': direction.name.toUpperCase(),
+                  'amount': t.amount,
+                  'currency': 'EGP',
+                  'date': '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+                  if (t.note != null && t.note!.isNotEmpty) 'description': t.note,
+                  'personId': person.syncId,
+                  'counterpartName': name,
+                }),
+              ),
+            );
       }
       await (db.delete(db.transactions)..where((x) => x.id.equals(t.id))).go();
     }
@@ -71,7 +79,11 @@ Future<void> migrateAmanatToLedger(AppDatabase db) async {
 }
 
 Future<int> _personFor(AppDatabase db, String name) async {
-  final existing = await (db.select(db.people)..where((p) => p.name.equals(name))..limit(1)).getSingleOrNull();
+  final existing =
+      await (db.select(db.people)
+            ..where((p) => p.name.equals(name))
+            ..limit(1))
+          .getSingleOrNull();
   if (existing != null) return existing.id;
   final hash = await Sha256().hash(utf8.encode(name));
   final syncId = 'amanat-${hash.bytes.take(12).map((b) => b.toRadixString(16).padLeft(2, '0')).join()}';

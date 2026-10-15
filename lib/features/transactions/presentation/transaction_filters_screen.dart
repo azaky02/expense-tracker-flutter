@@ -52,25 +52,20 @@ class _TransactionFiltersScreenState extends ConsumerState<TransactionFiltersScr
     Object? accountId = _keep,
     Object? person = _keep,
     Object? hasAttachment = _keep,
-  }) =>
-      TransactionFilters(
-        from: from == _keep ? _f.from : from as DateTime?,
-        to: to == _keep ? _f.to : to as DateTime?,
-        types: types == _keep ? _f.types : types as Set<TransactionType>?,
-        categoryIds: categoryIds == _keep ? _f.categoryIds : categoryIds as List<int>?,
-        accountId: accountId == _keep ? _f.accountId : accountId as int?,
-        person: person == _keep ? _f.person : person as String?,
-        hasAttachment: hasAttachment == _keep ? _f.hasAttachment : hasAttachment as bool?,
-        minAmount: _f.minAmount,
-        maxAmount: _f.maxAmount,
-      );
+  }) => TransactionFilters(
+    from: from == _keep ? _f.from : from as DateTime?,
+    to: to == _keep ? _f.to : to as DateTime?,
+    types: types == _keep ? _f.types : types as Set<TransactionType>?,
+    categoryIds: categoryIds == _keep ? _f.categoryIds : categoryIds as List<int>?,
+    accountId: accountId == _keep ? _f.accountId : accountId as int?,
+    person: person == _keep ? _f.person : person as String?,
+    hasAttachment: hasAttachment == _keep ? _f.hasAttachment : hasAttachment as bool?,
+    minAmount: _f.minAmount,
+    maxAmount: _f.maxAmount,
+  );
 
-  Future<DateTime?> _date(DateTime? initial) => showDatePicker(
-        context: context,
-        initialDate: initial ?? DateTime.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
-      );
+  Future<DateTime?> _date(DateTime? initial) =>
+      showDatePicker(context: context, initialDate: initial ?? DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100));
 
   void _apply() {
     final f = TransactionFilters(
@@ -125,43 +120,47 @@ class _TransactionFiltersScreenState extends ConsumerState<TransactionFiltersScr
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           FieldLabel('transactions.period'.tr()),
-          Row(children: [
-            Expanded(
-              child: PickerField(
-                text: _f.from == null ? 'transactions.from'.tr() : fmt.format(_f.from!),
-                placeholder: _f.from == null,
-                trailingIcon: Icons.calendar_today_outlined,
-                onTap: () async {
-                  final d = await _date(_f.from);
-                  if (d != null) setState(() => _f = _with(from: d));
-                },
+          Row(
+            children: [
+              Expanded(
+                child: PickerField(
+                  text: _f.from == null ? 'transactions.from'.tr() : fmt.format(_f.from!),
+                  placeholder: _f.from == null,
+                  trailingIcon: Icons.calendar_today_outlined,
+                  onTap: () async {
+                    final d = await _date(_f.from);
+                    if (d != null) setState(() => _f = _with(from: d));
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: PickerField(
-                text: _f.to == null ? 'transactions.to'.tr() : fmt.format(_f.to!),
-                placeholder: _f.to == null,
-                trailingIcon: Icons.calendar_today_outlined,
-                onTap: () async {
-                  final d = await _date(_f.to);
-                  if (d != null) setState(() => _f = _with(to: d));
-                },
+              const SizedBox(width: 8),
+              Expanded(
+                child: PickerField(
+                  text: _f.to == null ? 'transactions.to'.tr() : fmt.format(_f.to!),
+                  placeholder: _f.to == null,
+                  trailingIcon: Icons.calendar_today_outlined,
+                  onTap: () async {
+                    final d = await _date(_f.to);
+                    if (d != null) setState(() => _f = _with(to: d));
+                  },
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
           FieldLabel('transactions.type'.tr()),
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: RadioGroup<TransactionType?>(
               groupValue: typeValue,
               onChanged: (v) => setState(() => _f = _with(types: v == null ? null : {v})),
-              child: Column(children: [
-                RadioListTile<TransactionType?>(value: null, title: Text('transactions.tab.all'.tr())),
-                RadioListTile<TransactionType?>(value: TransactionType.expense, title: Text('transactions.tab.expense'.tr())),
-                RadioListTile<TransactionType?>(value: TransactionType.income, title: Text('transactions.tab.income'.tr())),
-                RadioListTile<TransactionType?>(value: TransactionType.transfer, title: Text('transactions.tab.transfer'.tr())),
-              ]),
+              child: Column(
+                children: [
+                  RadioListTile<TransactionType?>(value: null, title: Text('transactions.tab.all'.tr())),
+                  RadioListTile<TransactionType?>(value: TransactionType.expense, title: Text('transactions.tab.expense'.tr())),
+                  RadioListTile<TransactionType?>(value: TransactionType.income, title: Text('transactions.tab.income'.tr())),
+                  RadioListTile<TransactionType?>(value: TransactionType.transfer, title: Text('transactions.tab.transfer'.tr())),
+                ],
+              ),
             ),
           ),
           FieldLabel('transactions.category'.tr()),
@@ -202,15 +201,27 @@ class _TransactionFiltersScreenState extends ConsumerState<TransactionFiltersScr
             },
           ),
           FieldLabel('transactions.amountRange'.tr()),
-          Row(children: [
-            Expanded(
-              child: TextField(controller: _min, keyboardType: TextInputType.number, inputFormatters: const [AsciiDigitsFormatter()], decoration: InputDecoration(hintText: 'transactions.from'.tr())),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(controller: _max, keyboardType: TextInputType.number, inputFormatters: const [AsciiDigitsFormatter()], decoration: InputDecoration(hintText: 'transactions.to'.tr())),
-            ),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _min,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: const [AsciiDigitsFormatter()],
+                  decoration: InputDecoration(hintText: 'transactions.from'.tr()),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _max,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: const [AsciiDigitsFormatter()],
+                  decoration: InputDecoration(hintText: 'transactions.to'.tr()),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,

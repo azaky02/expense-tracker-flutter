@@ -8,6 +8,7 @@ import '../../../core/utils/color_utils.dart';
 class AccountWithBalance {
   const AccountWithBalance(this.account, this.balance);
   final Account account;
+
   /// opening balance + income − expenses − transfers out + transfers in.
   final double balance;
 }
@@ -33,13 +34,16 @@ class AccountRepository {
   Stream<List<AccountWithBalance>> watchAccounts({bool includeArchived = false}) {
     final where = includeArchived ? '' : ' WHERE a.is_active = 1';
     return _db
-        .customSelect('$_balanceSql$where ORDER BY CASE a.type WHEN \'cash\' THEN 0 ELSE 1 END, a.id',
-            readsFrom: {_db.accounts, _db.transactions})
+        .customSelect(
+          '$_balanceSql$where ORDER BY CASE a.type WHEN \'cash\' THEN 0 ELSE 1 END, a.id',
+          readsFrom: {_db.accounts, _db.transactions},
+        )
         .watch()
-        .map((rows) => [
-              for (final r in rows)
-                AccountWithBalance(_db.accounts.map(r.data), ((r.read<double>('balance')) * 100).roundToDouble() / 100),
-            ]);
+        .map(
+          (rows) => [
+            for (final r in rows) AccountWithBalance(_db.accounts.map(r.data), ((r.read<double>('balance')) * 100).roundToDouble() / 100),
+          ],
+        );
   }
 
   Stream<AccountWithBalance?> watchAccount(int id) {
@@ -52,21 +56,27 @@ class AccountRepository {
   Future<Account?> byId(int id) => (_db.select(_db.accounts)..where((a) => a.id.equals(id))).getSingleOrNull();
 
   Future<int> create({required String name, required AccountType type, double openingBalance = 0, String? color, int? cardId}) {
-    return _db.into(_db.accounts).insert(AccountsCompanion.insert(
-          name: name.trim(),
-          type: type,
-          openingBalance: Value(openingBalance),
-          color: color ?? colorToHex(DS.palette[type.index % DS.palette.length]),
-          cardId: Value(cardId),
-        ));
+    return _db
+        .into(_db.accounts)
+        .insert(
+          AccountsCompanion.insert(
+            name: name.trim(),
+            type: type,
+            openingBalance: Value(openingBalance),
+            color: color ?? colorToHex(DS.palette[type.index % DS.palette.length]),
+            cardId: Value(cardId),
+          ),
+        );
   }
 
   Future<void> update(int id, {required String name, required double openingBalance, String? color}) {
-    return (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(AccountsCompanion(
-          name: Value(name.trim()),
-          openingBalance: Value(openingBalance),
-          color: color == null ? const Value.absent() : Value(color),
-        ));
+    return (_db.update(_db.accounts)..where((a) => a.id.equals(id))).write(
+      AccountsCompanion(
+        name: Value(name.trim()),
+        openingBalance: Value(openingBalance),
+        color: color == null ? const Value.absent() : Value(color),
+      ),
+    );
   }
 
   /// Accounts are archived, never deleted: their transactions keep pointing at them.
@@ -82,12 +92,16 @@ Future<void> migrateToAccounts(AppDatabase db) async {
   await db.transaction(() async {
     var cash = await (db.select(db.accounts)..where((a) => a.syncId.equals(cashAccountSyncId))).getSingleOrNull();
     if (cash == null) {
-      await db.into(db.accounts).insert(AccountsCompanion.insert(
-            name: 'كاش',
-            type: AccountType.cash,
-            color: colorToHex(DS.success),
-            syncId: const Value(cashAccountSyncId),
-          ));
+      await db
+          .into(db.accounts)
+          .insert(
+            AccountsCompanion.insert(
+              name: 'كاش',
+              type: AccountType.cash,
+              color: colorToHex(DS.success),
+              syncId: const Value(cashAccountSyncId),
+            ),
+          );
       // Oldest possible version: a rename on another device always wins.
       await db.customStatement("UPDATE accounts SET updated_at = 1 WHERE sync_id = '$cashAccountSyncId'");
       cash = await (db.select(db.accounts)..where((a) => a.syncId.equals(cashAccountSyncId))).getSingle();
@@ -118,12 +132,16 @@ Future<int> ensureCardAccount(AppDatabase db, Card card) async {
     final bySync = await (db.select(db.accounts)..where((a) => a.syncId.equals(syncId))).getSingleOrNull();
     if (bySync != null) return bySync.id;
   }
-  return db.into(db.accounts).insert(AccountsCompanion.insert(
-        name: card.nickname,
-        type: card.cardCategory == CardCategory.credit ? AccountType.creditCard : AccountType.debitCard,
-        color: card.color,
-        cardId: Value(card.id),
-        isActive: Value(card.isActive),
-        syncId: Value(syncId),
-      ));
+  return db
+      .into(db.accounts)
+      .insert(
+        AccountsCompanion.insert(
+          name: card.nickname,
+          type: card.cardCategory == CardCategory.credit ? AccountType.creditCard : AccountType.debitCard,
+          color: card.color,
+          cardId: Value(card.id),
+          isActive: Value(card.isActive),
+          syncId: Value(syncId),
+        ),
+      );
 }

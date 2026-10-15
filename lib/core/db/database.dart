@@ -48,81 +48,75 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        onCreate: (Migrator m) async {
-          await m.createAll();
-          await customStatement(
-            'CREATE INDEX idx_transactions_date ON transactions(date);',
-          );
-          await customStatement(
-            'CREATE INDEX idx_transactions_category ON transactions(category_id);',
-          );
-          await customStatement(
-            'CREATE INDEX idx_transactions_card ON transactions(card_id);',
-          );
-          await createSyncObjects(this);
-        },
-        onUpgrade: (Migrator m, int from, int to) async {
-          if (from < 2) {
-            // v2: sync support (see core/sync/sync_schema.dart).
-            await m.addColumn(banks, banks.syncId);
-            await m.addColumn(banks, banks.updatedAt);
-            await m.addColumn(banks, banks.dirty);
-            await m.addColumn(categories, categories.syncId);
-            await m.addColumn(categories, categories.updatedAt);
-            await m.addColumn(categories, categories.dirty);
-            await m.addColumn(cards, cards.syncId);
-            await m.addColumn(cards, cards.updatedAt);
-            await m.addColumn(cards, cards.dirty);
-            await m.addColumn(beneficiaries, beneficiaries.syncId);
-            await m.addColumn(beneficiaries, beneficiaries.updatedAt);
-            await m.addColumn(beneficiaries, beneficiaries.dirty);
-            await m.addColumn(transactions, transactions.syncId);
-            await m.addColumn(transactions, transactions.updatedAt);
-            await m.addColumn(transactions, transactions.dirty);
-            await m.addColumn(categoryBudgets, categoryBudgets.syncId);
-            await m.addColumn(categoryBudgets, categoryBudgets.updatedAt);
-            await m.addColumn(categoryBudgets, categoryBudgets.dirty);
-            await m.createTable(syncTombstones);
-            await backfillSyncIds(this);
-            await createSyncObjects(this);
-          }
-          if (from < 3) {
-            // v3: People + Shared Ledger replica (V2 design). Existing amanat rows are moved into
-            // the ledger after opening, see migrateAmanatToLedger().
-            await m.createTable(people);
-            await m.createTable(ledgerEntries);
-            await m.createTable(ledgerOutbox);
-            await m.createTable(appNotifications);
-            await createSyncObjects(this);
-          }
-          if (from < 4) {
-            // v4: accounts + transfers. Existing cash/card data is moved onto accounts after
-            // opening, see migrateToAccounts().
-            await m.createTable(accounts);
-            await m.addColumn(transactions, transactions.accountId);
-            await m.addColumn(transactions, transactions.toAccountId);
-            await m.addColumn(ledgerEntries, ledgerEntries.paymentMethod);
-            // The change trigger must now also watch the new account columns.
-            await customStatement('DROP TRIGGER IF EXISTS sync_au_transactions');
-            await createSyncObjects(this);
-          }
-          if (from < 5) {
-            // v5: installments, cars and fuel prices (on-device only, not synced).
-            await m.createTable(installments);
-            await m.createTable(installmentPayments);
-            await m.createTable(cars);
-            await m.createTable(fuelTypes);
-            await m.createTable(carExpenses);
-          }
-          if (from >= 5 && from < 6) {
-            // v6: car maintenance reminders (a v5 database already has the cars table).
-            await m.addColumn(cars, cars.oilIntervalKm);
-            await m.addColumn(cars, cars.oilIntervalMonths);
-            await m.addColumn(cars, cars.licenseExpiry);
-            await m.addColumn(cars, cars.insuranceExpiry);
-          }
-        },
-      );
+    onCreate: (Migrator m) async {
+      await m.createAll();
+      await customStatement('CREATE INDEX idx_transactions_date ON transactions(date);');
+      await customStatement('CREATE INDEX idx_transactions_category ON transactions(category_id);');
+      await customStatement('CREATE INDEX idx_transactions_card ON transactions(card_id);');
+      await createSyncObjects(this);
+    },
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from < 2) {
+        // v2: sync support (see core/sync/sync_schema.dart).
+        await m.addColumn(banks, banks.syncId);
+        await m.addColumn(banks, banks.updatedAt);
+        await m.addColumn(banks, banks.dirty);
+        await m.addColumn(categories, categories.syncId);
+        await m.addColumn(categories, categories.updatedAt);
+        await m.addColumn(categories, categories.dirty);
+        await m.addColumn(cards, cards.syncId);
+        await m.addColumn(cards, cards.updatedAt);
+        await m.addColumn(cards, cards.dirty);
+        await m.addColumn(beneficiaries, beneficiaries.syncId);
+        await m.addColumn(beneficiaries, beneficiaries.updatedAt);
+        await m.addColumn(beneficiaries, beneficiaries.dirty);
+        await m.addColumn(transactions, transactions.syncId);
+        await m.addColumn(transactions, transactions.updatedAt);
+        await m.addColumn(transactions, transactions.dirty);
+        await m.addColumn(categoryBudgets, categoryBudgets.syncId);
+        await m.addColumn(categoryBudgets, categoryBudgets.updatedAt);
+        await m.addColumn(categoryBudgets, categoryBudgets.dirty);
+        await m.createTable(syncTombstones);
+        await backfillSyncIds(this);
+        await createSyncObjects(this);
+      }
+      if (from < 3) {
+        // v3: People + Shared Ledger replica (V2 design). Existing amanat rows are moved into
+        // the ledger after opening, see migrateAmanatToLedger().
+        await m.createTable(people);
+        await m.createTable(ledgerEntries);
+        await m.createTable(ledgerOutbox);
+        await m.createTable(appNotifications);
+        await createSyncObjects(this);
+      }
+      if (from < 4) {
+        // v4: accounts + transfers. Existing cash/card data is moved onto accounts after
+        // opening, see migrateToAccounts().
+        await m.createTable(accounts);
+        await m.addColumn(transactions, transactions.accountId);
+        await m.addColumn(transactions, transactions.toAccountId);
+        await m.addColumn(ledgerEntries, ledgerEntries.paymentMethod);
+        // The change trigger must now also watch the new account columns.
+        await customStatement('DROP TRIGGER IF EXISTS sync_au_transactions');
+        await createSyncObjects(this);
+      }
+      if (from < 5) {
+        // v5: installments, cars and fuel prices (on-device only, not synced).
+        await m.createTable(installments);
+        await m.createTable(installmentPayments);
+        await m.createTable(cars);
+        await m.createTable(fuelTypes);
+        await m.createTable(carExpenses);
+      }
+      if (from >= 5 && from < 6) {
+        // v6: car maintenance reminders (a v5 database already has the cars table).
+        await m.addColumn(cars, cars.oilIntervalKm);
+        await m.addColumn(cars, cars.oilIntervalMonths);
+        await m.addColumn(cars, cars.licenseExpiry);
+        await m.addColumn(cars, cars.insuranceExpiry);
+      }
+    },
+  );
 }
 
 /// Set when a database file that could not be decrypted was moved aside (see

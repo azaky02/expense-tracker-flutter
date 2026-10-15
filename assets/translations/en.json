@@ -17,7 +17,8 @@
     "retry": "Retry",
     "soon": "Coming soon",
     "viewAll": "View all",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "moreDetails": "More details (optional)"
   },
   "nav": {
     "home": "Home",
@@ -159,7 +160,13 @@
     "byCategory": "Expenses by category",
     "incomeVsExpenses": "Income vs expenses",
     "byAccount": "Expenses by account",
-    "people": "Balances with people"
+    "people": "Balances with people",
+    "indicators": "Month indicators",
+    "projectedHint": "if you keep the same pace",
+    "budgetUse": "Budget used",
+    "budgetLeft": "{amount} left",
+    "expensesVsLast": "Spending vs last",
+    "incomeVsLast": "Income vs last"
   },
   "budgets": {
     "title": "Category budget",
@@ -179,7 +186,23 @@
       "warning": "{category} budget: {percent}% used",
       "reached": "{category} budget: limit reached ({percent}%)",
       "over": "{category} budget: over the limit ({percent}%)"
-    }
+    },
+    "overview": "Budget overview",
+    "timeMarker": "Line = {p}% of the month has passed",
+    "spent": "Spent",
+    "remaining": "Remaining",
+    "limit": "Budget",
+    "dailyRate": "Spend/day",
+    "projected": "Projected",
+    "perDayLeft": "Left/day",
+    "vsLastMore": "{p}% more than last month in the same categories",
+    "vsLastLess": "{p}% less than last month in the same categories",
+    "paceWarning": "At this pace you will go over budget before the month ends",
+    "leftAmount": "{amount} left",
+    "overAmount": "{amount} over",
+    "perDay": "{amount}/day available",
+    "projectedOver": "{amount} expected by month end",
+    "lastMonth": "last month {amount}"
   },
   "dates": {
     "year": "Year",
@@ -443,9 +466,10 @@
     "name": "Masarefy"
   },
   "welcome": {
-    "tagline": "Your expenses and accounts in one place",
-    "start": "Get started",
-    "offlineNote": "Your data stays on this phone only, encrypted and protected by a PIN or Face ID."
+    "tagline": "Track spending, income, installments and your car – all in one place.",
+    "start": "Start now",
+    "offlineNote": "Your data stays on this phone only, encrypted and protected by a PIN or Face ID.",
+    "headline": "Your money,\nmade simple"
   },
   "auth": {
     "signIn": "Sign in",

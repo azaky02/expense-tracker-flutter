@@ -45,35 +45,26 @@ final _defaultCategories = [
   _CategorySeed('ترفيه', '🎬', AppColors.navy600, CategoryType.expense),
   _CategorySeed('صحة', '💊', AppColors.red500, CategoryType.expense),
   _CategorySeed('أخرى', '📦', AppColors.grey300, CategoryType.expense),
-  _CategorySeed(
-    'دخل',
-    '💰',
-    AppColors.teal700,
-    CategoryType.income,
-    children: const [('راتب', '🏦'), ('دخل إضافي', '➕')],
-  ),
+  _CategorySeed('دخل', '💰', AppColors.teal700, CategoryType.income, children: const [('راتب', '🏦'), ('دخل إضافي', '➕')]),
 ];
 
 Future<void> seedIfNeeded(AppDatabase db) async {
-  final existing = await (db.select(db.meta)..where((m) => m.key.equals(_seedFlagKey)))
-      .getSingleOrNull();
+  final existing = await (db.select(db.meta)..where((m) => m.key.equals(_seedFlagKey))).getSingleOrNull();
   if (existing != null) return;
 
   await db.batch((batch) {
     // Fixed sync ids: every device that seeds itself ends up with the *same* default rows,
     // so syncing two devices does not duplicate banks/categories.
-    batch.insertAll(
-      db.banks,
-      [
-        for (var i = 0; i < _defaultBanks.length; i++)
-          BanksCompanion.insert(name: _defaultBanks[i], syncId: Value('seed-bank-$i')),
-      ],
-    );
+    batch.insertAll(db.banks, [
+      for (var i = 0; i < _defaultBanks.length; i++) BanksCompanion.insert(name: _defaultBanks[i], syncId: Value('seed-bank-$i')),
+    ]);
   });
 
   var categorySeq = 0; // matches the row id order, see backfillSyncIds()
   for (final category in _defaultCategories) {
-    final parentId = await db.into(db.categories).insert(
+    final parentId = await db
+        .into(db.categories)
+        .insert(
           CategoriesCompanion.insert(
             name: category.name,
             icon: category.icon,
@@ -112,16 +103,16 @@ Future<void> seedIfNeeded(AppDatabase db) async {
   await db.into(db.meta).insert(MetaCompanion.insert(key: _seedFlagKey, value: 'true'));
 }
 
-
 /// The single system category amanat transactions are filed under. Idempotent; runs on every start
 /// so databases created before amanat existed get it too. Fixed sync id: it merges across devices.
 Future<void> ensureTrustCategory(AppDatabase db) async {
   await _ensureTransferCategory(db);
   await _ensureCarAndInstallmentData(db);
-  final existing = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-trust')))
-      .getSingleOrNull();
+  final existing = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-trust'))).getSingleOrNull();
   if (existing != null) return;
-  await db.into(db.categories).insert(
+  await db
+      .into(db.categories)
+      .insert(
         CategoriesCompanion.insert(
           name: 'أمانات',
           icon: '🤝',
@@ -136,10 +127,11 @@ Future<void> ensureTrustCategory(AppDatabase db) async {
 
 /// System category every transfer between the user's own accounts is filed under.
 Future<void> _ensureTransferCategory(AppDatabase db) async {
-  final existing = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-transfer')))
-      .getSingleOrNull();
+  final existing = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-transfer'))).getSingleOrNull();
   if (existing != null) return;
-  await db.into(db.categories).insert(
+  await db
+      .into(db.categories)
+      .insert(
         CategoriesCompanion.insert(
           name: 'تحويل',
           icon: '🔁',
@@ -157,15 +149,19 @@ Future<void> _ensureCarAndInstallmentData(AppDatabase db) async {
   Future<int> ensure(String syncId, String name, String icon, Color color, {int? parent}) async {
     final existing = await (db.select(db.categories)..where((c) => c.syncId.equals(syncId))).getSingleOrNull();
     if (existing != null) return existing.id;
-    final id = await db.into(db.categories).insert(CategoriesCompanion.insert(
-          name: name,
-          icon: icon,
-          color: colorToHex(color),
-          type: CategoryType.expense,
-          parentCategoryId: Value(parent),
-          isDefault: const Value(true),
-          syncId: Value(syncId),
-        ));
+    final id = await db
+        .into(db.categories)
+        .insert(
+          CategoriesCompanion.insert(
+            name: name,
+            icon: icon,
+            color: colorToHex(color),
+            type: CategoryType.expense,
+            parentCategoryId: Value(parent),
+            isDefault: const Value(true),
+            syncId: Value(syncId),
+          ),
+        );
     await db.customStatement("UPDATE categories SET updated_at = 1 WHERE sync_id = '$syncId'");
     return id;
   }

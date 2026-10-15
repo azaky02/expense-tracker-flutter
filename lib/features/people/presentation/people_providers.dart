@@ -20,13 +20,9 @@ final statementProvider = StreamProvider.family<List<StatementLine>, int>(
   (ref, id) => ref.watch(ledgerRepositoryProvider).watchStatement(id),
 );
 
-final notificationsProvider = StreamProvider<List<AppNotification>>(
-  (ref) => ref.watch(ledgerRepositoryProvider).watchNotifications(),
-);
+final notificationsProvider = StreamProvider<List<AppNotification>>((ref) => ref.watch(ledgerRepositoryProvider).watchNotifications());
 
-final unreadNotificationsProvider = StreamProvider<int>(
-  (ref) => ref.watch(ledgerRepositoryProvider).watchUnreadCount(),
-);
+final unreadNotificationsProvider = StreamProvider<int>((ref) => ref.watch(ledgerRepositoryProvider).watchUnreadCount());
 
 /// Totals across everyone: (they owe me, I owe them).
 final outstandingTotalsProvider = Provider<(double, double)>((ref) {
@@ -39,6 +35,4 @@ final outstandingTotalsProvider = Provider<(double, double)>((ref) {
   return (receivable, payable);
 });
 
-final pendingIncomingProvider = StreamProvider<int>(
-  (ref) => ref.watch(ledgerRepositoryProvider).watchPendingIncomingCount(),
-);
+final pendingIncomingProvider = StreamProvider<int>((ref) => ref.watch(ledgerRepositoryProvider).watchPendingIncomingCount());

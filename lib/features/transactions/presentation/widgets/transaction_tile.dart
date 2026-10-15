@@ -38,8 +38,8 @@ class TransactionTile extends StatelessWidget {
     final title = isTransfer
         ? 'transactions.transferTitle'.tr(namedArgs: {'from': item.accountName ?? '—', 'to': item.toAccountName ?? '—'})
         : (t.beneficiaryName?.isNotEmpty ?? false)
-            ? t.beneficiaryName!
-            : item.categoryName;
+        ? t.beneficiaryName!
+        : item.categoryName;
     final subtitle = [
       if (!isTransfer && item.accountName != null) item.accountName!,
       if (showDate) DateFormat.MMMd(context.locale.languageCode).format(t.date),
@@ -53,41 +53,56 @@ class TransactionTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(DS.radius),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-          child: Row(children: [
-            IconBubble(
-              emoji: isTransfer ? null : item.categoryIcon,
-              icon: isTransfer ? Icons.swap_horiz : null,
-              color: isTransfer ? theme.colorScheme.primary : colorFromHex(item.categoryColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
-                if (subtitle.isNotEmpty)
-                  Text(subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-              ]),
-            ),
-            const SizedBox(width: 8),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              AmountText(amount, color: color, size: 14, signed: !isTransfer),
-              if (!isTransfer)
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 170),
-                  child: Text(item.categoryPath,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(color: colorFromHex(item.categoryColor), fontWeight: FontWeight.w600)),
+          child: Row(
+            children: [
+              IconBubble(
+                emoji: isTransfer ? null : item.categoryIcon,
+                icon: isTransfer ? Icons.swap_horiz : null,
+                color: isTransfer ? theme.colorScheme.primary : colorFromHex(item.categoryColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+                    if (subtitle.isNotEmpty)
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                  ],
                 ),
-              Row(mainAxisSize: MainAxisSize.min, children: [
-                if (t.note != null && t.note!.isNotEmpty)
-                  Icon(Icons.sticky_note_2_outlined, size: 13, color: theme.colorScheme.onSurfaceVariant),
-                if (t.attachmentUri != null) Icon(Icons.attach_file, size: 13, color: theme.colorScheme.onSurfaceVariant),
-              ]),
-            ]),
-          ]),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  AmountText(amount, color: color, size: 14, signed: !isTransfer),
+                  if (!isTransfer)
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 170),
+                      child: Text(
+                        item.categoryPath,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(color: colorFromHex(item.categoryColor), fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (t.note != null && t.note!.isNotEmpty)
+                        Icon(Icons.sticky_note_2_outlined, size: 13, color: theme.colorScheme.onSurfaceVariant),
+                      if (t.attachmentUri != null) Icon(Icons.attach_file, size: 13, color: theme.colorScheme.onSurfaceVariant),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -99,6 +114,7 @@ class MonthSelector extends StatelessWidget {
   const MonthSelector({super.key, required this.month, required this.onChanged, this.light = false});
   final DateTime month;
   final ValueChanged<DateTime> onChanged;
+
   /// White text for use on dark/hero backgrounds.
   final bool light;
 

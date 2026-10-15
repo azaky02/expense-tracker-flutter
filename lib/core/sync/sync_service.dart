@@ -18,19 +18,19 @@ class SyncReport {
   const SyncReport({this.pushed = 0, this.pulled = 0, this.skipped = 0, this.ledgerErrors = 0});
   final int pushed;
   final int pulled;
+
   /// Ledger operations the server refused (e.g. an entry with yourself); the local copy is corrected.
   final int ledgerErrors;
+
   /// Remote records that referenced something this device does not have (kept out, not lost on the server).
   final int skipped;
 }
 
 typedef _Json = Map<String, dynamic>;
 
-String _iso(int seconds) =>
-    DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true).toIso8601String();
+String _iso(int seconds) => DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true).toIso8601String();
 int _secs(String iso) => DateTime.parse(iso).millisecondsSinceEpoch ~/ 1000;
-String _ymd(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+String _ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 DateTime _parseYmd(String s) {
   final p = s.split('-');
   return DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]));
@@ -51,14 +51,12 @@ class SyncService {
   final AppDatabase _db;
   final SyncApi _api;
 
-  Future<String?> _meta(String key) async =>
-      (await (_db.select(_db.meta)..where((m) => m.key.equals(key))).getSingleOrNull())?.value;
+  Future<String?> _meta(String key) async => (await (_db.select(_db.meta)..where((m) => m.key.equals(key))).getSingleOrNull())?.value;
 
   Future<void> _setMeta(String key, String value) =>
       _db.into(_db.meta).insertOnConflictUpdate(MetaCompanion.insert(key: key, value: value));
 
-  Future<void> _delMeta(String key) =>
-      (_db.delete(_db.meta)..where((m) => m.key.equals(key))).go();
+  Future<void> _delMeta(String key) => (_db.delete(_db.meta)..where((m) => m.key.equals(key))).go();
 
   static Future<String?> lastSyncAt(AppDatabase db) async =>
       (await (db.select(db.meta)..where((m) => m.key.equals(_lastSyncKey))).getSingleOrNull())?.value;
@@ -192,8 +190,9 @@ class SyncService {
         await _applyNotification(n);
       }
       if (readIds.isNotEmpty) {
-        await (_db.update(_db.appNotifications)..where((n) => n.id.isIn(readIds.map((r) => r.id))))
-            .write(const AppNotificationsCompanion(readPending: Value(false)));
+        await (_db.update(
+          _db.appNotifications,
+        )..where((n) => n.id.isIn(readIds.map((r) => r.id)))).write(const AppNotificationsCompanion(readPending: Value(false)));
       }
       await _setMeta(_ledgerCursorKey, '$ledgerCursor');
       await _setMeta(_notifCursorKey, '$notifCursor');
@@ -226,48 +225,67 @@ class SyncService {
     }
 
     for (final b in banks.where((b) => b.dirty && b.syncId != null)) {
-      add('banks', 'banks', b.id, b.updatedAt, {
-        'id': b.syncId, 'name': b.name, 'logoUri': b.logoUri, 'isCustom': b.isCustom,
-      });
+      add('banks', 'banks', b.id, b.updatedAt, {'id': b.syncId, 'name': b.name, 'logoUri': b.logoUri, 'isCustom': b.isCustom});
     }
     for (final c in cats.where((c) => c.dirty && c.syncId != null)) {
       final parent = c.parentCategoryId == null ? null : catSync[c.parentCategoryId];
       if (c.parentCategoryId != null && parent == null) continue;
       add('categories', 'categories', c.id, c.updatedAt, {
-        'id': c.syncId, 'parentId': parent, 'name': c.name, 'icon': c.icon, 'color': c.color,
-        'type': c.type.name, 'isDefault': c.isDefault,
+        'id': c.syncId,
+        'parentId': parent,
+        'name': c.name,
+        'icon': c.icon,
+        'color': c.color,
+        'type': c.type.name,
+        'isDefault': c.isDefault,
       });
     }
     for (final c in cards.where((c) => c.dirty && c.syncId != null)) {
       final bank = bankSync[c.bankId];
       if (bank == null) continue;
       add('cards', 'cards', c.id, c.updatedAt, {
-        'id': c.syncId, 'bankId': bank, 'cardType': c.cardType.name,
-        'cardCategory': c.cardCategory.name, 'nickname': c.nickname, 'last4Digits': c.last4Digits,
-        'dueDateDay': c.dueDateDay, 'statementDateDay': c.statementDateDay,
-        'creditLimit': c.creditLimit, 'color': c.color, 'isActive': c.isActive,
+        'id': c.syncId,
+        'bankId': bank,
+        'cardType': c.cardType.name,
+        'cardCategory': c.cardCategory.name,
+        'nickname': c.nickname,
+        'last4Digits': c.last4Digits,
+        'dueDateDay': c.dueDateDay,
+        'statementDateDay': c.statementDateDay,
+        'creditLimit': c.creditLimit,
+        'color': c.color,
+        'isActive': c.isActive,
       });
     }
     for (final a in accounts.where((a) => a.dirty && a.syncId != null)) {
       add('accounts', 'accounts', a.id, a.updatedAt, {
-        'id': a.syncId, 'name': a.name, 'type': a.type.name, 'openingBalance': a.openingBalance,
-        'currency': a.currency, 'color': a.color, 'cardId': a.cardId == null ? null : cardSync[a.cardId],
+        'id': a.syncId,
+        'name': a.name,
+        'type': a.type.name,
+        'openingBalance': a.openingBalance,
+        'currency': a.currency,
+        'color': a.color,
+        'cardId': a.cardId == null ? null : cardSync[a.cardId],
         'isActive': a.isActive,
       });
     }
     for (final b in await (_db.select(_db.beneficiaries)..where((b) => b.dirty.equals(true))).get()) {
-      add('beneficiaries', 'beneficiaries', b.id, b.updatedAt, {
-        'name': b.name, 'lastUsedAt': b.lastUsedAt.toUtc().toIso8601String(),
-      });
+      add('beneficiaries', 'beneficiaries', b.id, b.updatedAt, {'name': b.name, 'lastUsedAt': b.lastUsedAt.toUtc().toIso8601String()});
     }
     for (final t in await (_db.select(_db.transactions)..where((t) => t.dirty.equals(true))).get()) {
       final cat = catSync[t.categoryId];
       final card = t.cardId == null ? null : cardSync[t.cardId];
       if (t.syncId == null || cat == null || (t.cardId != null && card == null)) continue;
       add('transactions', 'transactions', t.id, t.updatedAt, {
-        'id': t.syncId, 'amount': t.amount, 'type': t.type.name, 'categoryId': cat,
-        'paymentMethodType': t.paymentMethodType.name, 'cardId': card, 'date': _ymd(t.date),
-        'note': t.note, 'beneficiaryName': t.beneficiaryName,
+        'id': t.syncId,
+        'amount': t.amount,
+        'type': t.type.name,
+        'categoryId': cat,
+        'paymentMethodType': t.paymentMethodType.name,
+        'cardId': card,
+        'date': _ymd(t.date),
+        'note': t.note,
+        'beneficiaryName': t.beneficiaryName,
         'createdAt': t.createdAt.toUtc().toIso8601String(),
         'accountId': t.accountId == null ? null : accSync[t.accountId],
         'toAccountId': t.toAccountId == null ? null : accSync[t.toAccountId],
@@ -277,14 +295,20 @@ class SyncService {
       final cat = catSync[b.categoryId];
       if (cat == null) continue;
       add('categoryBudgets', 'category_budgets', b.id, b.updatedAt, {
-        'categoryId': cat, 'monthlyLimit': b.monthlyLimit, 'isEnabled': b.isEnabled,
+        'categoryId': cat,
+        'monthlyLimit': b.monthlyLimit,
+        'isEnabled': b.isEnabled,
       });
     }
 
     for (final p in await (_db.select(_db.people)..where((p) => p.dirty.equals(true))).get()) {
       if (p.syncId == null) continue;
       add('people', 'people', p.id, p.updatedAt, {
-        'id': p.syncId, 'name': p.name, 'phone': p.phone, 'email': p.email, 'notes': p.notes,
+        'id': p.syncId,
+        'name': p.name,
+        'phone': p.phone,
+        'email': p.email,
+        'notes': p.notes,
         'linkedUserId': p.linkedUserId,
       });
     }
@@ -375,7 +399,11 @@ class SyncService {
       final local = await (_db.select(_db.people)..where((p) => p.syncId.equals(id))).getSingleOrNull();
       final used = local == null
           ? true
-          : (await (_db.select(_db.ledgerEntries)..where((e) => e.personId.equals(local.id))..limit(1)).get()).isNotEmpty;
+          : (await (_db.select(_db.ledgerEntries)
+                      ..where((e) => e.personId.equals(local.id))
+                      ..limit(1))
+                    .get())
+                .isNotEmpty;
       // A person with ledger history on this device is kept (history is never dropped).
       if (!used && local.updatedAt <= _secs(r['deletedAt'] as String)) {
         await (_db.delete(_db.people)..where((p) => p.id.equals(local.id))).go();
@@ -404,8 +432,7 @@ class SyncService {
   }
 
   /// A remote version replaces the local one only if it is strictly newer (last writer wins).
-  bool _newer(int? localUpdatedAt, _Json remote) =>
-      localUpdatedAt == null || _secs(remote['updatedAt'] as String) > localUpdatedAt;
+  bool _newer(int? localUpdatedAt, _Json remote) => localUpdatedAt == null || _secs(remote['updatedAt'] as String) > localUpdatedAt;
 
   Future<bool> _upsertPerson(_Json r) async {
     final id = r['id'] as String;
@@ -443,10 +470,12 @@ class SyncService {
       if (r['op'] == 'create' || r['error'] == 'not_found') {
         await (_db.delete(_db.ledgerEntries)..where((e) => e.entryId.equals(id))).go();
       } else if (status != null) {
-        await (_db.update(_db.ledgerEntries)..where((e) => e.entryId.equals(id))).write(LedgerEntriesCompanion(
-              status: Value(_enum(LedgerStatus.values, status.toLowerCase(), LedgerStatus.pending)),
-              queued: const Value(false),
-            ));
+        await (_db.update(_db.ledgerEntries)..where((e) => e.entryId.equals(id))).write(
+          LedgerEntriesCompanion(
+            status: Value(_enum(LedgerStatus.values, status.toLowerCase(), LedgerStatus.pending)),
+            queued: const Value(false),
+          ),
+        );
       }
     }
     await (_db.delete(_db.ledgerOutbox)..where((o) => o.id.isIn(sent.map((o) => o.id)))).go();
@@ -469,28 +498,43 @@ class SyncService {
       person = await (_db.select(_db.people)..where((p) => p.linkedUserId.equals(userId))).getSingleOrNull();
     }
     if (person == null && email != null) {
-      person = await (_db.select(_db.people)..where((p) => p.email.lower().equals(email))..limit(1)).getSingleOrNull();
+      person =
+          await (_db.select(_db.people)
+                ..where((p) => p.email.lower().equals(email))
+                ..limit(1))
+              .getSingleOrNull();
     }
     if (person == null && phone != null) {
-      person = await (_db.select(_db.people)..where((p) => p.phone.equals(phone))..limit(1)).getSingleOrNull();
+      person =
+          await (_db.select(_db.people)
+                ..where((p) => p.phone.equals(phone))
+                ..limit(1))
+              .getSingleOrNull();
     }
     if (person == null && userId == null && name != null && name.isNotEmpty) {
-      person = await (_db.select(_db.people)..where((p) => p.name.equals(name))..limit(1)).getSingleOrNull();
+      person =
+          await (_db.select(_db.people)
+                ..where((p) => p.name.equals(name))
+                ..limit(1))
+              .getSingleOrNull();
     }
     if (person == null) {
       if (name == null || name.isEmpty) return null;
-      return _db.into(_db.people).insert(PeopleCompanion.insert(
-            name: name,
-            email: Value(email),
-            phone: Value(phone),
-            linkedUserId: Value(userId),
-            // Same id on every device of this user, so they converge on one person.
-            syncId: Value(userId != null ? 'u-$userId' : null),
-          ));
+      return _db
+          .into(_db.people)
+          .insert(
+            PeopleCompanion.insert(
+              name: name,
+              email: Value(email),
+              phone: Value(phone),
+              linkedUserId: Value(userId),
+              // Same id on every device of this user, so they converge on one person.
+              syncId: Value(userId != null ? 'u-$userId' : null),
+            ),
+          );
     }
     if (userId != null && person.linkedUserId != userId) {
-      await (_db.update(_db.people)..where((p) => p.id.equals(person!.id)))
-          .write(PeopleCompanion(linkedUserId: Value(userId)));
+      await (_db.update(_db.people)..where((p) => p.id.equals(person!.id))).write(PeopleCompanion(linkedUserId: Value(userId)));
     }
     return person.id;
   }
@@ -498,13 +542,19 @@ class SyncService {
   Future<void> _applyLedgerEntry(_Json e) async {
     final id = e['id'] as String;
     final local = await (_db.select(_db.ledgerEntries)..where((x) => x.entryId.equals(id))).getSingleOrNull();
-    final stillQueued = (await (_db.select(_db.ledgerOutbox)..where((o) => o.entryId.equals(id))..limit(1)).get()).isNotEmpty;
+    final stillQueued =
+        (await (_db.select(_db.ledgerOutbox)
+                  ..where((o) => o.entryId.equals(id))
+                  ..limit(1))
+                .get())
+            .isNotEmpty;
     final personId = local?.personId ?? await _personFor(e);
     final cp = (e['counterparty'] as _Json?) ?? const {};
     final otherUser = cp['userId'] as String?;
     if (personId != null && otherUser != null) {
       // The server found an account for this person: remember it (syncs to my other devices).
-      await (_db.update(_db.people)..where((p) => p.id.equals(personId) & (p.linkedUserId.isNull() | p.linkedUserId.equals(otherUser).not())))
+      await (_db.update(_db.people)
+            ..where((p) => p.id.equals(personId) & (p.linkedUserId.isNull() | p.linkedUserId.equals(otherUser).not())))
           .write(PeopleCompanion(linkedUserId: Value(otherUser)));
     }
     final comp = LedgerEntriesCompanion(
@@ -540,25 +590,26 @@ class SyncService {
     final id = n['id'] as String;
     final local = await (_db.select(_db.appNotifications)..where((x) => x.id.equals(id))).getSingleOrNull();
     final serverRead = n['readAt'] == null ? null : DateTime.parse(n['readAt'] as String);
-    await _db.into(_db.appNotifications).insertOnConflictUpdate(AppNotificationsCompanion(
-          id: Value(id),
-          type: Value(n['type'] as String),
-          entryId: Value(n['entryId'] as String?),
-          actorName: Value(n['actorName'] as String?),
-          amount: Value((n['amount'] as num?)?.toDouble()),
-          currency: Value(n['currency'] as String?),
-          createdAt: Value(DateTime.parse(n['createdAt'] as String)),
-          readAt: Value(local?.readPending == true ? local!.readAt : serverRead),
-          readPending: Value(local?.readPending == true && serverRead == null),
-        ));
+    await _db
+        .into(_db.appNotifications)
+        .insertOnConflictUpdate(
+          AppNotificationsCompanion(
+            id: Value(id),
+            type: Value(n['type'] as String),
+            entryId: Value(n['entryId'] as String?),
+            actorName: Value(n['actorName'] as String?),
+            amount: Value((n['amount'] as num?)?.toDouble()),
+            currency: Value(n['currency'] as String?),
+            createdAt: Value(DateTime.parse(n['createdAt'] as String)),
+            readAt: Value(local?.readPending == true ? local!.readAt : serverRead),
+            readPending: Value(local?.readPending == true && serverRead == null),
+          ),
+        );
   }
 
   Future<bool> _deleteBySyncId(String table, _Json r) async {
     final id = r['id'] as String;
-    final rows = await _db.customSelect(
-      'SELECT updated_at FROM $table WHERE sync_id = ?',
-      variables: [Variable.withString(id)],
-    ).get();
+    final rows = await _db.customSelect('SELECT updated_at FROM $table WHERE sync_id = ?', variables: [Variable.withString(id)]).get();
     if (rows.isEmpty) return false;
     if (rows.first.read<int>('updated_at') > _secs(r['deletedAt'] as String)) return false;
     await _db.customUpdate('DELETE FROM $table WHERE sync_id = ?', variables: [Variable.withString(id)]);

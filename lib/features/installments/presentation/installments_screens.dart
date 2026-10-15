@@ -506,8 +506,8 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
       appBar: AppBar(title: Text((widget.installmentId == null ? 'installments.add' : 'installments.edit').tr())),
       body: !_loaded
           ? const SizedBox()
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          : StickySaveLayout(
+              button: FilledButton(onPressed: _saving ? null : _save, child: Text('common.save'.tr())),
               children: [
                 FieldLabel('installments.itemTitle'.tr()),
                 TextField(
@@ -585,8 +585,6 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
                 ),
                 FieldLabel('installments.notes'.tr()),
                 TextField(controller: _notes, minLines: 1, maxLines: 3),
-                const SizedBox(height: 20),
-                FilledButton(onPressed: _saving ? null : _save, child: Text('common.save'.tr())),
               ],
             ),
     );

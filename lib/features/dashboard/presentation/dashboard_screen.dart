@@ -74,8 +74,42 @@ class DashboardScreen extends ConsumerWidget {
                     offset: const Offset(0, -28),
                     child: _BalanceCard(total: total, income: income, expense: expense),
                   ),
-                  Transform.translate(offset: const Offset(0, -16), child: const _QuickActions()),
+                  Transform.translate(offset: const Offset(0, -14), child: const _MainActions()),
+                  const _Shortcuts(),
+                  const SizedBox(height: 12),
                   const _Alerts(),
+                  SectionHeader(
+                    'dashboard.recentTransactions'.tr(),
+                    action: 'common.viewAll'.tr(),
+                    onAction: () => context.go('/transactions'),
+                  ),
+                  recent.when(
+                    loading: () => const SkeletonList(count: 3),
+                    error: (e, _) =>
+                        ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(recentTransactionsProvider(6))),
+                    data: (items) => items.isEmpty
+                        ? AppCard(
+                            child: EmptyState(
+                              icon: Icons.receipt_long_outlined,
+                              title: 'dashboard.noTransactions'.tr(),
+                              actionLabel: 'add.expense'.tr(),
+                              onAction: () => context.push('/transactions/add'),
+                            ),
+                          )
+                        : AppCard(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            child: Column(
+                              children: [
+                                for (final t in items)
+                                  TransactionTile(
+                                    item: t,
+                                    showDate: true,
+                                    onTap: () => context.push('/transactions/${t.transaction.id}/edit'),
+                                  ),
+                              ],
+                            ),
+                          ),
+                  ),
                   if (accounts.isNotEmpty) ...[
                     SectionHeader('dashboard.accounts'.tr(), action: 'common.viewAll'.tr(), onAction: () => context.push('/accounts')),
                     SizedBox(
@@ -111,38 +145,6 @@ class DashboardScreen extends ConsumerWidget {
                     )
                   else
                     AppCard(child: _SpendingBars(items: breakdown.take(5).toList())),
-                  SectionHeader(
-                    'dashboard.recentTransactions'.tr(),
-                    action: 'common.viewAll'.tr(),
-                    onAction: () => context.go('/transactions'),
-                  ),
-                  recent.when(
-                    loading: () => const SkeletonList(count: 3),
-                    error: (e, _) =>
-                        ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(recentTransactionsProvider(6))),
-                    data: (items) => items.isEmpty
-                        ? AppCard(
-                            child: EmptyState(
-                              icon: Icons.receipt_long_outlined,
-                              title: 'dashboard.noTransactions'.tr(),
-                              actionLabel: 'add.expense'.tr(),
-                              onAction: () => context.push('/transactions/add'),
-                            ),
-                          )
-                        : AppCard(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            child: Column(
-                              children: [
-                                for (final t in items)
-                                  TransactionTile(
-                                    item: t,
-                                    showDate: true,
-                                    onTap: () => context.push('/transactions/${t.transaction.id}/edit'),
-                                  ),
-                              ],
-                            ),
-                          ),
-                  ),
                 ],
               ),
             ),
@@ -221,12 +223,16 @@ class _BalanceCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: DS.heroGradient,
         borderRadius: BorderRadius.circular(DS.radiusLg),
-        boxShadow: const [BoxShadow(color: Color(0x33102A5C), blurRadius: 20, offset: Offset(0, 8))],
+        border: Border.all(color: DS.gold.withValues(alpha: 0.35)),
+        boxShadow: const [BoxShadow(color: Color(0x330A3B28), blurRadius: 20, offset: Offset(0, 8))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('dashboard.totalBalance'.tr(), style: const TextStyle(color: Colors.white70)),
+          Text(
+            'dashboard.totalBalance'.tr(),
+            style: const TextStyle(color: DS.goldLight, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 4),
           AmountText(total, color: Colors.white, size: 30, weight: FontWeight.w800),
           const SizedBox(height: 14),
@@ -245,7 +251,14 @@ class _BalanceCard extends StatelessWidget {
           Row(
             children: [
               Text('${'dashboard.netFlow'.tr()}: ', style: const TextStyle(color: Colors.white70)),
-              AmountText(net, color: Colors.white, size: 14, signed: true),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  color: (net >= 0 ? const Color(0xFF4ADE80) : const Color(0xFFF87171)).withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: AmountText(net, color: net >= 0 ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5), size: 14, signed: true),
+              ),
             ],
           ),
         ],
@@ -263,9 +276,15 @@ class _Mini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(DS.radius)),
+      // Light: white boxes on the green card. Dark: translucent, so the card stays calm.
+      decoration: BoxDecoration(
+        color: dark ? Colors.black.withValues(alpha: 0.25) : Colors.white,
+        borderRadius: BorderRadius.circular(DS.radius),
+        border: dark ? Border.all(color: Colors.white.withValues(alpha: 0.08)) : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -273,11 +292,11 @@ class _Mini extends StatelessWidget {
             children: [
               Icon(icon, size: 14, color: color),
               const SizedBox(width: 4),
-              Text(label, style: const TextStyle(color: DS.textMuted, fontSize: 12)),
+              Text(label, style: TextStyle(color: dark ? Colors.white70 : DS.textMuted, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 2),
-          AmountText(amount, color: DS.text, size: 17),
+          AmountText(amount, color: dark ? Colors.white : DS.text, size: 17),
         ],
       ),
     );
@@ -326,6 +345,7 @@ class _Alerts extends ConsumerWidget {
         ),
     ];
     if (items.isEmpty) return const SizedBox.shrink();
+    items.removeRange(items.length > 3 ? 3 : items.length, items.length);
     return Column(
       children: [for (final w in items) Padding(padding: const EdgeInsets.only(bottom: 8), child: w)],
     );
@@ -461,48 +481,103 @@ class _SpendingBars extends StatelessWidget {
   }
 }
 
-/// Shortcuts to every section, right under the balance card.
-class _QuickActions extends ConsumerWidget {
-  const _QuickActions();
+/// The three most used actions, right under the balance card.
+class _MainActions extends ConsumerWidget {
+  const _MainActions();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final actions = <(IconData, String, Color, VoidCallback)>[
-      (Icons.local_gas_station_rounded, 'home.carExpense'.tr(), const Color(0xFF1250C4), () => startCarExpense(context, ref)),
-      (Icons.handshake_outlined, 'home.loan'.tr(), const Color(0xFF0E8C7F), () => context.push('/ledger/new')),
-      (Icons.event_repeat_rounded, 'installments.title'.tr(), const Color(0xFF7C3AED), () => context.push('/installments')),
-      (Icons.insights_rounded, 'stats.title'.tr(), const Color(0xFFDB2777), () => context.push('/stats')),
-      (Icons.directions_car_filled_outlined, 'home.myCars'.tr(), const Color(0xFF0A2A66), () => context.push('/cars')),
-      (Icons.account_balance_wallet_outlined, 'accounts.title'.tr(), const Color(0xFF16A34A), () => context.push('/accounts')),
-      (Icons.pie_chart_outline_rounded, 'home.budgets'.tr(), const Color(0xFFF59E0B), () => context.push('/budgets')),
-      (Icons.bar_chart_rounded, 'reports.title'.tr(), const Color(0xFF64748B), () => context.push('/reports')),
-    ];
-    final theme = Theme.of(context);
-    return AppCard(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-      child: GridView.count(
-        crossAxisCount: 4,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 6,
-        childAspectRatio: 0.95,
-        children: [
-          for (final (icon, label, color, onTap) in actions)
-            InkWell(
+    final scheme = Theme.of(context).colorScheme;
+    Widget action(IconData icon, String label, Color color, VoidCallback onTap) => Expanded(
+      child: Material(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(DS.radius),
+        elevation: 0,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(DS.radius),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(DS.radius),
-              onTap: onTap,
+              border: Border.all(color: scheme.outline),
+              boxShadow: DS.softShadow(Theme.of(context).brightness),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(height: 6),
+                Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return Row(
+      children: [
+        action(Icons.remove_rounded, 'add.expense'.tr(), scheme.error, () => context.push('/transactions/add')),
+        const SizedBox(width: 10),
+        action(Icons.add_rounded, 'add.income'.tr(), scheme.secondary, () => context.push('/transactions/add?type=income')),
+        const SizedBox(width: 10),
+        action(Icons.local_gas_station_rounded, 'home.carExpense'.tr(), DS.gold, () => startCarExpense(context, ref)),
+      ],
+    );
+  }
+}
+
+/// Every other section in one scrollable row, all in the brand colour.
+class _Shortcuts extends StatelessWidget {
+  const _Shortcuts();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = theme.colorScheme.primary;
+    final items = <(IconData, String, String)>[
+      (Icons.insights_rounded, 'stats.title', '/stats'),
+      (Icons.event_repeat_rounded, 'installments.title', '/installments'),
+      (Icons.handshake_outlined, 'home.loan', '/ledger/new'),
+      (Icons.directions_car_filled_outlined, 'home.myCars', '/cars'),
+      (Icons.account_balance_wallet_outlined, 'accounts.title', '/accounts'),
+      (Icons.pie_chart_outline_rounded, 'home.budgets', '/budgets'),
+      (Icons.bar_chart_rounded, 'reports.title', '/reports'),
+      (Icons.swap_horiz_rounded, 'add.transfer', '/transactions/add?type=transfer'),
+    ];
+    return SizedBox(
+      height: 84,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: items.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 4),
+        itemBuilder: (context, i) {
+          final (icon, label, route) = items[i];
+          return InkWell(
+            borderRadius: BorderRadius.circular(DS.radius),
+            onTap: () => context.push(route),
+            child: SizedBox(
+              width: 74,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
                     width: 46,
                     height: 46,
-                    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
-                    child: Icon(icon, color: color, size: 24),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: DS.gold.withValues(alpha: 0.35)),
+                    ),
+                    child: Icon(icon, color: color, size: 23),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Text(
-                    label,
+                    label.tr(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -511,7 +586,8 @@ class _QuickActions extends ConsumerWidget {
                 ],
               ),
             ),
-        ],
+          );
+        },
       ),
     );
   }

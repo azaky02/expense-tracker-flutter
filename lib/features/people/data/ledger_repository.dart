@@ -9,17 +9,14 @@ import '../../../core/db/tables.dart';
 
 /// Balance with one person, derived only from CONFIRMED ledger entries (never stored).
 class PersonBalance {
-  const PersonBalance({
-    required this.heOwesMe,
-    required this.iOweHim,
-    required this.pendingCount,
-    required this.lastDate,
-  });
+  const PersonBalance({required this.heOwesMe, required this.iOweHim, required this.pendingCount, required this.lastDate});
 
   /// Receivable: what the person still owes me.
   final double heOwesMe;
+
   /// Payable: what I still owe the person.
   final double iOweHim;
+
   /// Entries waiting for the other side (or for the server).
   final int pendingCount;
   final DateTime? lastDate;
@@ -83,8 +80,7 @@ String newEntryId() {
   return '${h.substring(0, 8)}-${h.substring(8, 12)}-${h.substring(12, 16)}-${h.substring(16, 20)}-${h.substring(20)}';
 }
 
-String _ymd(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+String _ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 class LedgerRepository {
   LedgerRepository(this._db);
@@ -100,9 +96,7 @@ class LedgerRepository {
         for (final e in entries) {
           if (e.personId != null) (byPerson[e.personId!] ??= []).add(e);
         }
-        final out = [
-          for (final p in list) PersonWithBalance(p, PersonBalance.of(byPerson[p.id] ?? const [])),
-        ];
+        final out = [for (final p in list) PersonWithBalance(p, PersonBalance.of(byPerson[p.id] ?? const []))];
         // People you have open balances with first, then most recent activity.
         out.sort((a, b) {
           final ao = a.balance.net != 0 ? 0 : 1, bo = b.balance.net != 0 ? 0 : 1;
@@ -118,34 +112,43 @@ class LedgerRepository {
     });
   }
 
-  Stream<Person?> watchPerson(int id) =>
-      (_db.select(_db.people)..where((p) => p.id.equals(id))).watchSingleOrNull();
+  Stream<Person?> watchPerson(int id) => (_db.select(_db.people)..where((p) => p.id.equals(id))).watchSingleOrNull();
 
   Future<int> createPerson({required String name, String? phone, String? email, String? notes}) {
-    return _db.into(_db.people).insert(PeopleCompanion.insert(
-          name: name.trim(),
-          phone: Value(_blank(phone)),
-          email: Value(_blank(email)?.toLowerCase()),
-          notes: Value(_blank(notes)),
-        ));
+    return _db
+        .into(_db.people)
+        .insert(
+          PeopleCompanion.insert(
+            name: name.trim(),
+            phone: Value(_blank(phone)),
+            email: Value(_blank(email)?.toLowerCase()),
+            notes: Value(_blank(notes)),
+          ),
+        );
   }
 
   Future<void> updatePerson(int id, {required String name, String? phone, String? email, String? notes}) async {
     final old = await (_db.select(_db.people)..where((p) => p.id.equals(id))).getSingle();
     final newEmail = _blank(email)?.toLowerCase();
-    await (_db.update(_db.people)..where((p) => p.id.equals(id))).write(PeopleCompanion(
-          name: Value(name.trim()),
-          phone: Value(_blank(phone)),
-          email: Value(newEmail),
-          notes: Value(_blank(notes)),
-          // A different e-mail may be a different account: forget the old link.
-          linkedUserId: newEmail == old.email ? const Value.absent() : const Value(null),
-        ));
+    await (_db.update(_db.people)..where((p) => p.id.equals(id))).write(
+      PeopleCompanion(
+        name: Value(name.trim()),
+        phone: Value(_blank(phone)),
+        email: Value(newEmail),
+        notes: Value(_blank(notes)),
+        // A different e-mail may be a different account: forget the old link.
+        linkedUserId: newEmail == old.email ? const Value.absent() : const Value(null),
+      ),
+    );
   }
 
   /// Only people without any ledger history can be deleted (history is never thrown away).
   Future<bool> deletePerson(int id) async {
-    final used = await (_db.select(_db.ledgerEntries)..where((e) => e.personId.equals(id))..limit(1)).get();
+    final used =
+        await (_db.select(_db.ledgerEntries)
+              ..where((e) => e.personId.equals(id))
+              ..limit(1))
+            .get();
     if (used.isNotEmpty) return false;
     await (_db.delete(_db.people)..where((p) => p.id.equals(id))).go();
     return true;
@@ -172,7 +175,10 @@ class LedgerRepository {
       var balance = 0.0;
       return [
         for (final e in rows)
-          StatementLine(e, balance = ((balance + (e.direction == LedgerDirection.gave ? e.amount : -e.amount)) * 100).roundToDouble() / 100),
+          StatementLine(
+            e,
+            balance = ((balance + (e.direction == LedgerDirection.gave ? e.amount : -e.amount)) * 100).roundToDouble() / 100,
+          ),
       ];
     });
   }
@@ -187,8 +193,10 @@ class LedgerRepository {
     String? description,
     String? settlesEntryId,
     String? paymentMethod,
+
     /// false = keep it as my own record even if the person has an account (no notification).
     bool notifyOtherParty = true,
+
     /// Signed out, nothing reaches the server, so the entry is shown as final until a sync says otherwise.
     bool signedIn = true,
   }) async {
@@ -197,22 +205,26 @@ class LedgerRepository {
     final hasContact = (person.email?.isNotEmpty ?? false) || (person.phone?.isNotEmpty ?? false);
     final shared = notifyOtherParty && hasContact;
     await _db.transaction(() async {
-      await _db.into(_db.ledgerEntries).insert(LedgerEntriesCompanion.insert(
-            entryId: id,
-            personId: Value(personId),
-            kind: kind,
-            direction: direction,
-            amount: amount,
-            date: date,
-            description: Value(_blank(description)),
-            // Without an account on the other side the entry is final right away; with one it waits
-            // for their confirmation. The server decides; this is just what to show until it answers.
-            status: shared && signedIn ? LedgerStatus.pending : LedgerStatus.confirmed,
-            settlesEntryId: Value(settlesEntryId),
-            paymentMethod: Value(paymentMethod),
-            counterpartName: Value(person.name),
-            queued: const Value(true),
-          ));
+      await _db
+          .into(_db.ledgerEntries)
+          .insert(
+            LedgerEntriesCompanion.insert(
+              entryId: id,
+              personId: Value(personId),
+              kind: kind,
+              direction: direction,
+              amount: amount,
+              date: date,
+              description: Value(_blank(description)),
+              // Without an account on the other side the entry is final right away; with one it waits
+              // for their confirmation. The server decides; this is just what to show until it answers.
+              status: shared && signedIn ? LedgerStatus.pending : LedgerStatus.confirmed,
+              settlesEntryId: Value(settlesEntryId),
+              paymentMethod: Value(paymentMethod),
+              counterpartName: Value(person.name),
+              queued: const Value(true),
+            ),
+          );
       await _enqueue(id, 'create', {
         'kind': kind.name.toUpperCase(),
         'direction': direction.name.toUpperCase(),
@@ -232,25 +244,28 @@ class LedgerRepository {
   }
 
   Future<void> confirm(String entryId) => _transition(entryId, 'confirm', LedgerStatus.confirmed);
-  Future<void> reject(String entryId, String? reason) =>
-      _transition(entryId, 'reject', LedgerStatus.rejected, {'reason': _blank(reason)});
+  Future<void> reject(String entryId, String? reason) => _transition(entryId, 'reject', LedgerStatus.rejected, {'reason': _blank(reason)});
   Future<void> cancel(String entryId) => _transition(entryId, 'cancel', LedgerStatus.cancelled);
 
   Future<void> _transition(String entryId, String op, LedgerStatus optimistic, [Map<String, dynamic> extra = const {}]) {
     return _db.transaction(() async {
-      await (_db.update(_db.ledgerEntries)..where((e) => e.entryId.equals(entryId))).write(
-            LedgerEntriesCompanion(status: Value(optimistic), queued: const Value(true)),
-          );
+      await (_db.update(
+        _db.ledgerEntries,
+      )..where((e) => e.entryId.equals(entryId))).write(LedgerEntriesCompanion(status: Value(optimistic), queued: const Value(true)));
       await _enqueue(entryId, op, extra);
     });
   }
 
   Future<void> _enqueue(String entryId, String op, Map<String, dynamic> fields) {
-    return _db.into(_db.ledgerOutbox).insert(LedgerOutboxCompanion.insert(
-          entryId: entryId,
-          op: op,
-          payload: jsonEncode({'op': op, 'id': entryId, ...fields}..removeWhere((k, v) => v == null)),
-        ));
+    return _db
+        .into(_db.ledgerOutbox)
+        .insert(
+          LedgerOutboxCompanion.insert(
+            entryId: entryId,
+            op: op,
+            payload: jsonEncode({'op': op, 'id': entryId, ...fields}..removeWhere((k, v) => v == null)),
+          ),
+        );
   }
 
   /// Entries other people recorded with me that wait for my confirmation.
@@ -276,9 +291,9 @@ class LedgerRepository {
   }
 
   Future<void> markAllRead() async {
-    await (_db.update(_db.appNotifications)..where((n) => n.readAt.isNull())).write(
-          AppNotificationsCompanion(readAt: Value(DateTime.now()), readPending: const Value(true)),
-        );
+    await (_db.update(
+      _db.appNotifications,
+    )..where((n) => n.readAt.isNull())).write(AppNotificationsCompanion(readAt: Value(DateTime.now()), readPending: const Value(true)));
   }
 
   Future<int?> personIdForEntry(String entryId) async =>

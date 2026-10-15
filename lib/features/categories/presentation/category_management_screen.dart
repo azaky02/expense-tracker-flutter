@@ -15,8 +15,7 @@ class CategoryManagementScreen extends ConsumerStatefulWidget {
   ConsumerState<CategoryManagementScreen> createState() => _CategoryManagementScreenState();
 }
 
-class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScreen>
-    with SingleTickerProviderStateMixin {
+class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScreen> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
   @override
@@ -31,14 +30,9 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
     super.dispose();
   }
 
-  CategoryType get _currentType =>
-      _tabController.index == 0 ? CategoryType.expense : CategoryType.income;
+  CategoryType get _currentType => _tabController.index == 0 ? CategoryType.expense : CategoryType.income;
 
-  Future<void> _openEditor({
-    required CategoryType type,
-    int? parentCategoryId,
-    Category? existing,
-  }) async {
+  Future<void> _openEditor({required CategoryType type, int? parentCategoryId, Category? existing}) async {
     await showCategoryEditor(context, ref, type: type, parentCategoryId: parentCategoryId, existing: existing);
   }
 
@@ -49,14 +43,8 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
         title: Text('categories.deleteCategory'.tr()),
         content: Text('categories.deleteConfirm'.tr(namedArgs: {'name': category.name})),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text('common.cancel'.tr()),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text('common.delete'.tr()),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text('common.cancel'.tr())),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text('common.delete'.tr())),
         ],
       ),
     );
@@ -138,10 +126,7 @@ class _CategoryList extends ConsumerWidget {
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ExpansionTile(
-                leading: CircleAvatar(
-                  backgroundColor: colorFromHex(node.main.color),
-                  child: Text(node.main.icon),
-                ),
+                leading: CircleAvatar(backgroundColor: colorFromHex(node.main.color), child: Text(node.main.icon)),
                 title: Text(node.main.name),
                 children: [
                   for (final child in node.children)
@@ -156,15 +141,9 @@ class _CategoryList extends ConsumerWidget {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, size: 18),
-                            onPressed: () => onEdit(child, type),
-                          ),
+                          IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => onEdit(child, type)),
                           if (!child.isDefault)
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, size: 18),
-                              onPressed: () => onDelete(child),
-                            ),
+                            IconButton(icon: const Icon(Icons.delete_outline, size: 18), onPressed: () => onDelete(child)),
                         ],
                       ),
                     ),

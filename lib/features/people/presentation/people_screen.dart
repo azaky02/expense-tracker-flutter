@@ -18,8 +18,8 @@ Color netColor(BuildContext context, double net) {
 String netLabel(BuildContext context, double net) => net > 0
     ? 'people.heOwesMe'.tr(context: context)
     : net < 0
-        ? 'people.iOweHim'.tr(context: context)
-        : 'people.settled'.tr(context: context);
+    ? 'people.iOweHim'.tr(context: context)
+    : 'people.settled'.tr(context: context);
 
 class NotificationsBell extends ConsumerWidget {
   const NotificationsBell({super.key});
@@ -45,24 +45,30 @@ class PersonAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final letter = name.trim().isEmpty ? '?' : name.trim().characters.first;
-    return Stack(clipBehavior: Clip.none, children: [
-      Container(
-        width: size,
-        height: size,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.14), shape: BoxShape.circle),
-        child: Text(letter, style: TextStyle(color: color, fontSize: size * 0.42, fontWeight: FontWeight.w800)),
-      ),
-      if (linked)
-        PositionedDirectional(
-          bottom: -2,
-          end: -2,
-          child: Container(
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, shape: BoxShape.circle),
-            child: const Icon(Icons.verified, size: 14, color: DS.primary),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: color.withValues(alpha: 0.14), shape: BoxShape.circle),
+          child: Text(
+            letter,
+            style: TextStyle(color: color, fontSize: size * 0.42, fontWeight: FontWeight.w800),
           ),
         ),
-    ]);
+        if (linked)
+          PositionedDirectional(
+            bottom: -2,
+            end: -2,
+            child: Container(
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, shape: BoxShape.circle),
+              child: const Icon(Icons.verified, size: 14, color: DS.primary),
+            ),
+          ),
+      ],
+    );
   }
 }
 
@@ -127,11 +133,17 @@ class _PeopleScreenState extends ConsumerState<PeopleScreen> {
                 decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: 'people.search'.tr()),
               ),
               const SizedBox(height: 12),
-              Row(children: [
-                Expanded(child: _Total(label: 'people.totalReceivable'.tr(), amount: receivable, color: DS.success)),
-                const SizedBox(width: 10),
-                Expanded(child: _Total(label: 'people.totalPayable'.tr(), amount: payable, color: Theme.of(context).colorScheme.error)),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: _Total(label: 'people.totalReceivable'.tr(), amount: receivable, color: DS.success),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _Total(label: 'people.totalPayable'.tr(), amount: payable, color: Theme.of(context).colorScheme.error),
+                  ),
+                ],
+              ),
               if (owesMe.isNotEmpty) ...[SectionHeader('people.sectionOwesMe'.tr()), _Group(owesMe)],
               if (iOwe.isNotEmpty) ...[SectionHeader('people.sectionIOwe'.tr()), _Group(iOwe)],
               if (rest.isNotEmpty) ...[SectionHeader('people.sectionAll'.tr()), _Group(rest)],
@@ -152,22 +164,24 @@ class _Group extends StatelessWidget {
     final theme = Theme.of(context);
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Column(children: [
-        for (final p in people)
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-            leading: PersonAvatar(name: p.person.name, color: netColor(context, p.balance.net), linked: p.person.linkedUserId != null),
-            title: Text(p.person.name, style: theme.textTheme.titleSmall),
-            subtitle: Text(
-              p.balance.pendingCount > 0
-                  ? 'people.pending'.tr(namedArgs: {'count': '${p.balance.pendingCount}'})
-                  : netLabel(context, p.balance.net),
-              style: theme.textTheme.bodySmall?.copyWith(color: p.balance.pendingCount > 0 ? DS.warning : null),
+      child: Column(
+        children: [
+          for (final p in people)
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+              leading: PersonAvatar(name: p.person.name, color: netColor(context, p.balance.net), linked: p.person.linkedUserId != null),
+              title: Text(p.person.name, style: theme.textTheme.titleSmall),
+              subtitle: Text(
+                p.balance.pendingCount > 0
+                    ? 'people.pending'.tr(namedArgs: {'count': '${p.balance.pendingCount}'})
+                    : netLabel(context, p.balance.net),
+                style: theme.textTheme.bodySmall?.copyWith(color: p.balance.pendingCount > 0 ? DS.warning : null),
+              ),
+              trailing: AmountText(p.balance.net.abs(), size: 15, color: netColor(context, p.balance.net)),
+              onTap: () => context.push('/people/${p.person.id}'),
             ),
-            trailing: AmountText(p.balance.net.abs(), size: 15, color: netColor(context, p.balance.net)),
-            onTap: () => context.push('/people/${p.person.id}'),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -182,11 +196,14 @@ class _Total extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       padding: const EdgeInsets.all(14),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: 4),
-        AmountText(amount, size: 18, color: color),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 4),
+          AmountText(amount, size: 18, color: color),
+        ],
+      ),
     );
   }
 }

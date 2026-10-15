@@ -70,18 +70,28 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
         title: Text((widget.personId == null ? 'people.add' : 'people.edit').tr(context: context)),
         actions: [
           if (widget.personId != null)
-            IconButton(onPressed: _delete, icon: const Icon(Icons.delete_outline), tooltip: 'people.delete'.tr(context: context)),
+            IconButton(
+              onPressed: _delete,
+              icon: const Icon(Icons.delete_outline),
+              tooltip: 'people.delete'.tr(context: context),
+            ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          TextField(controller: _name, autofocus: widget.personId == null, decoration: InputDecoration(labelText: 'people.name'.tr(context: context))),
+          TextField(
+            controller: _name,
+            autofocus: widget.personId == null,
+            decoration: InputDecoration(labelText: 'people.name'.tr(context: context)),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _phone,
             keyboardType: TextInputType.phone,
-            decoration: InputDecoration(labelText: '${'people.phone'.tr(context: context)} (${'common.optional'.tr(context: context)})'),
+            decoration: InputDecoration(
+              labelText: '${'people.phone'.tr(context: context)} (${'common.optional'.tr(context: context)})',
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -97,10 +107,15 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
           TextField(
             controller: _notes,
             maxLines: 3,
-            decoration: InputDecoration(labelText: '${'people.notes'.tr(context: context)} (${'common.optional'.tr(context: context)})'),
+            decoration: InputDecoration(
+              labelText: '${'people.notes'.tr(context: context)} (${'common.optional'.tr(context: context)})',
+            ),
           ),
           const SizedBox(height: 24),
-          FilledButton(onPressed: _saving ? null : _save, child: Text('common.save'.tr(context: context))),
+          FilledButton(
+            onPressed: _saving ? null : _save,
+            child: Text('common.save'.tr(context: context)),
+          ),
         ],
       ),
     );

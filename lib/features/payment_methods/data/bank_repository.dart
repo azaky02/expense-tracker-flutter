@@ -11,8 +11,6 @@ class BankRepository {
   }
 
   Future<int> createCustom(String name) {
-    return _db.into(_db.banks).insert(
-          BanksCompanion.insert(name: name, isCustom: const Value(true)),
-        );
+    return _db.into(_db.banks).insert(BanksCompanion.insert(name: name, isCustom: const Value(true)));
   }
 }

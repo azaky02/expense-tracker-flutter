@@ -21,6 +21,7 @@ class TransactionWithDetails {
   final String? accountName;
   final String? toAccountName;
   final int? parentCategoryId;
+
   /// Main category of a sub-category (null when the transaction sits on a main category).
   final String? parentCategoryName;
 
@@ -35,12 +36,7 @@ class MonthSummary {
 }
 
 class CategoryBreakdownItem {
-  const CategoryBreakdownItem({
-    required this.categoryId,
-    required this.categoryName,
-    required this.categoryColor,
-    required this.total,
-  });
+  const CategoryBreakdownItem({required this.categoryId, required this.categoryName, required this.categoryColor, required this.total});
   final int categoryId;
   final String categoryName;
   final String categoryColor;
@@ -48,12 +44,7 @@ class CategoryBreakdownItem {
 }
 
 class PaymentMethodBreakdownItem {
-  const PaymentMethodBreakdownItem({
-    required this.label,
-    required this.cardId,
-    required this.color,
-    required this.total,
-  });
+  const PaymentMethodBreakdownItem({required this.label, required this.cardId, required this.color, required this.total});
   final String label;
   final int? cardId;
   final String color;

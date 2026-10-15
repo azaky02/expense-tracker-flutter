@@ -25,14 +25,7 @@ class CategoryRepository {
   Stream<List<CategoryTreeNode>> watchTree({CategoryType? type}) {
     return watchAll(type: type).map((all) {
       final mains = all.where((c) => c.parentCategoryId == null).toList();
-      return mains
-          .map(
-            (main) => CategoryTreeNode(
-              main: main,
-              children: all.where((c) => c.parentCategoryId == main.id).toList(),
-            ),
-          )
-          .toList();
+      return mains.map((main) => CategoryTreeNode(main: main, children: all.where((c) => c.parentCategoryId == main.id).toList())).toList();
     });
   }
 
@@ -43,21 +36,15 @@ class CategoryRepository {
     required CategoryType type,
     int? parentCategoryId,
   }) {
-    return _db.into(_db.categories).insert(
-          CategoriesCompanion.insert(
-            name: name,
-            icon: icon,
-            color: color,
-            type: type,
-            parentCategoryId: Value(parentCategoryId),
-          ),
-        );
+    return _db
+        .into(_db.categories)
+        .insert(CategoriesCompanion.insert(name: name, icon: icon, color: color, type: type, parentCategoryId: Value(parentCategoryId)));
   }
 
   Future<void> update(int id, {required String name, required String icon, required String color}) {
-    return (_db.update(_db.categories)..where((c) => c.id.equals(id))).write(
-      CategoriesCompanion(name: Value(name), icon: Value(icon), color: Value(color)),
-    );
+    return (_db.update(
+      _db.categories,
+    )..where((c) => c.id.equals(id))).write(CategoriesCompanion(name: Value(name), icon: Value(icon), color: Value(color)));
   }
 
   /// Cascades to sub-categories via the FK's onDelete behavior isn't set at the drift level

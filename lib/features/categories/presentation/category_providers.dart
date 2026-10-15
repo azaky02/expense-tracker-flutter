@@ -8,7 +8,6 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
   return CategoryRepository(ref.watch(databaseProvider));
 });
 
-final categoryTreeProvider =
-    StreamProvider.family<List<CategoryTreeNode>, CategoryType?>((ref, type) {
+final categoryTreeProvider = StreamProvider.family<List<CategoryTreeNode>, CategoryType?>((ref, type) {
   return ref.watch(categoryRepositoryProvider).watchTree(type: type);
 });

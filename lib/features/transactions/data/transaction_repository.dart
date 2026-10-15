@@ -47,6 +47,7 @@ class TransactionFilters {
     this.search,
     this.hasAttachment,
   });
+
   /// Pass the main category's id plus all its children's ids to filter "this category or any
   /// of its sub-categories".
   final List<int>? categoryIds;
@@ -63,28 +64,65 @@ class TransactionFilters {
   final bool? hasAttachment;
 
   bool get isEmpty =>
-      (categoryIds?.isEmpty ?? true) && paymentMethodType == null && cardId == null && types == null &&
-      accountId == null && from == null && to == null && minAmount == null && maxAmount == null &&
-      (person?.isEmpty ?? true) && (search?.isEmpty ?? true) && hasAttachment == null;
+      (categoryIds?.isEmpty ?? true) &&
+      paymentMethodType == null &&
+      cardId == null &&
+      types == null &&
+      accountId == null &&
+      from == null &&
+      to == null &&
+      minAmount == null &&
+      maxAmount == null &&
+      (person?.isEmpty ?? true) &&
+      (search?.isEmpty ?? true) &&
+      hasAttachment == null;
 
   TransactionFilters copyWith({String? search, Set<TransactionType>? types, bool clearTypes = false}) => TransactionFilters(
-        categoryIds: categoryIds, paymentMethodType: paymentMethodType, cardId: cardId,
-        types: clearTypes ? null : (types ?? this.types), accountId: accountId, from: from, to: to,
-        minAmount: minAmount, maxAmount: maxAmount, person: person, search: search ?? this.search,
-        hasAttachment: hasAttachment,
-      );
+    categoryIds: categoryIds,
+    paymentMethodType: paymentMethodType,
+    cardId: cardId,
+    types: clearTypes ? null : (types ?? this.types),
+    accountId: accountId,
+    from: from,
+    to: to,
+    minAmount: minAmount,
+    maxAmount: maxAmount,
+    person: person,
+    search: search ?? this.search,
+    hasAttachment: hasAttachment,
+  );
 
   @override
   bool operator ==(Object other) =>
       other is TransactionFilters &&
-      _listEq(other.categoryIds, categoryIds) && other.paymentMethodType == paymentMethodType && other.cardId == cardId &&
-      _setEq(other.types, types) && other.accountId == accountId && other.from == from && other.to == to &&
-      other.minAmount == minAmount && other.maxAmount == maxAmount && other.person == person &&
-      other.search == search && other.hasAttachment == hasAttachment;
+      _listEq(other.categoryIds, categoryIds) &&
+      other.paymentMethodType == paymentMethodType &&
+      other.cardId == cardId &&
+      _setEq(other.types, types) &&
+      other.accountId == accountId &&
+      other.from == from &&
+      other.to == to &&
+      other.minAmount == minAmount &&
+      other.maxAmount == maxAmount &&
+      other.person == person &&
+      other.search == search &&
+      other.hasAttachment == hasAttachment;
 
   @override
-  int get hashCode => Object.hash(categoryIds?.length, paymentMethodType, cardId, types?.length, accountId, from, to,
-      minAmount, maxAmount, person, search, hasAttachment);
+  int get hashCode => Object.hash(
+    categoryIds?.length,
+    paymentMethodType,
+    cardId,
+    types?.length,
+    accountId,
+    from,
+    to,
+    minAmount,
+    maxAmount,
+    person,
+    search,
+    hasAttachment,
+  );
 }
 
 bool _listEq(List<int>? a, List<int>? b) {
@@ -133,7 +171,9 @@ class TransactionRepository {
   }
 
   Future<int> create(TransactionInput input) async {
-    final id = await _db.into(_db.transactions).insert(
+    final id = await _db
+        .into(_db.transactions)
+        .insert(
           TransactionsCompanion.insert(
             amount: input.amount,
             type: input.type,
@@ -172,8 +212,7 @@ class TransactionRepository {
   }
 
   Future<void> updateNote(int id, String note) {
-    return (_db.update(_db.transactions)..where((t) => t.id.equals(id)))
-        .write(TransactionsCompanion(note: Value(note)));
+    return (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(TransactionsCompanion(note: Value(note)));
   }
 
   Future<void> delete(int id) {
@@ -194,8 +233,7 @@ class TransactionRepository {
   }
 
   Stream<List<TransactionWithDetails>> watchList(TransactionFilters filters) {
-    final query = _baseQuery()
-      ..orderBy([OrderingTerm.desc(_db.transactions.date), OrderingTerm.desc(_db.transactions.createdAt)]);
+    final query = _baseQuery()..orderBy([OrderingTerm.desc(_db.transactions.date), OrderingTerm.desc(_db.transactions.createdAt)]);
     if (filters.categoryIds != null && filters.categoryIds!.isNotEmpty) {
       query.where(_db.transactions.categoryId.isIn(filters.categoryIds!));
     }
@@ -234,8 +272,7 @@ class TransactionRepository {
   }
 
   Stream<MonthSummary> watchMonthSummary(DateTime start, DateTime end) {
-    final query = _db.select(_db.transactions)
-      ..where((t) => t.date.isBetweenValues(start, end));
+    final query = _db.select(_db.transactions)..where((t) => t.date.isBetweenValues(start, end));
     return query.watch().map((rows) {
       var income = 0.0;
       var expense = 0.0;
@@ -252,13 +289,8 @@ class TransactionRepository {
 
   /// Rolls sub-category totals up into their main category (one level of nesting only).
   Stream<List<CategoryBreakdownItem>> watchExpenseCategoryBreakdown(DateTime start, DateTime end) {
-    final query = _db.select(_db.transactions).join([
-      innerJoin(_db.categories, _db.categories.id.equalsExp(_db.transactions.categoryId)),
-    ])
-      ..where(
-        _db.transactions.type.equalsValue(TransactionType.expense) &
-            _db.transactions.date.isBetweenValues(start, end),
-      );
+    final query = _db.select(_db.transactions).join([innerJoin(_db.categories, _db.categories.id.equalsExp(_db.transactions.categoryId))])
+      ..where(_db.transactions.type.equalsValue(TransactionType.expense) & _db.transactions.date.isBetweenValues(start, end));
     return query.watch().map((rows) {
       final totals = <int, CategoryBreakdownItem>{};
       for (final row in rows) {
@@ -288,20 +320,14 @@ class TransactionRepository {
   }
 
   Future<double> getCategoryMonthTotal(int categoryId, DateTime start, DateTime end) async {
-    final query = _db.select(_db.transactions)
-      ..where((t) => t.categoryId.equals(categoryId) & t.date.isBetweenValues(start, end));
+    final query = _db.select(_db.transactions)..where((t) => t.categoryId.equals(categoryId) & t.date.isBetweenValues(start, end));
     final rows = await query.get();
     return rows.fold<double>(0, (sum, t) => sum + t.amount);
   }
 
   Stream<double> watchCardMonthSpend(int cardId, DateTime start, DateTime end) {
     final query = _db.select(_db.transactions)
-      ..where(
-        (t) =>
-            t.cardId.equals(cardId) &
-            t.type.equalsValue(TransactionType.expense) &
-            t.date.isBetweenValues(start, end),
-      );
+      ..where((t) => t.cardId.equals(cardId) & t.type.equalsValue(TransactionType.expense) & t.date.isBetweenValues(start, end));
     return query.watch().map((rows) => rows.fold<double>(0, (sum, t) => sum + t.amount));
   }
 
@@ -318,13 +344,8 @@ class TransactionRepository {
 
   /// Cash vs. each card's spend for the month.
   Stream<List<PaymentMethodBreakdownItem>> watchExpenseByPaymentMethod(DateTime start, DateTime end) {
-    final query = _db.select(_db.transactions).join([
-      leftOuterJoin(_db.cards, _db.cards.id.equalsExp(_db.transactions.cardId)),
-    ])
-      ..where(
-        _db.transactions.type.equalsValue(TransactionType.expense) &
-            _db.transactions.date.isBetweenValues(start, end),
-      );
+    final query = _db.select(_db.transactions).join([leftOuterJoin(_db.cards, _db.cards.id.equalsExp(_db.transactions.cardId))])
+      ..where(_db.transactions.type.equalsValue(TransactionType.expense) & _db.transactions.date.isBetweenValues(start, end));
     return query.watch().map((rows) {
       final totals = <String, PaymentMethodBreakdownItem>{};
       for (final row in rows) {
@@ -359,9 +380,7 @@ class TransactionRepository {
     for (var i = monthsBack - 1; i >= 0; i--) {
       final monthStart = DateTime(ref.year, ref.month - i, 1);
       final monthEnd = DateTime(ref.year, ref.month - i + 1, 0);
-      final rows = await (_db.select(_db.transactions)
-            ..where((t) => t.date.isBetweenValues(monthStart, monthEnd)))
-          .get();
+      final rows = await (_db.select(_db.transactions)..where((t) => t.date.isBetweenValues(monthStart, monthEnd))).get();
       var income = 0.0;
       var expense = 0.0;
       for (final t in rows) {
@@ -379,21 +398,16 @@ class TransactionRepository {
 
   /// Groups expense spend by beneficiary for the month.
   Future<List<BeneficiaryBreakdownItem>> getBeneficiaryBreakdown(DateTime start, DateTime end) async {
-    final rows = await (_db.select(_db.transactions)
-          ..where(
-            (t) =>
-                t.type.equalsValue(TransactionType.expense) & t.date.isBetweenValues(start, end),
-          ))
-        .get();
+    final rows = await (_db.select(
+      _db.transactions,
+    )..where((t) => t.type.equalsValue(TransactionType.expense) & t.date.isBetweenValues(start, end))).get();
     final totals = <String, double>{};
     for (final t in rows) {
       final name = t.beneficiaryName?.trim();
       if (name == null || name.isEmpty) continue;
       totals[name] = (totals[name] ?? 0) + t.amount;
     }
-    final list = totals.entries
-        .map((e) => BeneficiaryBreakdownItem(beneficiaryName: e.key, total: e.value))
-        .toList()
+    final list = totals.entries.map((e) => BeneficiaryBreakdownItem(beneficiaryName: e.key, total: e.value)).toList()
       ..sort((a, b) => b.total.compareTo(a.total));
     return list;
   }
@@ -403,13 +417,16 @@ class TransactionRepository {
 
   /// The system category of a non-user type (trust, transfer).
   Future<int> systemCategoryId(CategoryType type) async {
-    final row = await (_db.select(_db.categories)..where((c) => c.type.equalsValue(type))..limit(1)).getSingle();
+    final row =
+        await (_db.select(_db.categories)
+              ..where((c) => c.type.equalsValue(type))
+              ..limit(1))
+            .getSingle();
     return row.id;
   }
 
   Stream<List<TrustBalance>> watchTrustBalances() {
-    final query = _db.select(_db.transactions)
-      ..where((t) => t.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]));
+    final query = _db.select(_db.transactions)..where((t) => t.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]));
     return query.watch().map((rows) {
       final byName = <String, TrustBalance>{};
       for (final t in rows) {
@@ -427,8 +444,10 @@ class TransactionRepository {
 
   Stream<List<TransactionWithDetails>> watchTrustTransactions(String name) {
     final query = _baseQuery()
-      ..where(_db.transactions.beneficiaryName.equals(name) &
-          _db.transactions.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]))
+      ..where(
+        _db.transactions.beneficiaryName.equals(name) &
+            _db.transactions.type.isIn([TransactionType.trustIn.name, TransactionType.trustOut.name]),
+      )
       ..orderBy([OrderingTerm.desc(_db.transactions.date), OrderingTerm.desc(_db.transactions.createdAt)]);
     return query.watch().map((rows) => rows.map(_mapRow).toList());
   }
@@ -437,15 +456,11 @@ class TransactionRepository {
     final trimmed = name?.trim();
     if (trimmed == null || trimmed.isEmpty) return;
     final now = DateTime.now();
-    final existing = await (_db.select(_db.beneficiaries)..where((b) => b.name.equals(trimmed)))
-        .getSingleOrNull();
+    final existing = await (_db.select(_db.beneficiaries)..where((b) => b.name.equals(trimmed))).getSingleOrNull();
     if (existing != null) {
-      await (_db.update(_db.beneficiaries)..where((b) => b.id.equals(existing.id)))
-          .write(BeneficiariesCompanion(lastUsedAt: Value(now)));
+      await (_db.update(_db.beneficiaries)..where((b) => b.id.equals(existing.id))).write(BeneficiariesCompanion(lastUsedAt: Value(now)));
     } else {
-      await _db.into(_db.beneficiaries).insert(
-            BeneficiariesCompanion.insert(name: trimmed, lastUsedAt: now),
-          );
+      await _db.into(_db.beneficiaries).insert(BeneficiariesCompanion.insert(name: trimmed, lastUsedAt: now));
     }
   }
 }

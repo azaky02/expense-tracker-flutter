@@ -31,7 +31,10 @@ class PaymentMethodsScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('common.cash'.tr(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                Text(
+                  'common.cash'.tr(),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
                 Text(
                   'cards.cashSpendThisMonth'.tr(namedArgs: {'amount': formatAmount(cashSpendAsync.value ?? 0)}),
                   style: const TextStyle(color: Colors.white70),
@@ -45,15 +48,14 @@ class PaymentMethodsScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: colorFromHex(c.card.color),
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                decoration: BoxDecoration(color: colorFromHex(c.card.color), borderRadius: BorderRadius.circular(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.card.nickname,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text(
+                      c.card.nickname,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                     Text(
                       '${c.bankName} • ${c.card.cardCategory.name == 'credit' ? 'cards.credit'.tr() : 'cards.debit'.tr()}',
                       style: const TextStyle(color: Colors.white70),
@@ -64,10 +66,7 @@ class PaymentMethodsScreen extends ConsumerWidget {
                       children: [
                         Text('**** ${c.card.last4Digits}', style: const TextStyle(color: Colors.white)),
                         if (c.card.dueDateDay != null)
-                          Text(
-                            '${'cards.dueDate'.tr()}: ${c.card.dueDateDay}',
-                            style: const TextStyle(color: Colors.amber),
-                          ),
+                          Text('${'cards.dueDate'.tr()}: ${c.card.dueDateDay}', style: const TextStyle(color: Colors.amber)),
                       ],
                     ),
                   ],

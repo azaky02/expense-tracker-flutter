@@ -364,11 +364,19 @@ class PickerField extends StatelessWidget {
 
 /// Big centred amount input with the currency (amount is always the first field, UX §19).
 class AmountField extends StatelessWidget {
-  const AmountField({super.key, required this.controller, this.onChanged, this.autofocus = false, this.currency = 'EGP', this.compact = false});
+  const AmountField({
+    super.key,
+    required this.controller,
+    this.onChanged,
+    this.autofocus = false,
+    this.currency = 'EGP',
+    this.compact = false,
+  });
   final TextEditingController controller;
   final ValueChanged<String>? onChanged;
   final bool autofocus;
   final String currency;
+
   /// Normal-height version for use next to other fields in a [FieldRow].
   final bool compact;
 
@@ -386,8 +394,127 @@ class AmountField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: '0.00',
         suffixText: currency,
-        suffixStyle: AppTheme.numbers(fontSize: compact ? 12 : 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
+        suffixStyle: AppTheme.numbers(
+          fontSize: compact ? 12 : 14,
+          fontWeight: FontWeight.w600,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
+    );
+  }
+}
+
+/// Collapsible "Additional details (optional)" card for the less used fields of a form.
+class OptionalSection extends StatefulWidget {
+  const OptionalSection({super.key, required this.children, this.initiallyExpanded = false, this.summary});
+  final List<Widget> children;
+  final bool initiallyExpanded;
+
+  /// What is already filled in, shown while collapsed (e.g. "ملاحظة · مرفق").
+  final String? summary;
+
+  @override
+  State<OptionalSection> createState() => _OptionalSectionState();
+}
+
+class _OptionalSectionState extends State<OptionalSection> {
+  late bool _open = widget.initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(DS.radius),
+          border: Border.all(color: theme.colorScheme.outline),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(DS.radius),
+              onTap: () => setState(() => _open = !_open),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.tune, size: 20, color: theme.colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('common.moreDetails'.tr(), style: theme.textTheme.titleSmall),
+                          if (!_open && (widget.summary?.isNotEmpty ?? false))
+                            Text(
+                              widget.summary!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                        ],
+                      ),
+                    ),
+                    AnimatedRotation(
+                      turns: _open ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: Icon(Icons.keyboard_arrow_down, color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 180),
+              crossFadeState: _open ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+              firstChild: const SizedBox(width: double.infinity),
+              secondChild: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: widget.children),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Form body with the save button fixed at the bottom of the screen (above the keyboard).
+class StickySaveLayout extends StatelessWidget {
+  const StickySaveLayout({
+    super.key,
+    required this.children,
+    required this.button,
+    this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 24),
+  });
+  final List<Widget> children;
+  final Widget button;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(padding: padding, children: children),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor,
+            border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.6))),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: SafeArea(
+            top: false,
+            child: SizedBox(width: double.infinity, child: button),
+          ),
+        ),
+      ],
     );
   }
 }

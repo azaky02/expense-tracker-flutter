@@ -96,10 +96,7 @@ class _CategoryPickerSheetState extends ConsumerState<_CategoryPickerSheet> {
                 Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(10)),
                     child: Text(path, style: theme.textTheme.titleMedium),
                   ),
                 ),
@@ -140,20 +137,9 @@ class _CategoryPickerSheetState extends ConsumerState<_CategoryPickerSheet> {
                     addLabel: 'categories.addSubCategory'.tr(context: context),
                     onAdd: node == null ? null : _addSub,
                     children: [
-                      if (node != null)
-                        _Row(
-                          icon: '',
-                          label: '—',
-                          selected: _subId == null,
-                          onTap: () => setState(() => _subId = null),
-                        ),
+                      if (node != null) _Row(icon: '', label: '—', selected: _subId == null, onTap: () => setState(() => _subId = null)),
                       for (final c in node?.children ?? const <Category>[])
-                        _Row(
-                          icon: c.icon,
-                          label: c.name,
-                          selected: c.id == _subId,
-                          onTap: () => setState(() => _subId = c.id),
-                        ),
+                        _Row(icon: c.icon, label: c.name, selected: c.id == _subId, onTap: () => setState(() => _subId = c.id)),
                     ],
                   ),
                 ),
@@ -181,7 +167,9 @@ class _Column extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: OutlinedButton(onPressed: onAdd, child: Text(addLabel)),
         ),
-        Expanded(child: ListView(padding: const EdgeInsets.symmetric(horizontal: 8), children: children)),
+        Expanded(
+          child: ListView(padding: const EdgeInsets.symmetric(horizontal: 8), children: children),
+        ),
       ],
     );
   }
@@ -214,10 +202,7 @@ class _Row extends StatelessWidget {
                   child: Text(
                     label,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: selected ? scheme.onSecondary : scheme.onSurface,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600, color: selected ? scheme.onSecondary : scheme.onSurface),
                   ),
                 ),
               ],

@@ -87,12 +87,14 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
 
   void _setAccount(AccountWithBalance a) {
     final isCard = a.account.cardId != null;
-    _update((v) => v.copyWith(
-          accountId: a.account.id,
-          paymentMethodType: isCard ? PaymentMethodType.card : PaymentMethodType.cash,
-          cardId: a.account.cardId,
-          clearCardId: !isCard,
-        ));
+    _update(
+      (v) => v.copyWith(
+        accountId: a.account.id,
+        paymentMethodType: isCard ? PaymentMethodType.card : PaymentMethodType.cash,
+        cardId: a.account.cardId,
+        clearCardId: !isCard,
+      ),
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -107,35 +109,32 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     showModalBottomSheet(
       context: context,
       builder: (ctx) => SafeArea(
-        child: Wrap(children: [
-          ListTile(
-            leading: const Icon(Icons.photo_camera_outlined),
-            title: Text('transactions.camera'.tr()),
-            onTap: () {
-              Navigator.pop(ctx);
-              _pickImage(ImageSource.camera);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library_outlined),
-            title: Text('transactions.gallery'.tr()),
-            onTap: () {
-              Navigator.pop(ctx);
-              _pickImage(ImageSource.gallery);
-            },
-          ),
-        ]),
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text('transactions.camera'.tr()),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text('transactions.gallery'.tr()),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _values.date,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
+    final picked = await showDatePicker(context: context, initialDate: _values.date, firstDate: DateTime(2000), lastDate: DateTime(2100));
     if (picked != null) _update((v) => v.copyWith(date: picked));
   }
 
@@ -212,8 +211,20 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
       }
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+    final hasNote = _values.note?.trim().isNotEmpty ?? false;
+    final summary = [
+      if (hasNote) 'transactions.notes'.tr(),
+      if (_values.beneficiaryName != null) _values.beneficiaryName!,
+      if (_values.attachmentUri != null) 'transactions.attachment'.tr(),
+    ].join(' · ');
+    return StickySaveLayout(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      button: FilledButton(
+        onPressed: widget.isSubmitting || !_values.isValid ? null : () => widget.onSubmit(_values),
+        child: widget.isSubmitting
+            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            : Text(widget.submitLabel),
+      ),
       children: [
         FieldLabel('transactions.amount'.tr()),
         AmountField(
@@ -249,31 +260,30 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
           FieldLabel('transactions.account'.tr()),
           _accountField(accounts, _values.accountId, destination: false),
         ],
-        FieldLabel('transactions.notes'.tr()),
-        TextField(
-          controller: _noteController,
-          maxLines: 3,
-          minLines: 2,
-          decoration: InputDecoration(hintText: 'transactions.notesHint'.tr()),
-          onChanged: (text) => _update((v) => v.copyWith(note: text)),
-        ),
-        if (!isTransfer) ...[
-          FieldLabel('${'transactions.beneficiary'.tr()} (${'common.optional'.tr()})'),
-          PickerField(
-            text: _values.beneficiaryName ?? 'transactions.beneficiaryPlaceholder'.tr(),
-            placeholder: _values.beneficiaryName == null,
-            leading: const Icon(Icons.person_outline, size: 20),
-            onTap: _pickPerson,
-          ),
-          FieldLabel('${'transactions.attachment'.tr()} (${'common.optional'.tr()})'),
-          _attachment(theme),
-        ],
-        const SizedBox(height: 24),
-        FilledButton(
-          onPressed: widget.isSubmitting || !_values.isValid ? null : () => widget.onSubmit(_values),
-          child: widget.isSubmitting
-              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : Text(widget.submitLabel),
+        OptionalSection(
+          initiallyExpanded: summary.isNotEmpty,
+          summary: summary,
+          children: [
+            FieldLabel('transactions.notes'.tr()),
+            TextField(
+              controller: _noteController,
+              maxLines: 3,
+              minLines: 1,
+              decoration: InputDecoration(hintText: 'transactions.notesHint'.tr()),
+              onChanged: (text) => _update((v) => v.copyWith(note: text)),
+            ),
+            if (!isTransfer) ...[
+              FieldLabel('transactions.beneficiary'.tr()),
+              PickerField(
+                text: _values.beneficiaryName ?? 'transactions.beneficiaryPlaceholder'.tr(),
+                placeholder: _values.beneficiaryName == null,
+                leading: const Icon(Icons.person_outline, size: 20),
+                onTap: _pickPerson,
+              ),
+              FieldLabel('transactions.attachment'.tr()),
+              _attachment(theme),
+            ],
+          ],
         ),
       ],
     );
@@ -283,23 +293,25 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     if (_values.attachmentUri != null) {
       return Align(
         alignment: AlignmentDirectional.centerStart,
-        child: Stack(children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(DS.radius),
-            child: Image.file(File(_values.attachmentUri!), width: 110, height: 110, fit: BoxFit.cover),
-          ),
-          PositionedDirectional(
-            top: 4,
-            end: 4,
-            child: InkWell(
-              onTap: () async {
-                await deleteAttachment(_values.attachmentUri);
-                _update((v) => v.copyWith(clearAttachment: true));
-              },
-              child: const CircleAvatar(radius: 12, child: Icon(Icons.close, size: 14)),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(DS.radius),
+              child: Image.file(File(_values.attachmentUri!), width: 110, height: 110, fit: BoxFit.cover),
             ),
-          ),
-        ]),
+            PositionedDirectional(
+              top: 4,
+              end: 4,
+              child: InkWell(
+                onTap: () async {
+                  await deleteAttachment(_values.attachmentUri);
+                  _update((v) => v.copyWith(clearAttachment: true));
+                },
+                child: const CircleAvatar(radius: 12, child: Icon(Icons.close, size: 14)),
+              ),
+            ),
+          ],
+        ),
       );
     }
     return InkWell(
@@ -312,11 +324,13 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
           border: Border.all(color: theme.colorScheme.outline),
           color: theme.colorScheme.surface,
         ),
-        child: Column(children: [
-          Icon(Icons.add_a_photo_outlined, color: theme.colorScheme.primary),
-          const SizedBox(height: 6),
-          Text('transactions.attachInvoice'.tr(), style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
-        ]),
+        child: Column(
+          children: [
+            Icon(Icons.add_a_photo_outlined, color: theme.colorScheme.primary),
+            const SizedBox(height: 6),
+            Text('transactions.attachInvoice'.tr(), style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }

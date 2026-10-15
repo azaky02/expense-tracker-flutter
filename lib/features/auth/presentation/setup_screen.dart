@@ -94,7 +94,8 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         await store.setPin(pin);
       } else {
         final ok = await LockNotifier.runWithoutLock(
-            () => LocalAuthentication().authenticate(localizedReason: 'setup.biometricsReason'.tr()));
+          () => LocalAuthentication().authenticate(localizedReason: 'setup.biometricsReason'.tr()),
+        );
         if (!ok) {
           setState(() => _error = 'security.biometricsFailed'.tr());
           return;
@@ -126,17 +127,22 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         margin: const EdgeInsets.only(bottom: 10),
         color: selected ? theme.colorScheme.primaryContainer : null,
         onTap: enabled ? () => setState(() => _lock = value) : null,
-        child: Row(children: [
-          IconBubble(icon: icon, color: DS.primary, size: 44),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: theme.textTheme.titleSmall),
-              Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-            ]),
-          ),
-          Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? DS.primary : theme.colorScheme.outline),
-        ]),
+        child: Row(
+          children: [
+            IconBubble(icon: icon, color: DS.primary, size: 44),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: theme.textTheme.titleSmall),
+                  Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                ],
+              ),
+            ),
+            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? DS.primary : theme.colorScheme.outline),
+          ],
+        ),
       ),
     );
   }
@@ -153,18 +159,25 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           const Center(child: AppLogo()),
           const SizedBox(height: 12),
           Text('setup.title'.tr(), textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
-          Text('setup.subtitle'.tr(),
-              textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(
+            'setup.subtitle'.tr(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
           if (_recovered)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: AppCard(
                 color: DS.warningSoft,
-                child: Row(children: [
-                  const Icon(Icons.info_outline, color: DS.warning),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text('setup.recoveredNotice'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.text))),
-                ]),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: DS.warning),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text('setup.recoveredNotice'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.text)),
+                    ),
+                  ],
+                ),
               ),
             ),
           FieldLabel('setup.name'.tr()),
@@ -180,7 +193,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             controller: _phone,
             keyboardType: TextInputType.phone,
             autofillHints: const [AutofillHints.telephoneNumber],
-            inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')), LengthLimitingTextInputFormatter(16)],
+            inputFormatters: [
+              const AsciiDigitsFormatter(),
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s\-]')),
+              LengthLimitingTextInputFormatter(16),
+            ],
             textDirection: ui.TextDirection.ltr,
             decoration: const InputDecoration(hintText: '01xxxxxxxxx', prefixIcon: Icon(Icons.phone_iphone)),
             onChanged: (_) => setState(() {}),
@@ -192,11 +209,18 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
             ),
           FieldLabel('setup.protect'.tr()),
           _option(SetupLock.pin, Icons.pin_outlined, 'setup.pinTitle'.tr(), 'setup.pinSubtitle'.tr()),
-          _option(SetupLock.biometrics, Icons.face_retouching_natural, 'setup.bioTitle'.tr(),
-              biometrics ? 'setup.bioSubtitle'.tr() : 'setup.bioUnavailable'.tr(),
-              enabled: biometrics),
+          _option(
+            SetupLock.biometrics,
+            Icons.face_retouching_natural,
+            'setup.bioTitle'.tr(),
+            biometrics ? 'setup.bioSubtitle'.tr() : 'setup.bioUnavailable'.tr(),
+            enabled: biometrics,
+          ),
           if (_error != null)
-            Padding(padding: const EdgeInsets.only(top: 4), child: Text(_error!, style: TextStyle(color: theme.colorScheme.error))),
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+            ),
           const SizedBox(height: 16),
           FilledButton(
             onPressed: _busy || !_valid ? null : _submit,
@@ -205,7 +229,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
                 : Text('setup.create'.tr()),
           ),
           const SizedBox(height: 10),
-          Text('setup.localNote'.tr(), textAlign: TextAlign.center, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(
+            'setup.localNote'.tr(),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
         ],
       ),
     );

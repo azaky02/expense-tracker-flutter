@@ -91,10 +91,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/installments/:id/edit',
-        pageBuilder: (context, state) => MaterialPage(
-          fullscreenDialog: true,
-          child: InstallmentFormScreen(installmentId: int.parse(state.pathParameters['id']!)),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: InstallmentFormScreen(installmentId: int.parse(state.pathParameters['id']!))),
       ),
       GoRoute(path: '/cars', builder: (context, state) => const CarsScreen()),
       GoRoute(path: '/fuel-prices', builder: (context, state) => const FuelPricesScreen()),
@@ -118,10 +116,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/unlock', builder: (context, state) => const UnlockScreen()),
-      GoRoute(
-        path: '/reports',
-        builder: (context, state) => const ReportsScreen(),
-      ),
+      GoRoute(path: '/reports', builder: (context, state) => const ReportsScreen()),
       GoRoute(
         path: '/transactions/add',
         pageBuilder: (context, state) => MaterialPage(
@@ -138,39 +133,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/transactions/:id/edit',
-        pageBuilder: (context, state) => MaterialPage(
-          fullscreenDialog: true,
-          child: EditTransactionScreen(
-            transactionId: int.parse(state.pathParameters['id']!),
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: EditTransactionScreen(transactionId: int.parse(state.pathParameters['id']!))),
       ),
       GoRoute(
         path: '/cards/add',
-        pageBuilder: (context, state) => const MaterialPage(
-          fullscreenDialog: true,
-          child: AddCardScreen(),
-        ),
+        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: AddCardScreen()),
       ),
       GoRoute(
         path: '/cards/:id',
-        builder: (context, state) => CardDetailsScreen(
-          cardId: int.parse(state.pathParameters['id']!),
-        ),
+        builder: (context, state) => CardDetailsScreen(cardId: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(
         path: '/cards/:id/edit',
-        pageBuilder: (context, state) => MaterialPage(
-          fullscreenDialog: true,
-          child: EditCardScreen(
-            cardId: int.parse(state.pathParameters['id']!),
-          ),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: EditCardScreen(cardId: int.parse(state.pathParameters['id']!))),
       ),
-      GoRoute(
-        path: '/cards',
-        builder: (context, state) => const PaymentMethodsScreen(),
-      ),
+      GoRoute(path: '/cards', builder: (context, state) => const PaymentMethodsScreen()),
       GoRoute(path: '/accounts', builder: (context, state) => const AccountsScreen()),
       GoRoute(
         path: '/accounts/new',
@@ -187,10 +166,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/accounts/:id/edit',
-        pageBuilder: (context, state) => MaterialPage(
-          fullscreenDialog: true,
-          child: AccountFormScreen(accountId: int.parse(state.pathParameters['id']!)),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: AccountFormScreen(accountId: int.parse(state.pathParameters['id']!))),
       ),
       GoRoute(path: '/budgets', builder: (context, state) => const BudgetsScreen()),
       GoRoute(path: '/security', builder: (context, state) => const SecurityScreen()),
@@ -222,46 +199,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/people/:id/edit',
-        pageBuilder: (context, state) => MaterialPage(
-          fullscreenDialog: true,
-          child: PersonFormScreen(personId: int.parse(state.pathParameters['id']!)),
-        ),
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: PersonFormScreen(personId: int.parse(state.pathParameters['id']!))),
       ),
       GoRoute(
         path: '/people/:id/statement',
         builder: (context, state) => StatementScreen(personId: int.parse(state.pathParameters['id']!)),
       ),
-      GoRoute(
-        path: '/notifications',
-        builder: (context, state) => const NotificationsScreen(),
-      ),
-      GoRoute(
-        path: '/account',
-        builder: (context, state) => const AccountSyncScreen(),
-      ),
-      GoRoute(
-        path: '/categories',
-        builder: (context, state) => const CategoryManagementScreen(),
-      ),
+      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
+      GoRoute(path: '/account', builder: (context, state) => const AccountSyncScreen()),
+      GoRoute(path: '/categories', builder: (context, state) => const CategoryManagementScreen()),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            ScaffoldWithNavBar(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) => ScaffoldWithNavBar(navigationShell: navigationShell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/home', builder: (context, state) => const DashboardScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/transactions',
-              builder: (context, state) => const TransactionsListScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/people', builder: (context, state) => const PeopleScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen()),
-          ]),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/home', builder: (context, state) => const DashboardScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/transactions', builder: (context, state) => const TransactionsListScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/people', builder: (context, state) => const PeopleScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/settings', builder: (context, state) => const SettingsScreen())],
+          ),
         ],
       ),
     ],

@@ -34,11 +34,13 @@ class AccountsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           children: [
             AppCard(
-              child: Column(children: [
-                Text('accounts.total'.tr(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                const SizedBox(height: 4),
-                AmountText(total, size: 28, weight: FontWeight.w800),
-              ]),
+              child: Column(
+                children: [
+                  Text('accounts.total'.tr(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 4),
+                  AmountText(total, size: 28, weight: FontWeight.w800),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             for (final a in accounts)
@@ -46,17 +48,22 @@ class AccountsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: AppCard(
                   onTap: () => context.push(a.account.cardId != null ? '/cards/${a.account.cardId}' : '/accounts/${a.account.id}'),
-                  child: Row(children: [
-                    AccountBubble(a, size: 46),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(a.account.name, style: Theme.of(context).textTheme.titleSmall),
-                        Text(accountTypeLabel(context, a.account.type), style: Theme.of(context).textTheme.bodySmall),
-                      ]),
-                    ),
-                    AmountText(a.balance, size: 16, color: a.balance < 0 ? Theme.of(context).colorScheme.error : null),
-                  ]),
+                  child: Row(
+                    children: [
+                      AccountBubble(a, size: 46),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(a.account.name, style: Theme.of(context).textTheme.titleSmall),
+                            Text(accountTypeLabel(context, a.account.type), style: Theme.of(context).textTheme.bodySmall),
+                          ],
+                        ),
+                      ),
+                      AmountText(a.balance, size: 16, color: a.balance < 0 ? Theme.of(context).colorScheme.error : null),
+                    ],
+                  ),
                 ),
               ),
             const SizedBox(height: 4),
@@ -76,14 +83,17 @@ class AccountsScreen extends ConsumerWidget {
     final type = await showModalBottomSheet<AccountType>(
       context: context,
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          for (final t in AccountType.values)
-            ListTile(
-              leading: IconBubble(icon: accountIcon(t), color: DS.palette[t.index % DS.palette.length], size: 36),
-              title: Text(accountTypeLabel(ctx, t)),
-              onTap: () => Navigator.pop(ctx, t),
-            ),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final t in AccountType.values)
+              ListTile(
+                leading: IconBubble(icon: accountIcon(t), color: DS.palette[t.index % DS.palette.length], size: 36),
+                title: Text(accountTypeLabel(ctx, t)),
+                onTap: () => Navigator.pop(ctx, t),
+              ),
+          ],
+        ),
       ),
     );
     if (type == null || !context.mounted) return;
@@ -114,29 +124,45 @@ class AccountDetailsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           AppCard(
-            child: Row(children: [
-              AccountBubble(a, size: 52),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('accounts.currentBalance'.tr(), style: Theme.of(context).textTheme.bodySmall),
-                  AmountText(a.balance, size: 26, weight: FontWeight.w800, color: a.balance < 0 ? Theme.of(context).colorScheme.error : null),
-                  Text('${accountTypeLabel(context, a.account.type)} · ${'accounts.opening'.tr()}: ${a.account.openingBalance.toStringAsFixed(0)}',
-                      style: Theme.of(context).textTheme.bodySmall),
-                ]),
-              ),
-            ]),
+            child: Row(
+              children: [
+                AccountBubble(a, size: 52),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('accounts.currentBalance'.tr(), style: Theme.of(context).textTheme.bodySmall),
+                      AmountText(
+                        a.balance,
+                        size: 26,
+                        weight: FontWeight.w800,
+                        color: a.balance < 0 ? Theme.of(context).colorScheme.error : null,
+                      ),
+                      Text(
+                        '${accountTypeLabel(context, a.account.type)} · ${'accounts.opening'.tr()}: ${a.account.openingBalance.toStringAsFixed(0)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           SectionHeader('dashboard.recentTransactions'.tr()),
           if (items.isEmpty)
-            AppCard(child: EmptyState(icon: Icons.receipt_long_outlined, title: 'accounts.noTransactions'.tr()))
+            AppCard(
+              child: EmptyState(icon: Icons.receipt_long_outlined, title: 'accounts.noTransactions'.tr()),
+            )
           else
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              child: Column(children: [
-                for (final t in items.take(50))
-                  TransactionTile(item: t, showDate: true, onTap: () => context.push('/transactions/${t.transaction.id}/edit')),
-              ]),
+              child: Column(
+                children: [
+                  for (final t in items.take(50))
+                    TransactionTile(item: t, showDate: true, onTap: () => context.push('/transactions/${t.transaction.id}/edit')),
+                ],
+              ),
             ),
         ],
       ),
@@ -198,11 +224,17 @@ class _AccountFormScreenState extends ConsumerState<AccountFormScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Center(child: IconBubble(icon: accountIcon(_type), color: DS.palette[_type.index % DS.palette.length], size: 64)),
+          Center(
+            child: IconBubble(icon: accountIcon(_type), color: DS.palette[_type.index % DS.palette.length], size: 64),
+          ),
           const SizedBox(height: 8),
           Center(child: Text(accountTypeLabel(context, _type), style: Theme.of(context).textTheme.titleSmall)),
           FieldLabel('accounts.name'.tr()),
-          TextField(controller: _name, autofocus: widget.accountId == null, decoration: InputDecoration(hintText: 'accounts.nameHint'.tr())),
+          TextField(
+            controller: _name,
+            autofocus: widget.accountId == null,
+            decoration: InputDecoration(hintText: 'accounts.nameHint'.tr()),
+          ),
           FieldLabel('accounts.opening'.tr()),
           AmountField(controller: _opening),
           const SizedBox(height: 24),

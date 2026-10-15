@@ -27,32 +27,26 @@ class SyncSession {
   final String accessToken;
   final String refreshToken;
 
-  SyncSession withTokens(String access, String refresh) => SyncSession(
-        serverUrl: serverUrl,
-        userId: userId,
-        email: email,
-        name: name,
-        accessToken: access,
-        refreshToken: refresh,
-      );
+  SyncSession withTokens(String access, String refresh) =>
+      SyncSession(serverUrl: serverUrl, userId: userId, email: email, name: name, accessToken: access, refreshToken: refresh);
 
   Map<String, dynamic> toJson() => {
-        'serverUrl': serverUrl,
-        'userId': userId,
-        'email': email,
-        'name': name,
-        'accessToken': accessToken,
-        'refreshToken': refreshToken,
-      };
+    'serverUrl': serverUrl,
+    'userId': userId,
+    'email': email,
+    'name': name,
+    'accessToken': accessToken,
+    'refreshToken': refreshToken,
+  };
 
   factory SyncSession.fromJson(Map<String, dynamic> j) => SyncSession(
-        serverUrl: j['serverUrl'] as String,
-        userId: j['userId'] as String,
-        email: j['email'] as String,
-        name: (j['name'] as String?) ?? '',
-        accessToken: j['accessToken'] as String,
-        refreshToken: j['refreshToken'] as String,
-      );
+    serverUrl: j['serverUrl'] as String,
+    userId: j['userId'] as String,
+    email: j['email'] as String,
+    name: (j['name'] as String?) ?? '',
+    accessToken: j['accessToken'] as String,
+    refreshToken: j['refreshToken'] as String,
+  );
 
   static Future<SyncSession?> load() async {
     final raw = await SecureStorageService.instance.readSyncSession();
@@ -64,8 +58,7 @@ class SyncSession {
     }
   }
 
-  Future<void> save() =>
-      SecureStorageService.instance.writeSyncSession(jsonEncode(toJson()));
+  Future<void> save() => SecureStorageService.instance.writeSyncSession(jsonEncode(toJson()));
 
   static Future<void> clear() => SecureStorageService.instance.clearSyncSession();
 }
@@ -94,8 +87,7 @@ String normalizeServerUrl(String input) {
 }
 
 class SyncApi {
-  SyncApi(this.serverUrl, {this._session, this.onSessionChanged, http.Client? client})
-      : _client = client ?? http.Client();
+  SyncApi(this.serverUrl, {this._session, this.onSessionChanged, http.Client? client}) : _client = client ?? http.Client();
 
   final String serverUrl;
   final void Function(SyncSession)? onSessionChanged;
@@ -104,21 +96,21 @@ class SyncApi {
 
   Uri _uri(String path) => Uri.parse('$serverUrl/api$path');
 
-  Future<Map<String, dynamic>> _send(String method, String path, Object? body,
-      {String? token}) async {
+  Future<Map<String, dynamic>> _send(String method, String path, Object? body, {String? token}) async {
     final req = http.Request(method, _uri(path))
       ..headers['content-type'] = 'application/json'
       ..headers['accept'] = 'application/json';
     if (token != null) req.headers['authorization'] = 'Bearer $token';
     if (body != null) req.body = jsonEncode(body);
     try {
-      final res = await http.Response.fromStream(
-          await _client.send(req).timeout(const Duration(seconds: 60)));
+      final res = await http.Response.fromStream(await _client.send(req).timeout(const Duration(seconds: 60)));
       Map<String, dynamic> json = const {};
       try {
         final decoded = jsonDecode(utf8.decode(res.bodyBytes));
         if (decoded is Map<String, dynamic>) json = decoded;
-      } catch (_) {/* non-JSON body (e.g. an IIS error page) */}
+      } catch (_) {
+        /* non-JSON body (e.g. an IIS error page) */
+      }
       if (res.statusCode >= 200 && res.statusCode < 300) return json;
       throw ApiException(res.statusCode, (json['error'] as String?) ?? 'http_${res.statusCode}');
     } on SocketException {
@@ -153,13 +145,15 @@ class SyncApi {
   }
 
   Future<SyncSession> register(String email, String password, String name, String? signupCode, {String? phone}) async {
-    final s = _sessionFrom(await _send('POST', '/auth/register', {
-      'email': email,
-      'password': password,
-      'name': name,
-      if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
-      if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
-    }));
+    final s = _sessionFrom(
+      await _send('POST', '/auth/register', {
+        'email': email,
+        'password': password,
+        'name': name,
+        if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
+        if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
+      }),
+    );
     _session = s;
     return s;
   }
@@ -180,14 +174,16 @@ class SyncApi {
     String? email,
     String? signupCode,
   }) async {
-    final s = _sessionFrom(await _send('POST', '/auth/register', {
-      'phone': phone,
-      'otp': otp,
-      'password': password,
-      'name': name,
-      if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
-      if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
-    }));
+    final s = _sessionFrom(
+      await _send('POST', '/auth/register', {
+        'phone': phone,
+        'otp': otp,
+        'password': password,
+        'name': name,
+        if (email != null && email.trim().isNotEmpty) 'email': email.trim(),
+        if (signupCode != null && signupCode.isNotEmpty) 'signupCode': signupCode,
+      }),
+    );
     _session = s;
     return s;
   }
@@ -197,11 +193,12 @@ class SyncApi {
     if (s == null) return;
     try {
       await _send('POST', '/auth/logout', {'refreshToken': s.refreshToken});
-    } on ApiException {/* best effort */}
+    } on ApiException {
+      /* best effort */
+    }
   }
 
-  Future<void> deleteAccount(String password) =>
-      _authed('DELETE', '/me', {'password': password});
+  Future<void> deleteAccount(String password) => _authed('DELETE', '/me', {'password': password});
 
   Future<Map<String, dynamic>> sync(Map<String, dynamic> body) => _authed('POST', '/sync', body);
 

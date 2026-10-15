@@ -7,5 +7,4 @@ Color colorFromHex(String hex) {
   return Color(int.parse(value, radix: 16));
 }
 
-String colorToHex(Color color) =>
-    '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
+String colorToHex(Color color) => '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';

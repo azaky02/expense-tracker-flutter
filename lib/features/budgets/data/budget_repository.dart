@@ -17,10 +17,10 @@ class BudgetStatus {
   BudgetLevel get level => ratio > 1
       ? BudgetLevel.over
       : ratio >= 1
-          ? BudgetLevel.reached
-          : ratio >= 0.8
-              ? BudgetLevel.warning
-              : BudgetLevel.ok;
+      ? BudgetLevel.reached
+      : ratio >= 0.8
+      ? BudgetLevel.warning
+      : BudgetLevel.ok;
 }
 
 enum BudgetLevel { ok, warning, reached, over }
@@ -40,19 +40,21 @@ FROM category_budgets b JOIN categories c ON c.id = b.category_id
 WHERE b.is_enabled = 1
 ORDER BY spent DESC''';
     return _db
-        .customSelect(sql,
-            variables: [Variable.withDateTime(start), Variable.withDateTime(end)],
-            readsFrom: {_db.categoryBudgets, _db.categories, _db.transactions})
+        .customSelect(
+          sql,
+          variables: [Variable.withDateTime(start), Variable.withDateTime(end)],
+          readsFrom: {_db.categoryBudgets, _db.categories, _db.transactions},
+        )
         .watch()
         .asyncMap((rows) async {
-      final budgets = {for (final b in await _db.select(_db.categoryBudgets).get()) b.id: b};
-      final cats = {for (final c in await _db.select(_db.categories).get()) c.id: c};
-      return [
-        for (final r in rows)
-          if (budgets[r.read<int>('b_id')] != null && cats[r.read<int>('c_id')] != null)
-            BudgetStatus(budget: budgets[r.read<int>('b_id')]!, category: cats[r.read<int>('c_id')]!, spent: r.read<double>('spent')),
-      ];
-    });
+          final budgets = {for (final b in await _db.select(_db.categoryBudgets).get()) b.id: b};
+          final cats = {for (final c in await _db.select(_db.categories).get()) c.id: c};
+          return [
+            for (final r in rows)
+              if (budgets[r.read<int>('b_id')] != null && cats[r.read<int>('c_id')] != null)
+                BudgetStatus(budget: budgets[r.read<int>('b_id')]!, category: cats[r.read<int>('c_id')]!, spent: r.read<double>('spent')),
+          ];
+        });
   }
 
   /// One budget per (main) category: setting it again replaces the limit.
@@ -61,10 +63,42 @@ ORDER BY spent DESC''';
     if (existing == null) {
       await _db.into(_db.categoryBudgets).insert(CategoryBudgetsCompanion.insert(categoryId: categoryId, monthlyLimit: monthlyLimit));
     } else {
-      await (_db.update(_db.categoryBudgets)..where((b) => b.id.equals(existing.id)))
-          .write(CategoryBudgetsCompanion(monthlyLimit: Value(monthlyLimit), isEnabled: const Value(true)));
+      await (_db.update(_db.categoryBudgets)..where((b) => b.id.equals(existing.id))).write(
+        CategoryBudgetsCompanion(monthlyLimit: Value(monthlyLimit), isEnabled: const Value(true)),
+      );
     }
   }
 
   Future<void> remove(int budgetId) => (_db.delete(_db.categoryBudgets)..where((b) => b.id.equals(budgetId))).go();
+}
+
+/// Where a month stands in time, for spending-pace indicators (budgets and reports).
+class MonthPace {
+  MonthPace(DateTime month, {DateTime? now}) : month = DateTime(month.year, month.month) {
+    final today = now ?? DateTime.now();
+    totalDays = DateTime(month.year, month.month + 1, 0).day;
+    final current = today.year == month.year && today.month == month.month;
+    final past = DateTime(today.year, today.month).isAfter(this.month);
+    elapsedDays = current ? today.day : (past ? totalDays : 0);
+  }
+
+  final DateTime month;
+  late final int totalDays;
+
+  /// Days of the month already lived (all of them for past months, none for future ones).
+  late final int elapsedDays;
+  int get daysLeft => totalDays - elapsedDays;
+  bool get isCurrent => elapsedDays > 0 && elapsedDays < totalDays;
+
+  /// Share of the month that has passed (0..1).
+  double get timeRatio => elapsedDays / totalDays;
+
+  /// Average spend per day so far.
+  double dailyRate(double spent) => elapsedDays == 0 ? 0 : spent / elapsedDays;
+
+  /// End-of-month total if spending continues at the current pace.
+  double projected(double spent) => elapsedDays == 0 ? spent : spent / elapsedDays * totalDays;
+
+  /// How much can still be spent per day to stay within [remaining].
+  double? dailyAllowance(double remaining) => daysLeft > 0 && remaining > 0 ? remaining / daysLeft : null;
 }

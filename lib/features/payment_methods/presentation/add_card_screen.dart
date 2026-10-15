@@ -35,7 +35,9 @@ class _AddCardScreenState extends ConsumerState<AddCardScreen> {
         onSubmit: (values) async {
           setState(() => _isSubmitting = true);
           try {
-            await ref.read(cardRepositoryProvider).create(
+            await ref
+                .read(cardRepositoryProvider)
+                .create(
                   bankId: values.bankId!,
                   cardType: values.cardType,
                   cardCategory: values.cardCategory,

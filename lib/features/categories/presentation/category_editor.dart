@@ -104,13 +104,7 @@ Future<int?> showCategoryEditor(
 
   final repo = ref.read(categoryRepositoryProvider);
   if (existing == null) {
-    return repo.create(
-      name: name,
-      icon: icon,
-      color: colorToHex(selectedColor),
-      type: type,
-      parentCategoryId: parentCategoryId,
-    );
+    return repo.create(name: name, icon: icon, color: colorToHex(selectedColor), type: type, parentCategoryId: parentCategoryId);
   }
   await repo.update(existing.id, name: name, icon: icon, color: colorToHex(selectedColor));
   return existing.id;

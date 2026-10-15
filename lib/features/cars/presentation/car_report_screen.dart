@@ -655,7 +655,7 @@ class _CarExportSheetState extends State<_CarExportSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton.icon(
-                      style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1D6F42)),
+                      style: FilledButton.styleFrom(backgroundColor: DS.gold, foregroundColor: DS.navy),
                       onPressed: () => _export(pdf: false),
                       icon: const Icon(Icons.table_chart_outlined),
                       label: const Text('Excel'),

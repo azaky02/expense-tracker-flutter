@@ -65,7 +65,9 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
     final personId = _personId;
     if (personId == null || _amountValue <= 0) return;
     setState(() => _saving = true);
-    await ref.read(ledgerRepositoryProvider).createEntry(
+    await ref
+        .read(ledgerRepositoryProvider)
+        .createEntry(
           personId: personId,
           kind: _kind,
           direction: direction,
@@ -86,20 +88,23 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
       builder: (ctx) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
-          child: ListView(shrinkWrap: true, children: [
-            ListTile(
-              leading: const IconBubble(icon: Icons.person_add_alt_1_outlined, color: DS.primary, size: 38),
-              title: Text('people.add'.tr(context: ctx)),
-              onTap: () => Navigator.pop(ctx, -1),
-            ),
-            for (final p in people)
+          child: ListView(
+            shrinkWrap: true,
+            children: [
               ListTile(
-                leading: PersonAvatar(name: p.person.name, color: netColor(ctx, p.balance.net), size: 38),
-                title: Text(p.person.name),
-                trailing: AmountText(p.balance.net.abs(), size: 13, color: netColor(ctx, p.balance.net)),
-                onTap: () => Navigator.pop(ctx, p.person.id),
+                leading: const IconBubble(icon: Icons.person_add_alt_1_outlined, color: DS.primary, size: 38),
+                title: Text('people.add'.tr(context: ctx)),
+                onTap: () => Navigator.pop(ctx, -1),
               ),
-          ]),
+              for (final p in people)
+                ListTile(
+                  leading: PersonAvatar(name: p.person.name, color: netColor(ctx, p.balance.net), size: 38),
+                  title: Text(p.person.name),
+                  trailing: AmountText(p.balance.net.abs(), size: 13, color: netColor(ctx, p.balance.net)),
+                  onTap: () => Navigator.pop(ctx, p.person.id),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -131,17 +136,22 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      body: StickySaveLayout(
+        button: FilledButton(
+          onPressed: _saving || _personId == null || _amountValue <= 0 ? null : () => _save(direction, shared),
+          child: Text((isSettlement ? 'ledger.saveSettlement' : 'ledger.save').tr()),
+        ),
         children: [
           if (isSettlement && selected != null)
             AppCard(
               color: theme.colorScheme.primaryContainer,
-              child: Column(children: [
-                Text('people.currentBalance'.tr(), style: theme.textTheme.bodySmall),
-                AmountText(selected.balance.net.abs(), size: 26, weight: FontWeight.w800, color: netColor(context, selected.balance.net)),
-                Text(netLabel(context, selected.balance.net), style: TextStyle(color: netColor(context, selected.balance.net))),
-              ]),
+              child: Column(
+                children: [
+                  Text('people.currentBalance'.tr(), style: theme.textTheme.bodySmall),
+                  AmountText(selected.balance.net.abs(), size: 26, weight: FontWeight.w800, color: netColor(context, selected.balance.net)),
+                  Text(netLabel(context, selected.balance.net), style: TextStyle(color: netColor(context, selected.balance.net))),
+                ],
+              ),
             ),
           FieldLabel('ledger.person'.tr()),
           PickerField(
@@ -161,10 +171,13 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
               onSelectionChanged: (s) => setState(() => _direction = s.first),
             ),
             const SizedBox(height: 8),
-            Wrap(spacing: 8, children: [
-              for (final k in [LedgerKind.loan, LedgerKind.advance, LedgerKind.other])
-                ChoiceChip(label: Text(kindLabel(context, k)), selected: _kind == k, onSelected: (_) => setState(() => _kind = k)),
-            ]),
+            Wrap(
+              spacing: 8,
+              children: [
+                for (final k in [LedgerKind.loan, LedgerKind.advance, LedgerKind.other])
+                  ChoiceChip(label: Text(kindLabel(context, k)), selected: _kind == k, onSelected: (_) => setState(() => _kind = k)),
+              ],
+            ),
           ],
           FieldLabel((isSettlement ? 'ledger.settlementAmount' : 'transactions.amount').tr()),
           AmountField(controller: _amount, onChanged: (_) => setState(() {})),
@@ -185,38 +198,49 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
               if (d != null) setState(() => _date = d);
             },
           ),
-          FieldLabel('ledger.paymentMethod'.tr()),
-          AppCard(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: RadioGroup<String>(
-              groupValue: _paymentMethod,
-              onChanged: (v) => setState(() => _paymentMethod = v ?? 'cash'),
-              child: Column(children: [
-                for (final m in _paymentMethods) RadioListTile<String>(value: m, dense: true, title: Text('ledger.pay.$m'.tr())),
-              ]),
-            ),
+          OptionalSection(
+            initiallyExpanded: _description.text.isNotEmpty,
+            summary: ['ledger.pay.$_paymentMethod'.tr(), if (_description.text.isNotEmpty) _description.text].join(' · '),
+            children: [
+              FieldLabel('ledger.paymentMethod'.tr()),
+              AppCard(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: RadioGroup<String>(
+                  groupValue: _paymentMethod,
+                  onChanged: (v) => setState(() => _paymentMethod = v ?? 'cash'),
+                  child: Column(
+                    children: [
+                      for (final m in _paymentMethods) RadioListTile<String>(value: m, dense: true, title: Text('ledger.pay.$m'.tr())),
+                    ],
+                  ),
+                ),
+              ),
+              FieldLabel('ledger.description'.tr()),
+              TextField(
+                controller: _description,
+                minLines: 1,
+                maxLines: 3,
+                decoration: InputDecoration(hintText: 'ledger.descriptionHint'.tr()),
+                onChanged: (_) => setState(() {}),
+              ),
+            ],
           ),
-          FieldLabel('ledger.description'.tr()),
-          TextField(controller: _description, maxLines: 2, decoration: InputDecoration(hintText: 'ledger.descriptionHint'.tr())),
           if (shared)
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               value: _notify,
               onChanged: (v) => setState(() => _notify = v),
               title: Text('ledger.notifyOther'.tr()),
-              subtitle: Text((_notify ? 'ledger.sharedHint' : 'ledger.privateHint').tr(namedArgs: {'name': selected.person.name}),
-                  style: theme.textTheme.bodySmall),
+              subtitle: Text(
+                (_notify ? 'ledger.sharedHint' : 'ledger.privateHint').tr(namedArgs: {'name': selected.person.name}),
+                style: theme.textTheme.bodySmall,
+              ),
             )
           else if (selected != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text('ledger.localHint'.tr(namedArgs: {'name': selected.person.name}), style: theme.textTheme.bodySmall),
             ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _saving || _personId == null || _amountValue <= 0 ? null : () => _save(direction, shared),
-            child: Text((isSettlement ? 'ledger.saveSettlement' : 'ledger.save').tr()),
-          ),
         ],
       ),
     );

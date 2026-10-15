@@ -16,10 +16,7 @@ Future<String> persistAttachment(String pickedPath) async {
     await attachmentsDir.create(recursive: true);
   }
   final extension = p.extension(pickedPath);
-  final destination = p.join(
-    attachmentsDir.path,
-    '${DateTime.now().microsecondsSinceEpoch}$extension',
-  );
+  final destination = p.join(attachmentsDir.path, '${DateTime.now().microsecondsSinceEpoch}$extension');
   await File(pickedPath).copy(destination);
   return destination;
 }
