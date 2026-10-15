@@ -68,6 +68,11 @@ void main() {
     await pumpFor(tester, 3);
     await tester.enterText(fields.at(0), '٤١٢٠٠');
     await pumpFor(tester, 3);
+    // The paid amount starts empty: 770 for 40 L at 19.25.
+    expect(find.widgetWithText(TextField, '0.00'), findsWidgets);
+    await tester.enterText(fields.at(2), '٧٧٥');
+    await pumpFor(tester, 3);
+    expect(find.textContaining('770'), findsWidgets, reason: 'fuel total = 40 × 19.25');
     await tester.tap(find.byIcon(Icons.save_rounded));
     await pumpFor(tester, 15);
 
@@ -75,7 +80,7 @@ void main() {
     expect(find.byType(CarExpenseFormScreen), findsNothing, reason: 'form closed after saving');
     expect(find.textContaining('41,200'), findsWidgets);
     expect(find.textContaining('40 لتر'), findsWidgets);
-    expect(find.textContaining('770'), findsWidgets); // 40 L × 19.25
+    expect(find.textContaining('775'), findsWidgets); // what was paid
     // Dismiss the "saved" snackbar so its timer does not outlive the test.
     tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger)).removeCurrentSnackBar();
     await tester.pump();

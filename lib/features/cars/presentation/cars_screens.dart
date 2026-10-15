@@ -589,7 +589,6 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
   int? _accountId;
   int? _fuelTypeId;
   DateTime _date = todayDateOnly();
-  bool _amountEdited = false;
   bool _saving = false;
   _LocationState _location = _LocationState.locating;
   Position? _position;
@@ -627,7 +626,6 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
       _accountId = t.accountId;
       _date = t.date;
       _amount.text = t.amount.toStringAsFixed(2);
-      _amountEdited = true;
       _odometer.text = e.odometer?.toString() ?? '';
       _liters.text = e.liters == null ? '' : e.liters!.toString();
       _fuelTypeId = e.fuelTypeId ?? _fuelTypeId;
@@ -708,12 +706,9 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
   bool get _isFuel => _categoryId != null && _categoryId == _fuelCategoryId;
 
   /// Litres × price fills the amount until the user types an amount themselves.
-  void _recalc(List<FuelType> types) {
-    final fuel = _fuel(types);
-    if (_amountEdited || fuel == null) return;
-    final liters = _parse(_liters.text);
-    _amount.text = liters > 0 ? (liters * fuel.pricePerLiter).toStringAsFixed(2) : '';
-  }
+  /// Fuel total and tips are derived on every build; the paid amount stays empty until the user
+  /// types what was actually paid.
+  void _recalc(List<FuelType> types) {}
 
   void _toast(String text) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -991,7 +986,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
             icon: Icons.payments_outlined,
             iconColor: DS.gold,
             label: (_isFuel ? 'cars.totalPaid' : 'transactions.amount').tr(),
-            child: AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
+            child: AmountField(controller: _amount, onChanged: (_) => setState(() {})),
           ),
           if (_isFuel || _liters.text.isNotEmpty)
             FormRowCard(
