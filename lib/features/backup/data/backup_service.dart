@@ -38,6 +38,8 @@ class BackupService {
     _db.cars,
     _db.fuelTypes,
     _db.carExpenses,
+    _db.associations,
+    _db.associationPayments,
   ];
 
   Future<SecretKey> _key(String password, List<int> salt) => Pbkdf2(

@@ -110,7 +110,8 @@
       "income": "دخل",
       "expense": "مصروف",
       "transfer": "تحويل"
-    }
+    },
+    "currentBalance": "الرصيد الحالي: {amount}"
   },
   "categories": {
     "food": "أكل و شرب",
@@ -345,7 +346,7 @@
   "add": {
     "expense": "مصروف",
     "income": "دخل",
-    "ledger": "معاملة مع شخص",
+    "ledger": "عهدة مع شخص",
     "settlement": "سداد",
     "title": "إضافة حركة جديدة",
     "expenseHint": "تسجيل مصروف جديد",
@@ -391,7 +392,7 @@
   "ledger": {
     "kind": {
       "loan": "قرض / سلفة",
-      "advance": "مقدّم / عهدة",
+      "advance": "عهدة",
       "settlement": "سداد",
       "other": "أخرى"
     },
@@ -409,18 +410,18 @@
     "cancel": "إلغاء المعاملة",
     "rejectReason": "سبب الرفض",
     "direction": "الاتجاه",
-    "kindLabel": "النوع",
+    "kindLabel": "الاتجاه",
     "person": "الشخص",
     "choosePerson": "اختر الشخص",
     "description": "البيان",
-    "save": "حفظ المعاملة",
-    "newTitle": "معاملة مع شخص",
+    "save": "حفظ العهدة",
+    "newTitle": "عهدة مع شخص",
     "settlementTitle": "تسجيل سداد",
     "createdByOther": "سجّلها {name}",
     "rejectedBecause": "سبب الرفض: {reason}",
     "sharedHint": "{name} ممكن يكون عنده حساب: لو عنده، المعاملة هتوصله ولازم يأكدها.",
     "localHint": "{name} من غير بريد: المعاملة بتتسجل عندك نهائية.",
-    "descriptionHint": "مثال: سلفة لشراء…",
+    "descriptionHint": "مثال: عهدة لشراء…",
     "notifyOther": "إرسال إشعار للطرف الآخر",
     "payInFull": "سداد المبلغ بالكامل",
     "paymentMethod": "طريقة الدفع",
@@ -541,7 +542,7 @@
     "recoveredNotice": "البيانات القديمة على الموبايل ده ماكانتش قابلة للفتح (مفتاح التشفير اتمسح، غالبًا بسبب إلغاء التثبيت وإعادته)، فبدأنا بقاعدة بيانات جديدة. لو عندك نسخة احتياطية رجّعها من المزيد ← النسخ الاحتياطي."
   },
   "installments": {
-    "title": "الأقساط",
+    "title": "الأقساط والقروض",
     "add": "إضافة تقسيط",
     "edit": "تعديل التقسيط",
     "emptyTitle": "مفيش أقساط لسه",
@@ -584,7 +585,15 @@
     "reminderTitle": "تذكير بقسط {title}",
     "reminderBody": "قسط {number} لـ {provider} بقيمة {amount} ج.م مستحق {date} (باقي {days} يوم)",
     "reminderToday": "قسط {number} لـ {provider} بقيمة {amount} ج.م مستحق النهارده",
-    "missingFields": "كمّل البيانات: الاسم، جهة التقسيط، القيمة الإجمالية، قيمة القسط وعدد الشهور"
+    "missingFields": "كمّل البيانات: الاسم، جهة التقسيط، القيمة الإجمالية، قيمة القسط وعدد الشهور",
+    "kindInstallment": "تقسيط",
+    "kindLoan": "قرض",
+    "addLoan": "إضافة قرض",
+    "editLoan": "تعديل القرض",
+    "loanTitle": "اسم القرض",
+    "loanHint": "مثال: قرض شخصي / قرض عربية",
+    "lender": "جهة القرض",
+    "lenderHint": "مثال: بنك مصر / اسم الشخص"
   },
   "cars": {
     "title": "السيارة",
@@ -643,7 +652,12 @@
     "insuranceExpiry": "انتهاء التأمين",
     "chooseDate": "اختار التاريخ",
     "stationHintShort": "مثال: وطنية",
-    "editExpenseFor": "تعديل مصروف {car}"
+    "editExpenseFor": "تعديل مصروف {car}",
+    "addCarExpense": "إضافة مصروف سيارة",
+    "expenseType": "نوع المصروف",
+    "otherExpense": "مصروف آخر",
+    "odometerReading": "قراءة العداد",
+    "plateLine": "رقم اللوحة: {plate}"
   },
   "fuel": {
     "title": "أسعار الوقود",
@@ -749,9 +763,17 @@
   },
   "home": {
     "carExpense": "مصروف سيارة",
-    "loan": "قرض / سلفة",
+    "loan": "عهدة",
     "myCars": "سياراتي",
-    "budgets": "الميزانيات"
+    "budgets": "الميزانيات",
+    "loans": "القروض",
+    "associations": "الجمعيات",
+    "hello": "مرحبًا {name}",
+    "lastUpdate": "آخر تحديث: {time}",
+    "more": "المزيد",
+    "thisMonth": "ملخص هذا الشهر",
+    "allDetails": "كل التفاصيل",
+    "net": "صافي الشهر"
   },
   "stats": {
     "title": "الإحصائيات",
@@ -804,5 +826,52 @@
     "salaryBody": "النهارده يوم الراتب – سجّله كدخل في مصروفي",
     "dailyShort": "يومي",
     "salaryShort": "راتب يوم {day}"
+  },
+  "associations": {
+    "title": "الجمعيات",
+    "add": "إضافة جمعية",
+    "edit": "تعديل الجمعية",
+    "emptyTitle": "مفيش جمعيات لسه",
+    "emptyMessage": "سجّل الجمعية ودورك في القبض، وهنفكّرك أول الشهر اللي هتقبض فيه.",
+    "owner": "صاحب الجمعية",
+    "ownerHint": "مثال: أم أحمد",
+    "ownerLine": "صاحبها: {owner}",
+    "share": "قيمة السهم",
+    "months": "عدد الشهور",
+    "total": "مبلغ الجمعية",
+    "myTurnLabel": "ترتيبي في القبض",
+    "startDate": "تاريخ البداية",
+    "payDay": "يوم الدفع والقبض",
+    "perMonth": "شهريًا",
+    "progress": "دفعت {paid} من {months}",
+    "receiveOn": "القبض {date}",
+    "receivedDone": "اتقبضت",
+    "youReceive": "هتقبض",
+    "turnLine": "دورك رقم {turn} – يوم {date}",
+    "paidSoFar": "المدفوع لحد دلوقتي",
+    "schedule": "جدول الشهور",
+    "sharePaid": "السهم اتدفع",
+    "shareDue": "السهم",
+    "myTurn": "دورك في القبض",
+    "receive": "تسجيل القبض",
+    "payTitle": "دفع سهم شهر {n} من {months}",
+    "receiveTitle": "قبض الجمعية – شهر {n} من {months}",
+    "asExpense": "سجّله كمصروف (جمعية)",
+    "asIncome": "سجّله كدخل (قبض جمعية)",
+    "undoTitle": "إلغاء التسجيل؟",
+    "deleteTitle": "حذف الجمعية؟",
+    "deleteMessage": "هتتمسح الجمعية وجدولها. المصروفات والدخل اللي اتسجلوا هيفضلوا.",
+    "name": "اسم الجمعية",
+    "nameHint": "مثال: جمعية الشغل",
+    "receivePreview": "هتقبض {amount} ج.م يوم {date}",
+    "reminderHint": "هنبعتلك تنبيه أول الشهر اللي هتقبض فيه، وتنبيه يوم القبض.",
+    "missingOwner": "اكتب صاحب الجمعية",
+    "missingShare": "اكتب قيمة السهم",
+    "missingMonths": "عدد الشهور من 2 لـ 60",
+    "badTurn": "ترتيبك لازم يكون بين 1 وعدد الشهور",
+    "missingTotal": "اكتب مبلغ الجمعية",
+    "reminderTitle": "الجمعية 💰",
+    "reminderMonth": "الشهر ده دورك في جمعية {name}: هتقبض {amount} ج.م يوم {date}",
+    "reminderDay": "النهارده يوم قبض جمعية {name}: {amount} ج.م"
   }
 }

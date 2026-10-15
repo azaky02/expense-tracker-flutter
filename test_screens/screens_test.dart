@@ -16,6 +16,7 @@ import 'package:expense_tracker_flutter/core/router/app_router.dart';
 import 'package:expense_tracker_flutter/core/sync/sync_controller.dart';
 import 'package:expense_tracker_flutter/core/theme/app_theme.dart';
 import 'package:expense_tracker_flutter/features/accounts/data/account_repository.dart';
+import 'package:expense_tracker_flutter/features/associations/data/association_repository.dart';
 import 'package:expense_tracker_flutter/features/budgets/data/budget_repository.dart';
 import 'package:expense_tracker_flutter/features/cars/data/car_repository.dart';
 import 'package:expense_tracker_flutter/features/installments/data/installment_repository.dart';
@@ -94,6 +95,15 @@ Future<void> _demoData(AppDatabase db) async {
   for (final (back, odo, liters, st) in [(60, 38200, 38.0, 'وطنية'), (45, 38700, 41.0, 'توتال'), (30, 39250, 40.0, 'وطنية'), (20, 39800, 37.0, 'موبيل'), (14, 40400, 42.0, 'توتال')]) {
     await cars.addExpense(CarExpenseInput(carId: carId, categoryId: fuelCat, amount: liters * 19.25, accountId: cash, date: day(back), odometer: odo, liters: liters, fuelTypeId: 2, pricePerLiter: 19.25, beneficiary: st));
   }
+  await plans.create(InstallmentsCompanion.insert(
+      title: 'قرض شخصي', provider: 'بنك مصر', totalAmount: 60000, installmentAmount: 5000, months: 12, dueDay: 5,
+      startMonth: DateTime(now.year, now.month - 1), kind: const Value('loan')));
+  final assoc = AssociationRepository(db);
+  await assoc.create(AssociationsCompanion.insert(
+      owner: 'أم أحمد', totalAmount: 10000, shareAmount: 1000, months: 10, myTurn: 4, startMonth: DateTime(now.year, now.month - 2), payDay: 5));
+  final assocItem = (await assoc.loadAll()).single;
+  await assoc.record(assocItem.a, 1, receive: false, amount: 1000, accountId: cash);
+  await assoc.record(assocItem.a, 2, receive: false, amount: 1000, accountId: cash);
   final budgets = BudgetRepository(db);
   await budgets.setBudget(cats['أكل و شرب']!, 1500);
   await budgets.setBudget(cats['مواصلات']!, 4000);
@@ -217,6 +227,11 @@ void main() {
       '27_fuel': '/fuel-prices',
       '30_car_report': '/cars/1/report',
       '31_stats': '/stats',
+      '33_associations': '/associations',
+      '34_association': '/associations/1',
+      '35_association_form': '/associations/new',
+      '36_loan_form': '/installments/new?kind=loan',
+      '37_custody_form': '/ledger/new?personId=1',
       '32_reminders': '/reminders',
       '28_home_categories': '/home',
     });

@@ -18,7 +18,9 @@ import '../../../core/widgets/ds_widgets.dart';
 import '../../accounts/data/account_repository.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_widgets.dart';
+import '../../categories/data/category_repository.dart';
 import '../../categories/presentation/category_picker_sheet.dart';
+import '../../categories/presentation/category_providers.dart';
 import '../data/car_analytics.dart';
 import '../data/car_repository.dart';
 import 'car_report_screen.dart';
@@ -765,171 +767,267 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
     final categoryPath = _categoryId == null ? null : ref.watch(categoryPathProvider(_categoryId!)).value;
     final lastOdo = car?.lastOdometer;
 
+    // The car category's sub-categories as big icon choices (fuel, service, ...).
+    final tree = ref.watch(categoryTreeProvider(CategoryType.expense)).value ?? const <CategoryTreeNode>[];
+    final carNode = tree.where((n) => n.main.syncId == 'seed-cat-car').firstOrNull;
+    final carTypes = carNode?.children ?? const <Category>[];
+    final otherSelected = _categoryId != null && !carTypes.any((c) => c.id == _categoryId);
+
+    Widget typeChip(String emoji, String label, bool selected, VoidCallback onTap) => Padding(
+      padding: const EdgeInsetsDirectional.only(end: 8),
+      child: Material(
+        color: selected ? DS.primary : theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            width: 70,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: selected ? DS.gold : theme.colorScheme.outline),
+            ),
+            child: Column(
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 24)),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: selected ? Colors.white : theme.colorScheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text((widget.expenseId == null ? 'cars.addExpenseFor' : 'cars.editExpenseFor').tr(namedArgs: {'car': car?.car.name ?? ''})),
+      appBar: BrandFormAppBar(
+        title: (widget.expenseId == null ? 'cars.addCarExpense' : 'cars.editExpenseFor').tr(namedArgs: {'car': car?.car.name ?? ''}),
+        onSave: _saving ? null : () => _save(types),
       ),
       body: StickySaveLayout(
-        button: FilledButton(
-          onPressed: _saving ? null : () => _save(types),
-          child: _saving
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : Text('common.save'.tr()),
-        ),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 24),
+        button: BigSaveButton(label: 'common.save'.tr(), busy: _saving, onPressed: () => _save(types)),
         children: [
-          if (cars.any((c) => c.car.id == _carId)) ...[
-            FieldLabel('cars.car'.tr()),
-            DropdownButtonFormField<int>(
-              isExpanded: true,
-              initialValue: _carId,
-              items: [
-                for (final c in cars)
-                  DropdownMenuItem(
-                    value: c.car.id,
-                    child: Text('${c.car.name} · ${c.car.brand} ${c.car.modelYear}', overflow: TextOverflow.ellipsis),
-                  ),
-              ],
-              onChanged: cars.length < 2 ? null : (v) => setState(() => _carId = v ?? _carId),
-            ),
-          ],
-          FieldLabel('transactions.category'.tr()),
-          PickerField(
-            text: categoryPath ?? 'transactions.chooseCategory'.tr(),
-            placeholder: categoryPath == null,
-            onTap: () async {
-              final id = await showCategoryPicker(context, type: CategoryType.expense, selectedId: _categoryId);
-              if (id != null) setState(() => _categoryId = id);
-            },
-          ),
-          FieldRow(
-            flex: const [5, 4],
-            [
-              (
-                'transactions.date'.tr(),
-                PickerField(
-                  text: DateFormat.yMMMd(context.locale.languageCode).format(_date),
-                  trailingIcon: Icons.calendar_today_outlined,
-                  onTap: () async {
-                    final d = await showDatePicker(
-                      context: context,
-                      initialDate: _date,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (d != null) setState(() => _date = d);
-                  },
-                ),
-              ),
-              (
-                'cars.odometer'.tr(),
-                TextField(
-                  controller: _odometer,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    hintText: lastOdo == null ? 'cars.km'.tr() : NumberFormat.decimalPattern().format(lastOdo),
-                    suffixText: 'cars.km'.tr(),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (_isFuel || _liters.text.isNotEmpty)
-            FieldRow(
-              flex: const [5, 4],
-              [
-                (
-                  'fuel.type'.tr(),
-                  DropdownButtonFormField<int>(
-                    isExpanded: true,
-                    initialValue: _fuelTypeId,
-                    items: [
-                      for (final f in types)
-                        DropdownMenuItem(
-                          value: f.id,
-                          child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis),
+          // The car.
+          if (car != null)
+            Material(
+              color: DS.goldSoft,
+              borderRadius: BorderRadius.circular(DS.radiusLg),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(DS.radiusLg),
+                onTap: cars.length < 2
+                    ? null
+                    : () async {
+                        final id = await showModalBottomSheet<int>(
+                          context: context,
+                          builder: (ctx) => SafeArea(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (final c in cars)
+                                  ListTile(
+                                    leading: const Icon(Icons.directions_car_filled_outlined),
+                                    title: Text(c.car.name),
+                                    subtitle: Text('${c.car.brand} · ${c.car.modelYear}'),
+                                    onTap: () => Navigator.pop(ctx, c.car.id),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                        if (id != null) setState(() => _carId = id);
+                      },
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 78,
+                        height: 52,
+                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                        child: const Icon(Icons.directions_car_filled_rounded, size: 40, color: DS.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${car.car.brand} ${car.car.modelYear}',
+                              style: theme.textTheme.titleMedium?.copyWith(color: DS.text, fontWeight: FontWeight.w800),
+                            ),
+                            Text(
+                              [
+                                car.car.name,
+                                if (car.car.plate != null) 'cars.plateLine'.tr(namedArgs: {'plate': car.car.plate!}),
+                              ].join(' · '),
+                              style: theme.textTheme.bodySmall?.copyWith(color: DS.textMuted),
+                            ),
+                          ],
                         ),
+                      ),
+                      if (cars.length > 1) const Icon(Icons.keyboard_arrow_down, color: DS.textMuted),
                     ],
-                    onChanged: (v) => setState(() {
-                      _fuelTypeId = v;
-                      _recalc(types);
-                    }),
                   ),
                 ),
-                (
-                  'cars.liters'.tr(),
-                  TextField(
-                    controller: _liters,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: const [AsciiDigitsFormatter()],
-                    decoration: InputDecoration(suffixText: 'cars.litersUnit'.tr()),
-                    onChanged: (_) => setState(() => _recalc(types)),
-                  ),
-                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 14, bottom: 8),
+            child: Text('cars.expenseType'.tr(), style: theme.textTheme.titleSmall),
+          ),
+          SizedBox(
+            height: 82,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final c in carTypes) typeChip(c.icon, c.name, _categoryId == c.id, () => setState(() => _categoryId = c.id)),
+                typeChip(otherSelected ? '✔️' : '➕', 'cars.otherExpense'.tr(), otherSelected, () async {
+                  final id = await showCategoryPicker(context, type: CategoryType.expense, selectedId: _categoryId);
+                  if (id != null) setState(() => _categoryId = id);
+                }),
               ],
             ),
-          FieldLabel('cars.amountPaid'.tr()),
-          AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
+          ),
+          if (otherSelected && categoryPath != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(categoryPath, style: theme.textTheme.bodySmall),
+            ),
+          FormRowCard(
+            icon: Icons.payments_outlined,
+            iconColor: DS.gold,
+            label: 'transactions.amount'.tr(),
+            child: AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
+          ),
           if (_isFuel && _fuel(types) != null && _parse(_amount.text) > 0 && _parse(_liters.text) == 0)
             Align(
-              alignment: AlignmentDirectional.centerStart,
+              alignment: AlignmentDirectional.centerEnd,
               child: TextButton(
                 onPressed: () => setState(() => _liters.text = (_parse(_amount.text) / _fuel(types)!.pricePerLiter).toStringAsFixed(2)),
                 child: Text('cars.calcLiters'.tr()),
               ),
             ),
-          FieldLabel('cars.paymentMethod'.tr()),
-          PickerField(
-            text: account?.account.name ?? 'accounts.choose'.tr(),
-            placeholder: account == null,
-            leading: account == null ? null : AccountBubble(account, size: 22),
-            onTap: () async {
-              final id = await showAccountPicker(context, selectedId: _accountId);
-              if (id != null) setState(() => _accountId = id);
-            },
+          FormRowCard(
+            icon: Icons.speed_rounded,
+            label: 'cars.odometerReading'.tr(),
+            child: TextField(
+              controller: _odometer,
+              keyboardType: TextInputType.number,
+              inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                hintText: lastOdo == null ? 'cars.km'.tr() : NumberFormat.decimalPattern().format(lastOdo),
+                suffixText: 'cars.km'.tr(),
+              ),
+            ),
           ),
-          OptionalSection(
-            initiallyExpanded: _station.text.isNotEmpty || _note.text.isNotEmpty,
-            summary: [if (_station.text.isNotEmpty) _station.text, if (_location == _LocationState.found) 'cars.location'.tr()].join(' · '),
-            children: [
-              FieldLabel('cars.station'.tr()),
-              TextField(
-                controller: _station,
-                decoration: InputDecoration(hintText: 'cars.stationHint'.tr()),
+          if (_isFuel || _liters.text.isNotEmpty) ...[
+            FormRowCard(
+              icon: Icons.local_gas_station_outlined,
+              label: 'fuel.type'.tr(),
+              child: DropdownButtonFormField<int>(
+                isExpanded: true,
+                initialValue: _fuelTypeId,
+                items: [
+                  for (final f in types)
+                    DropdownMenuItem(
+                      value: f.id,
+                      child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis),
+                    ),
+                ],
+                onChanged: (v) => setState(() {
+                  _fuelTypeId = v;
+                  _recalc(types);
+                }),
               ),
-              FieldLabel('transactions.notes'.tr()),
-              TextField(controller: _note, minLines: 1, maxLines: 3),
-              const SizedBox(height: 12),
-              AppCard(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  children: [
-                    Icon(
-                      _location == _LocationState.found ? Icons.place : Icons.location_off_outlined,
-                      color: _location == _LocationState.found ? DS.success : theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(switch (_location) {
-                        _LocationState.locating => 'cars.locating'.tr(),
-                        _LocationState.found => 'cars.locationFound'.tr(
-                          namedArgs: {'lat': _lat!.toStringAsFixed(5), 'lng': _lng!.toStringAsFixed(5)},
-                        ),
-                        _LocationState.denied => 'cars.locationDenied'.tr(),
-                        _LocationState.off => 'cars.locationOff'.tr(),
-                        _LocationState.failed => 'cars.locationFailed'.tr(),
-                      }, style: theme.textTheme.bodySmall),
-                    ),
-                    if (_location == _LocationState.locating)
-                      const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    else if (_location == _LocationState.found)
-                      IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_lat!, _lng!))
-                    else
-                      IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
-                  ],
+            ),
+            FormRowCard(
+              icon: Icons.water_drop_outlined,
+              label: 'cars.liters'.tr(),
+              child: TextField(
+                controller: _liters,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: const [AsciiDigitsFormatter()],
+                decoration: InputDecoration(suffixText: 'cars.litersUnit'.tr()),
+                onChanged: (_) => setState(() => _recalc(types)),
+              ),
+            ),
+          ],
+          FormRowCard(
+            icon: Icons.calendar_month_outlined,
+            label: 'transactions.date'.tr(),
+            child: PickerField(
+              text: DateFormat.yMMMMd(context.locale.languageCode).format(_date),
+              trailingIcon: Icons.calendar_today_outlined,
+              onTap: () async {
+                final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2000), lastDate: DateTime(2100));
+                if (d != null) setState(() => _date = d);
+              },
+            ),
+          ),
+          FormRowCard(
+            icon: Icons.account_balance_wallet_outlined,
+            label: 'transactions.account'.tr(),
+            child: PickerField(
+              text: account?.account.name ?? 'accounts.choose'.tr(),
+              placeholder: account == null,
+              subtitle: account == null ? null : 'transactions.currentBalance'.tr(namedArgs: {'amount': formatAmount(account.balance)}),
+              trailingIcon: Icons.chevron_left,
+              leading: account == null ? null : AccountBubble(account, size: 26),
+              onTap: () async {
+                final id = await showAccountPicker(context, selectedId: _accountId);
+                if (id != null) setState(() => _accountId = id);
+              },
+            ),
+          ),
+          FormRowCard(
+            icon: Icons.local_convenience_store_outlined,
+            label: 'cars.station'.tr(),
+            child: TextField(
+              controller: _station,
+              decoration: InputDecoration(hintText: 'cars.stationHintShort'.tr()),
+            ),
+          ),
+          FormRowCard(
+            icon: Icons.description_outlined,
+            label: 'transactions.notes'.tr(),
+            child: TextField(controller: _note, minLines: 2, maxLines: 3, maxLength: 500),
+          ),
+          const SizedBox(height: 10),
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Row(
+              children: [
+                Icon(
+                  _location == _LocationState.found ? Icons.place : Icons.location_off_outlined,
+                  color: _location == _LocationState.found ? DS.success : theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(switch (_location) {
+                    _LocationState.locating => 'cars.locating'.tr(),
+                    _LocationState.found => 'cars.locationFound'.tr(
+                      namedArgs: {'lat': _lat!.toStringAsFixed(5), 'lng': _lng!.toStringAsFixed(5)},
+                    ),
+                    _LocationState.denied => 'cars.locationDenied'.tr(),
+                    _LocationState.off => 'cars.locationOff'.tr(),
+                    _LocationState.failed => 'cars.locationFailed'.tr(),
+                  }, style: theme.textTheme.bodySmall),
+                ),
+                if (_location == _LocationState.locating)
+                  const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                else if (_location == _LocationState.found)
+                  IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_lat!, _lng!))
+                else
+                  IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
+              ],
+            ),
           ),
         ],
       ),

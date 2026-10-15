@@ -114,6 +114,7 @@ void main() {
       notes: null,
       remindersEnabled: true,
       createdAt: DateTime(2026, 10, 1),
+      kind: 'installment',
     );
     final item = InstallmentWithSchedule(plan, [
       for (var n = 1; n <= 3; n++) InstallmentDue(number: n, dueDate: installmentDueDate(plan, n)),

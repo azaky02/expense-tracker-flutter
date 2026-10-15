@@ -37,18 +37,28 @@ Widget _duePill(BuildContext context, DateTime due) {
 }
 
 /// Installments list (one card per plan).
-class InstallmentsScreen extends ConsumerWidget {
-  const InstallmentsScreen({super.key});
+class InstallmentsScreen extends ConsumerStatefulWidget {
+  const InstallmentsScreen({super.key, this.initialFilter});
+
+  /// 'loan' or 'installment' to open on one kind; null = all.
+  final String? initialFilter;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InstallmentsScreen> createState() => _InstallmentsScreenState();
+}
+
+class _InstallmentsScreenState extends ConsumerState<InstallmentsScreen> {
+  late String? _filter = widget.initialFilter;
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(installmentsProvider);
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: Text('installments.title'.tr())),
       floatingActionButton: FloatingActionButton.extended(
         shape: const StadiumBorder(),
-        onPressed: () => context.push('/installments/new'),
+        onPressed: () => context.push(_filter == 'loan' ? '/installments/new?kind=loan' : '/installments/new'),
         icon: const Icon(Icons.add),
         label: Text('installments.add'.tr()),
       ),
@@ -65,6 +75,11 @@ class InstallmentsScreen extends ConsumerWidget {
               onAction: () => context.push('/installments/new'),
             );
           }
+          final all = items;
+          items = [
+            for (final i in all)
+              if (_filter == null || i.plan.kind == _filter) i,
+          ];
           final active = items.where((i) => !i.isFinished).toList();
           final monthly = active.fold<double>(0, (s, i) => s + i.plan.installmentAmount);
           final remaining = active.fold<double>(0, (s, i) => s + i.remainingAmount);
@@ -97,6 +112,18 @@ class InstallmentsScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final (value, label) in [
+                    (null, 'common.all'),
+                    ('installment', 'installments.kindInstallment'),
+                    ('loan', 'installments.kindLoan'),
+                  ])
+                    ChoiceChip(label: Text(label.tr()), selected: _filter == value, onSelected: (_) => setState(() => _filter = value)),
+                ],
+              ),
+              const SizedBox(height: 8),
               for (final item in items) _PlanCard(item),
             ],
           );
@@ -122,13 +149,27 @@ class _PlanCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              IconBubble(icon: Icons.event_repeat, color: item.isFinished ? DS.success : theme.colorScheme.primary),
+              IconBubble(
+                icon: item.plan.kind == 'loan' ? Icons.account_balance_outlined : Icons.event_repeat,
+                color: item.isFinished ? DS.success : (item.plan.kind == 'loan' ? DS.gold : theme.colorScheme.primary),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item.plan.title, style: theme.textTheme.titleSmall),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(item.plan.title, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+                        ),
+                        const SizedBox(width: 6),
+                        StatusPill(
+                          (item.plan.kind == 'loan' ? 'installments.kindLoan' : 'installments.kindInstallment').tr(),
+                          color: item.plan.kind == 'loan' ? DS.gold : theme.colorScheme.primary,
+                        ),
+                      ],
+                    ),
                     Text(item.plan.provider, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                   ],
                 ),
@@ -387,8 +428,11 @@ class _PaySheetState extends ConsumerState<_PaySheet> {
 
 /// Add / edit a plan.
 class InstallmentFormScreen extends ConsumerStatefulWidget {
-  const InstallmentFormScreen({super.key, this.installmentId});
+  const InstallmentFormScreen({super.key, this.installmentId, this.loan = false});
   final int? installmentId;
+
+  /// New entry starts as a loan (قرض) instead of an installment plan.
+  final bool loan;
 
   @override
   ConsumerState<InstallmentFormScreen> createState() => _InstallmentFormScreenState();
@@ -406,6 +450,8 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
   bool _reminders = true;
   bool _installmentEdited = false;
   bool _loaded = false;
+  late String _kind = widget.loan ? 'loan' : 'installment';
+  bool get _isLoan => _kind == 'loan';
   bool _saving = false;
 
   @override
@@ -428,6 +474,7 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
           _dueDay = p.dueDay;
           _startMonth = p.startMonth;
           _reminders = p.remindersEnabled;
+          _kind = p.kind;
           _installmentEdited = true;
           _loaded = true;
         });
@@ -470,6 +517,7 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
     setState(() => _saving = true);
     final data = InstallmentsCompanion(
       title: Value(_title.text.trim()),
+      kind: Value(_kind),
       provider: Value(_provider.text.trim()),
       totalAmount: Value(_num(_total)),
       installmentAmount: Value(_num(_installment)),
@@ -503,22 +551,45 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
     final first = dueDateFor(_startMonth, _dueDay, 1);
     final last = dueDateFor(_startMonth, _dueDay, _monthsValue < 1 ? 1 : _monthsValue);
     return Scaffold(
-      appBar: AppBar(title: Text((widget.installmentId == null ? 'installments.add' : 'installments.edit').tr())),
+      appBar: BrandFormAppBar(
+        title: (widget.installmentId == null
+                ? (_isLoan ? 'installments.addLoan' : 'installments.add')
+                : (_isLoan ? 'installments.editLoan' : 'installments.edit'))
+            .tr(),
+        onSave: _saving ? null : _save,
+      ),
       body: !_loaded
           ? const SizedBox()
           : StickySaveLayout(
-              button: FilledButton(onPressed: _saving ? null : _save, child: Text('common.save'.tr())),
+              button: BigSaveButton(label: 'common.save'.tr(), busy: _saving, onPressed: _save),
               children: [
-                FieldLabel('installments.itemTitle'.tr()),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  segments: [
+                    ButtonSegment(
+                      value: 'installment',
+                      icon: const Icon(Icons.event_repeat),
+                      label: Text('installments.kindInstallment'.tr()),
+                    ),
+                    ButtonSegment(
+                      value: 'loan',
+                      icon: const Icon(Icons.account_balance_outlined),
+                      label: Text('installments.kindLoan'.tr()),
+                    ),
+                  ],
+                  selected: {_kind},
+                  onSelectionChanged: (v) => setState(() => _kind = v.first),
+                ),
+                FieldLabel((_isLoan ? 'installments.loanTitle' : 'installments.itemTitle').tr()),
                 TextField(
                   controller: _title,
-                  decoration: InputDecoration(hintText: 'installments.itemHint'.tr()),
+                  decoration: InputDecoration(hintText: (_isLoan ? 'installments.loanHint' : 'installments.itemHint').tr()),
                   onChanged: (_) => setState(() {}),
                 ),
-                FieldLabel('installments.provider'.tr()),
+                FieldLabel((_isLoan ? 'installments.lender' : 'installments.provider').tr()),
                 TextField(
                   controller: _provider,
-                  decoration: InputDecoration(hintText: 'installments.providerHint'.tr()),
+                  decoration: InputDecoration(hintText: (_isLoan ? 'installments.lenderHint' : 'installments.providerHint').tr()),
                   onChanged: (_) => setState(() {}),
                 ),
                 FieldRow(

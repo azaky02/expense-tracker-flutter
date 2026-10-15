@@ -146,6 +146,27 @@ Future<void> _ensureTransferCategory(AppDatabase db) async {
 
 /// v5 master data: the car category tree, the installments category and fuel prices.
 Future<void> _ensureCarAndInstallmentData(AppDatabase db) async {
+  Future<void> ensureIncome(String syncId, String name, String icon) async {
+    final existing = await (db.select(db.categories)..where((c) => c.syncId.equals(syncId))).getSingleOrNull();
+    if (existing != null) return;
+    // Under the built-in "دخل" main category.
+    final parent = await (db.select(db.categories)..where((c) => c.syncId.equals('seed-cat-9'))).getSingleOrNull();
+    await db
+        .into(db.categories)
+        .insert(
+          CategoriesCompanion.insert(
+            name: name,
+            icon: icon,
+            color: colorToHex(AppColors.teal700),
+            type: CategoryType.income,
+            parentCategoryId: Value(parent?.id),
+            isDefault: const Value(true),
+            syncId: Value(syncId),
+          ),
+        );
+    await db.customStatement("UPDATE categories SET updated_at = 1 WHERE sync_id = '$syncId'");
+  }
+
   Future<int> ensure(String syncId, String name, String icon, Color color, {int? parent}) async {
     final existing = await (db.select(db.categories)..where((c) => c.syncId.equals(syncId))).getSingleOrNull();
     if (existing != null) return existing.id;
@@ -181,6 +202,8 @@ Future<void> _ensureCarAndInstallmentData(AppDatabase db) async {
     await ensure('seed-cat-car-$key', name, icon, AppColors.navy600, parent: car);
   }
   await ensure('seed-cat-installments', 'أقساط', '📅', AppColors.teal700);
+  await ensure('seed-cat-association', 'جمعية', '🤝', AppColors.teal700);
+  await ensureIncome('seed-cat-association-in', 'قبض جمعية', '🪙');
 
   if (await db.select(db.fuelTypes).get().then((r) => r.isEmpty)) {
     for (final (name, price) in const [('بنزين 80', 17.75), ('بنزين 92', 19.25), ('بنزين 95', 21.0), ('سولار', 17.5)]) {

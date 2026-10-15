@@ -9,6 +9,7 @@ import 'core/settings/settings_provider.dart';
 import 'core/settings/settings_state.dart';
 import 'core/sync/sync_controller.dart';
 import 'core/theme/app_theme.dart';
+import 'features/associations/data/association_repository.dart';
 import 'features/cars/data/car_reminders.dart';
 import 'features/installments/data/installment_reminders.dart';
 import 'features/settings/data/general_reminders.dart';
@@ -74,6 +75,7 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
         ref.watch(installmentRemindersProvider);
         ref.watch(carRemindersProvider);
         ref.watch(generalRemindersProvider);
+        ref.watch(associationRemindersProvider);
         final router = ref.watch(routerProvider);
         return MaterialApp.router(
           routerConfig: router,

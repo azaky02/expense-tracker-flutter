@@ -11,7 +11,6 @@ import '../../../core/widgets/ds_widgets.dart';
 import '../data/ledger_repository.dart';
 import 'people_providers.dart';
 import 'people_screen.dart';
-import 'person_screen.dart';
 import '../../../core/utils/currency.dart';
 
 const _paymentMethods = ['cash', 'bank', 'transfer', 'other'];
@@ -41,7 +40,8 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
   void initState() {
     super.initState();
     _personId = widget.personId;
-    _kind = widget.settlement ? LedgerKind.settlement : LedgerKind.loan;
+    // Loans now live under Installments; entries made here are custody (عهدة).
+    _kind = widget.settlement ? LedgerKind.settlement : LedgerKind.advance;
   }
 
   @override
@@ -135,11 +135,15 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
         : (isSettlement ? 'ledger.settlementTitle' : 'ledger.newTitle').tr();
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: BrandFormAppBar(
+        title: title,
+        onSave: _saving || _personId == null || _amountValue <= 0 ? null : () => _save(direction, shared),
+      ),
       body: StickySaveLayout(
-        button: FilledButton(
-          onPressed: _saving || _personId == null || _amountValue <= 0 ? null : () => _save(direction, shared),
-          child: Text((isSettlement ? 'ledger.saveSettlement' : 'ledger.save').tr()),
+        button: BigSaveButton(
+          label: (isSettlement ? 'ledger.saveSettlement' : 'ledger.save').tr(),
+          busy: _saving,
+          onPressed: _personId == null || _amountValue <= 0 ? null : () => _save(direction, shared),
         ),
         children: [
           if (isSettlement && selected != null)
@@ -169,14 +173,6 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
               ],
               selected: {direction},
               onSelectionChanged: (s) => setState(() => _direction = s.first),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final k in [LedgerKind.loan, LedgerKind.advance, LedgerKind.other])
-                  ChoiceChip(label: Text(kindLabel(context, k)), selected: _kind == k, onSelected: (_) => setState(() => _kind = k)),
-              ],
             ),
           ],
           FieldLabel((isSettlement ? 'ledger.settlementAmount' : 'transactions.amount').tr()),

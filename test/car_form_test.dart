@@ -64,11 +64,11 @@ void main() {
 
     // Litres typed with an Arabic keyboard.
     final fields = find.byType(TextField);
-    await tester.enterText(fields.at(1), '٤٠'); // litres (odometer is first)
+    await tester.enterText(fields.at(2), '٤٠'); // litres (amount, odometer, litres)
     await pumpFor(tester, 3);
-    await tester.enterText(fields.at(0), '٤١٢٠٠');
+    await tester.enterText(fields.at(1), '٤١٢٠٠');
     await pumpFor(tester, 3);
-    await tester.tap(find.byType(FilledButton).last);
+    await tester.tap(find.byIcon(Icons.save_rounded));
     await pumpFor(tester, 15);
 
     // Back on the car screen with the new fuel expense listed.

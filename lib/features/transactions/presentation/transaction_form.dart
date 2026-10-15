@@ -39,10 +39,10 @@ class TransactionForm extends ConsumerStatefulWidget {
   final bool isSubmitting;
 
   @override
-  ConsumerState<TransactionForm> createState() => _TransactionFormState();
+  ConsumerState<TransactionForm> createState() => TransactionFormState();
 }
 
-class _TransactionFormState extends ConsumerState<TransactionForm> {
+class TransactionFormState extends ConsumerState<TransactionForm> {
   late TransactionFormValues _values;
   final _amountController = TextEditingController();
   final _noteController = TextEditingController();
@@ -178,6 +178,8 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
     return PickerField(
       text: a?.account.name ?? 'accounts.choose'.tr(),
       placeholder: a == null,
+      subtitle: a == null ? null : 'transactions.currentBalance'.tr(namedArgs: {'amount': formatAmount(a.balance)}),
+      trailingIcon: Icons.chevron_left,
       leading: a == null ? null : AccountBubble(a, size: 28),
       onTap: () => _pickAccount(destination: destination),
     );
@@ -211,82 +213,111 @@ class _TransactionFormState extends ConsumerState<TransactionForm> {
       }
     }
 
-    final hasNote = _values.note?.trim().isNotEmpty ?? false;
-    final summary = [
-      if (hasNote) 'transactions.notes'.tr(),
-      if (_values.beneficiaryName != null) _values.beneficiaryName!,
-      if (_values.attachmentUri != null) 'transactions.attachment'.tr(),
-    ].join(' · ');
     return StickySaveLayout(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      button: FilledButton(
-        onPressed: widget.isSubmitting || !_values.isValid ? null : () => widget.onSubmit(_values),
-        child: widget.isSubmitting
-            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : Text(widget.submitLabel),
-      ),
+      padding: const EdgeInsets.fromLTRB(14, 6, 14, 24),
+      button: BigSaveButton(label: widget.submitLabel, busy: widget.isSubmitting, onPressed: !_values.isValid ? null : submit),
       children: [
-        FieldLabel('transactions.amount'.tr()),
-        AmountField(
-          controller: _amountController,
-          autofocus: widget.initialValues.amount == 0,
-          onChanged: (text) => _update((v) => v.copyWith(amount: parseAmount(text))),
-        ),
-        FieldLabel('transactions.date'.tr()),
-        PickerField(
-          text: DateFormat.yMMMMd(context.locale.languageCode).format(_values.date),
-          trailingIcon: Icons.calendar_today_outlined,
-          onTap: _pickDate,
+        FormRowCard(
+          icon: Icons.payments_outlined,
+          iconColor: DS.gold,
+          label: 'transactions.amount'.tr(),
+          child: AmountField(
+            controller: _amountController,
+            autofocus: widget.initialValues.amount == 0,
+            onChanged: (text) => _update((v) => v.copyWith(amount: parseAmount(text))),
+          ),
         ),
         if (isTransfer) ...[
-          FieldLabel('transactions.fromAccount'.tr()),
-          _accountField(accounts, _values.accountId, destination: false),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: IconBubble(icon: Icons.south, color: theme.colorScheme.primary, size: 32),
-            ),
+          FormRowCard(
+            icon: Icons.account_balance_wallet_outlined,
+            label: 'transactions.fromAccount'.tr(),
+            child: _accountField(accounts, _values.accountId, destination: false),
           ),
-          FieldLabel('transactions.toAccount'.tr()),
-          _accountField(accounts, _values.toAccountId, destination: true),
+          FormRowCard(
+            icon: Icons.south_rounded,
+            label: 'transactions.toAccount'.tr(),
+            child: _accountField(accounts, _values.toAccountId, destination: true),
+          ),
         ] else ...[
-          FieldLabel('transactions.category'.tr()),
-          PickerField(
-            text: categoryLabel ?? 'transactions.chooseCategory'.tr(),
-            placeholder: categoryLabel == null,
-            leading: categoryLabel == null ? null : IconBubble(emoji: categoryIcon, color: categoryColor ?? DS.primary, size: 28),
-            onTap: () => _pickCategory(categoryType),
-          ),
-          FieldLabel('transactions.account'.tr()),
-          _accountField(accounts, _values.accountId, destination: false),
-        ],
-        OptionalSection(
-          initiallyExpanded: summary.isNotEmpty,
-          summary: summary,
-          children: [
-            FieldLabel('transactions.notes'.tr()),
-            TextField(
-              controller: _noteController,
-              maxLines: 3,
-              minLines: 1,
-              decoration: InputDecoration(hintText: 'transactions.notesHint'.tr()),
-              onChanged: (text) => _update((v) => v.copyWith(note: text)),
+          FormRowCard(
+            icon: Icons.category_outlined,
+            label: 'transactions.category'.tr(),
+            child: PickerField(
+              text: categoryLabel ?? 'transactions.chooseCategory'.tr(),
+              placeholder: categoryLabel == null,
+              trailingIcon: Icons.chevron_left,
+              leading: categoryLabel == null
+                  ? null
+                  : Container(
+                      width: 34,
+                      height: 34,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: (categoryColor ?? DS.primary).withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(categoryIcon ?? '', style: const TextStyle(fontSize: 17)),
+                    ),
+              onTap: () => _pickCategory(categoryType),
             ),
-            if (!isTransfer) ...[
-              FieldLabel('transactions.beneficiary'.tr()),
-              PickerField(
-                text: _values.beneficiaryName ?? 'transactions.beneficiaryPlaceholder'.tr(),
-                placeholder: _values.beneficiaryName == null,
-                leading: const Icon(Icons.person_outline, size: 20),
-                onTap: _pickPerson,
-              ),
-              FieldLabel('transactions.attachment'.tr()),
-              _attachment(theme),
-            ],
-          ],
+          ),
+          FormRowCard(
+            icon: Icons.account_balance_wallet_outlined,
+            label: 'transactions.account'.tr(),
+            child: _accountField(accounts, _values.accountId, destination: false),
+          ),
+        ],
+        FormRowCard(
+          icon: Icons.calendar_month_outlined,
+          label: 'transactions.date'.tr(),
+          child: PickerField(
+            text: DateFormat.yMMMMd(context.locale.languageCode).format(_values.date),
+            trailingIcon: Icons.calendar_today_outlined,
+            onTap: _pickDate,
+          ),
         ),
+        FormRowCard(
+          icon: Icons.description_outlined,
+          label: 'transactions.notes'.tr(),
+          child: TextField(
+            controller: _noteController,
+            maxLines: 3,
+            minLines: 2,
+            maxLength: 500,
+            decoration: InputDecoration(hintText: 'transactions.notesHint'.tr()),
+            onChanged: (text) => _update((v) => v.copyWith(note: text)),
+          ),
+        ),
+        if (!isTransfer) ...[
+          FormRowCard(
+            icon: Icons.person_outline,
+            label: 'transactions.beneficiary'.tr(),
+            child: PickerField(
+              text: _values.beneficiaryName ?? 'transactions.beneficiaryPlaceholder'.tr(),
+              placeholder: _values.beneficiaryName == null,
+              onTap: _pickPerson,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 6),
+            child: Row(
+              children: [
+                Icon(Icons.attach_file, size: 20, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text('${'transactions.attachment'.tr()} (${'common.optional'.tr()})', style: theme.textTheme.labelLarge),
+              ],
+            ),
+          ),
+          _attachment(theme),
+        ],
       ],
     );
+  }
+
+  /// Saves through the parent's onSubmit (used by the ✓ in the header too).
+  void submit() {
+    if (widget.isSubmitting || !_values.isValid) return;
+    widget.onSubmit(_values);
   }
 
   Widget _attachment(ThemeData theme) {

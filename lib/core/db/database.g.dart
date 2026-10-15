@@ -6660,6 +6660,16 @@ class $InstallmentsTable extends Installments with TableInfo<$InstallmentsTable,
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('installment'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -6673,6 +6683,7 @@ class $InstallmentsTable extends Installments with TableInfo<$InstallmentsTable,
     notes,
     remindersEnabled,
     createdAt,
+    kind,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -6730,6 +6741,9 @@ class $InstallmentsTable extends Installments with TableInfo<$InstallmentsTable,
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
+    if (data.containsKey('kind')) {
+      context.handle(_kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    }
     return context;
   }
 
@@ -6750,6 +6764,7 @@ class $InstallmentsTable extends Installments with TableInfo<$InstallmentsTable,
       notes: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}notes']),
       remindersEnabled: attachedDatabase.typeMapping.read(DriftSqlType.bool, data['${effectivePrefix}reminders_enabled'])!,
       createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      kind: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
     );
   }
 
@@ -6779,6 +6794,9 @@ class Installment extends DataClass implements Insertable<Installment> {
   final String? notes;
   final bool remindersEnabled;
   final DateTime createdAt;
+
+  /// 'installment' (bought on installments) or 'loan' (borrowed money paid back monthly).
+  final String kind;
   const Installment({
     required this.id,
     required this.title,
@@ -6791,6 +6809,7 @@ class Installment extends DataClass implements Insertable<Installment> {
     this.notes,
     required this.remindersEnabled,
     required this.createdAt,
+    required this.kind,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -6808,6 +6827,7 @@ class Installment extends DataClass implements Insertable<Installment> {
     }
     map['reminders_enabled'] = Variable<bool>(remindersEnabled);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['kind'] = Variable<String>(kind);
     return map;
   }
 
@@ -6824,6 +6844,7 @@ class Installment extends DataClass implements Insertable<Installment> {
       notes: notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       remindersEnabled: Value(remindersEnabled),
       createdAt: Value(createdAt),
+      kind: Value(kind),
     );
   }
 
@@ -6841,6 +6862,7 @@ class Installment extends DataClass implements Insertable<Installment> {
       notes: serializer.fromJson<String?>(json['notes']),
       remindersEnabled: serializer.fromJson<bool>(json['remindersEnabled']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      kind: serializer.fromJson<String>(json['kind']),
     );
   }
   @override
@@ -6858,6 +6880,7 @@ class Installment extends DataClass implements Insertable<Installment> {
       'notes': serializer.toJson<String?>(notes),
       'remindersEnabled': serializer.toJson<bool>(remindersEnabled),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'kind': serializer.toJson<String>(kind),
     };
   }
 
@@ -6873,6 +6896,7 @@ class Installment extends DataClass implements Insertable<Installment> {
     Value<String?> notes = const Value.absent(),
     bool? remindersEnabled,
     DateTime? createdAt,
+    String? kind,
   }) => Installment(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -6885,6 +6909,7 @@ class Installment extends DataClass implements Insertable<Installment> {
     notes: notes.present ? notes.value : this.notes,
     remindersEnabled: remindersEnabled ?? this.remindersEnabled,
     createdAt: createdAt ?? this.createdAt,
+    kind: kind ?? this.kind,
   );
   Installment copyWithCompanion(InstallmentsCompanion data) {
     return Installment(
@@ -6899,6 +6924,7 @@ class Installment extends DataClass implements Insertable<Installment> {
       notes: data.notes.present ? data.notes.value : this.notes,
       remindersEnabled: data.remindersEnabled.present ? data.remindersEnabled.value : this.remindersEnabled,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      kind: data.kind.present ? data.kind.value : this.kind,
     );
   }
 
@@ -6915,14 +6941,27 @@ class Installment extends DataClass implements Insertable<Installment> {
           ..write('startMonth: $startMonth, ')
           ..write('notes: $notes, ')
           ..write('remindersEnabled: $remindersEnabled, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('kind: $kind')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, title, provider, totalAmount, installmentAmount, months, dueDay, startMonth, notes, remindersEnabled, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    title,
+    provider,
+    totalAmount,
+    installmentAmount,
+    months,
+    dueDay,
+    startMonth,
+    notes,
+    remindersEnabled,
+    createdAt,
+    kind,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6937,7 +6976,8 @@ class Installment extends DataClass implements Insertable<Installment> {
           other.startMonth == this.startMonth &&
           other.notes == this.notes &&
           other.remindersEnabled == this.remindersEnabled &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.kind == this.kind);
 }
 
 class InstallmentsCompanion extends UpdateCompanion<Installment> {
@@ -6952,6 +6992,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
   final Value<String?> notes;
   final Value<bool> remindersEnabled;
   final Value<DateTime> createdAt;
+  final Value<String> kind;
   const InstallmentsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -6964,6 +7005,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
     this.notes = const Value.absent(),
     this.remindersEnabled = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.kind = const Value.absent(),
   });
   InstallmentsCompanion.insert({
     this.id = const Value.absent(),
@@ -6977,6 +7019,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
     this.notes = const Value.absent(),
     this.remindersEnabled = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.kind = const Value.absent(),
   }) : title = Value(title),
        provider = Value(provider),
        totalAmount = Value(totalAmount),
@@ -6996,6 +7039,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
     Expression<String>? notes,
     Expression<bool>? remindersEnabled,
     Expression<DateTime>? createdAt,
+    Expression<String>? kind,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -7009,6 +7053,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
       if (notes != null) 'notes': notes,
       if (remindersEnabled != null) 'reminders_enabled': remindersEnabled,
       if (createdAt != null) 'created_at': createdAt,
+      if (kind != null) 'kind': kind,
     });
   }
 
@@ -7024,6 +7069,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
     Value<String?>? notes,
     Value<bool>? remindersEnabled,
     Value<DateTime>? createdAt,
+    Value<String>? kind,
   }) {
     return InstallmentsCompanion(
       id: id ?? this.id,
@@ -7037,6 +7083,7 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
       notes: notes ?? this.notes,
       remindersEnabled: remindersEnabled ?? this.remindersEnabled,
       createdAt: createdAt ?? this.createdAt,
+      kind: kind ?? this.kind,
     );
   }
 
@@ -7076,6 +7123,9 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
     return map;
   }
 
@@ -7092,7 +7142,8 @@ class InstallmentsCompanion extends UpdateCompanion<Installment> {
           ..write('startMonth: $startMonth, ')
           ..write('notes: $notes, ')
           ..write('remindersEnabled: $remindersEnabled, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('kind: $kind')
           ..write(')'))
         .toString();
   }
@@ -8578,6 +8629,925 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
   }
 }
 
+class $AssociationsTable extends Associations with TableInfo<$AssociationsTable, Association> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AssociationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _ownerMeta = const VerificationMeta('owner');
+  @override
+  late final GeneratedColumn<String> owner = GeneratedColumn<String>(
+    'owner',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalAmountMeta = const VerificationMeta('totalAmount');
+  @override
+  late final GeneratedColumn<double> totalAmount = GeneratedColumn<double>(
+    'total_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _shareAmountMeta = const VerificationMeta('shareAmount');
+  @override
+  late final GeneratedColumn<double> shareAmount = GeneratedColumn<double>(
+    'share_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _monthsMeta = const VerificationMeta('months');
+  @override
+  late final GeneratedColumn<int> months = GeneratedColumn<int>(
+    'months',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _myTurnMeta = const VerificationMeta('myTurn');
+  @override
+  late final GeneratedColumn<int> myTurn = GeneratedColumn<int>(
+    'my_turn',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startMonthMeta = const VerificationMeta('startMonth');
+  @override
+  late final GeneratedColumn<DateTime> startMonth = GeneratedColumn<DateTime>(
+    'start_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _payDayMeta = const VerificationMeta('payDay');
+  @override
+  late final GeneratedColumn<int> payDay = GeneratedColumn<int>(
+    'pay_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
+  @override
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+    'notes',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, owner, totalAmount, shareAmount, months, myTurn, startMonth, payDay, notes, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'associations';
+  @override
+  VerificationContext validateIntegrity(Insertable<Association> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(_nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    }
+    if (data.containsKey('owner')) {
+      context.handle(_ownerMeta, owner.isAcceptableOrUnknown(data['owner']!, _ownerMeta));
+    } else if (isInserting) {
+      context.missing(_ownerMeta);
+    }
+    if (data.containsKey('total_amount')) {
+      context.handle(_totalAmountMeta, totalAmount.isAcceptableOrUnknown(data['total_amount']!, _totalAmountMeta));
+    } else if (isInserting) {
+      context.missing(_totalAmountMeta);
+    }
+    if (data.containsKey('share_amount')) {
+      context.handle(_shareAmountMeta, shareAmount.isAcceptableOrUnknown(data['share_amount']!, _shareAmountMeta));
+    } else if (isInserting) {
+      context.missing(_shareAmountMeta);
+    }
+    if (data.containsKey('months')) {
+      context.handle(_monthsMeta, months.isAcceptableOrUnknown(data['months']!, _monthsMeta));
+    } else if (isInserting) {
+      context.missing(_monthsMeta);
+    }
+    if (data.containsKey('my_turn')) {
+      context.handle(_myTurnMeta, myTurn.isAcceptableOrUnknown(data['my_turn']!, _myTurnMeta));
+    } else if (isInserting) {
+      context.missing(_myTurnMeta);
+    }
+    if (data.containsKey('start_month')) {
+      context.handle(_startMonthMeta, startMonth.isAcceptableOrUnknown(data['start_month']!, _startMonthMeta));
+    } else if (isInserting) {
+      context.missing(_startMonthMeta);
+    }
+    if (data.containsKey('pay_day')) {
+      context.handle(_payDayMeta, payDay.isAcceptableOrUnknown(data['pay_day']!, _payDayMeta));
+    } else if (isInserting) {
+      context.missing(_payDayMeta);
+    }
+    if (data.containsKey('notes')) {
+      context.handle(_notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta, createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Association map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Association(
+      id: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      owner: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}owner'])!,
+      totalAmount: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}total_amount'])!,
+      shareAmount: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}share_amount'])!,
+      months: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}months'])!,
+      myTurn: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}my_turn'])!,
+      startMonth: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}start_month'])!,
+      payDay: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}pay_day'])!,
+      notes: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      createdAt: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $AssociationsTable createAlias(String alias) {
+    return $AssociationsTable(attachedDatabase, alias);
+  }
+}
+
+class Association extends DataClass implements Insertable<Association> {
+  final int id;
+  final String name;
+
+  /// صاحب الجمعية.
+  final String owner;
+
+  /// مبلغ الجمعية (what this user receives in their turn).
+  final double totalAmount;
+
+  /// قيمة السهم (paid every month).
+  final double shareAmount;
+  final int months;
+  final int myTurn;
+
+  /// Month of the first payment.
+  final DateTime startMonth;
+
+  /// Day of the month the share is paid (the pot is received on the same day).
+  final int payDay;
+  final String? notes;
+  final DateTime createdAt;
+  const Association({
+    required this.id,
+    required this.name,
+    required this.owner,
+    required this.totalAmount,
+    required this.shareAmount,
+    required this.months,
+    required this.myTurn,
+    required this.startMonth,
+    required this.payDay,
+    this.notes,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['owner'] = Variable<String>(owner);
+    map['total_amount'] = Variable<double>(totalAmount);
+    map['share_amount'] = Variable<double>(shareAmount);
+    map['months'] = Variable<int>(months);
+    map['my_turn'] = Variable<int>(myTurn);
+    map['start_month'] = Variable<DateTime>(startMonth);
+    map['pay_day'] = Variable<int>(payDay);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  AssociationsCompanion toCompanion(bool nullToAbsent) {
+    return AssociationsCompanion(
+      id: Value(id),
+      name: Value(name),
+      owner: Value(owner),
+      totalAmount: Value(totalAmount),
+      shareAmount: Value(shareAmount),
+      months: Value(months),
+      myTurn: Value(myTurn),
+      startMonth: Value(startMonth),
+      payDay: Value(payDay),
+      notes: notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Association.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Association(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      owner: serializer.fromJson<String>(json['owner']),
+      totalAmount: serializer.fromJson<double>(json['totalAmount']),
+      shareAmount: serializer.fromJson<double>(json['shareAmount']),
+      months: serializer.fromJson<int>(json['months']),
+      myTurn: serializer.fromJson<int>(json['myTurn']),
+      startMonth: serializer.fromJson<DateTime>(json['startMonth']),
+      payDay: serializer.fromJson<int>(json['payDay']),
+      notes: serializer.fromJson<String?>(json['notes']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'owner': serializer.toJson<String>(owner),
+      'totalAmount': serializer.toJson<double>(totalAmount),
+      'shareAmount': serializer.toJson<double>(shareAmount),
+      'months': serializer.toJson<int>(months),
+      'myTurn': serializer.toJson<int>(myTurn),
+      'startMonth': serializer.toJson<DateTime>(startMonth),
+      'payDay': serializer.toJson<int>(payDay),
+      'notes': serializer.toJson<String?>(notes),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Association copyWith({
+    int? id,
+    String? name,
+    String? owner,
+    double? totalAmount,
+    double? shareAmount,
+    int? months,
+    int? myTurn,
+    DateTime? startMonth,
+    int? payDay,
+    Value<String?> notes = const Value.absent(),
+    DateTime? createdAt,
+  }) => Association(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    owner: owner ?? this.owner,
+    totalAmount: totalAmount ?? this.totalAmount,
+    shareAmount: shareAmount ?? this.shareAmount,
+    months: months ?? this.months,
+    myTurn: myTurn ?? this.myTurn,
+    startMonth: startMonth ?? this.startMonth,
+    payDay: payDay ?? this.payDay,
+    notes: notes.present ? notes.value : this.notes,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Association copyWithCompanion(AssociationsCompanion data) {
+    return Association(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      owner: data.owner.present ? data.owner.value : this.owner,
+      totalAmount: data.totalAmount.present ? data.totalAmount.value : this.totalAmount,
+      shareAmount: data.shareAmount.present ? data.shareAmount.value : this.shareAmount,
+      months: data.months.present ? data.months.value : this.months,
+      myTurn: data.myTurn.present ? data.myTurn.value : this.myTurn,
+      startMonth: data.startMonth.present ? data.startMonth.value : this.startMonth,
+      payDay: data.payDay.present ? data.payDay.value : this.payDay,
+      notes: data.notes.present ? data.notes.value : this.notes,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Association(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('owner: $owner, ')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('shareAmount: $shareAmount, ')
+          ..write('months: $months, ')
+          ..write('myTurn: $myTurn, ')
+          ..write('startMonth: $startMonth, ')
+          ..write('payDay: $payDay, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, owner, totalAmount, shareAmount, months, myTurn, startMonth, payDay, notes, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Association &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.owner == this.owner &&
+          other.totalAmount == this.totalAmount &&
+          other.shareAmount == this.shareAmount &&
+          other.months == this.months &&
+          other.myTurn == this.myTurn &&
+          other.startMonth == this.startMonth &&
+          other.payDay == this.payDay &&
+          other.notes == this.notes &&
+          other.createdAt == this.createdAt);
+}
+
+class AssociationsCompanion extends UpdateCompanion<Association> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> owner;
+  final Value<double> totalAmount;
+  final Value<double> shareAmount;
+  final Value<int> months;
+  final Value<int> myTurn;
+  final Value<DateTime> startMonth;
+  final Value<int> payDay;
+  final Value<String?> notes;
+  final Value<DateTime> createdAt;
+  const AssociationsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.owner = const Value.absent(),
+    this.totalAmount = const Value.absent(),
+    this.shareAmount = const Value.absent(),
+    this.months = const Value.absent(),
+    this.myTurn = const Value.absent(),
+    this.startMonth = const Value.absent(),
+    this.payDay = const Value.absent(),
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  AssociationsCompanion.insert({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    required String owner,
+    required double totalAmount,
+    required double shareAmount,
+    required int months,
+    required int myTurn,
+    required DateTime startMonth,
+    required int payDay,
+    this.notes = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : owner = Value(owner),
+       totalAmount = Value(totalAmount),
+       shareAmount = Value(shareAmount),
+       months = Value(months),
+       myTurn = Value(myTurn),
+       startMonth = Value(startMonth),
+       payDay = Value(payDay);
+  static Insertable<Association> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? owner,
+    Expression<double>? totalAmount,
+    Expression<double>? shareAmount,
+    Expression<int>? months,
+    Expression<int>? myTurn,
+    Expression<DateTime>? startMonth,
+    Expression<int>? payDay,
+    Expression<String>? notes,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (owner != null) 'owner': owner,
+      if (totalAmount != null) 'total_amount': totalAmount,
+      if (shareAmount != null) 'share_amount': shareAmount,
+      if (months != null) 'months': months,
+      if (myTurn != null) 'my_turn': myTurn,
+      if (startMonth != null) 'start_month': startMonth,
+      if (payDay != null) 'pay_day': payDay,
+      if (notes != null) 'notes': notes,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  AssociationsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? owner,
+    Value<double>? totalAmount,
+    Value<double>? shareAmount,
+    Value<int>? months,
+    Value<int>? myTurn,
+    Value<DateTime>? startMonth,
+    Value<int>? payDay,
+    Value<String?>? notes,
+    Value<DateTime>? createdAt,
+  }) {
+    return AssociationsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      owner: owner ?? this.owner,
+      totalAmount: totalAmount ?? this.totalAmount,
+      shareAmount: shareAmount ?? this.shareAmount,
+      months: months ?? this.months,
+      myTurn: myTurn ?? this.myTurn,
+      startMonth: startMonth ?? this.startMonth,
+      payDay: payDay ?? this.payDay,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (owner.present) {
+      map['owner'] = Variable<String>(owner.value);
+    }
+    if (totalAmount.present) {
+      map['total_amount'] = Variable<double>(totalAmount.value);
+    }
+    if (shareAmount.present) {
+      map['share_amount'] = Variable<double>(shareAmount.value);
+    }
+    if (months.present) {
+      map['months'] = Variable<int>(months.value);
+    }
+    if (myTurn.present) {
+      map['my_turn'] = Variable<int>(myTurn.value);
+    }
+    if (startMonth.present) {
+      map['start_month'] = Variable<DateTime>(startMonth.value);
+    }
+    if (payDay.present) {
+      map['pay_day'] = Variable<int>(payDay.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssociationsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('owner: $owner, ')
+          ..write('totalAmount: $totalAmount, ')
+          ..write('shareAmount: $shareAmount, ')
+          ..write('months: $months, ')
+          ..write('myTurn: $myTurn, ')
+          ..write('startMonth: $startMonth, ')
+          ..write('payDay: $payDay, ')
+          ..write('notes: $notes, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $AssociationPaymentsTable extends AssociationPayments with TableInfo<$AssociationPaymentsTable, AssociationPayment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AssociationPaymentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'),
+  );
+  static const VerificationMeta _associationIdMeta = const VerificationMeta('associationId');
+  @override
+  late final GeneratedColumn<int> associationId = GeneratedColumn<int>(
+    'association_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('REFERENCES associations (id) ON DELETE CASCADE'),
+  );
+  static const VerificationMeta _numberMeta = const VerificationMeta('number');
+  @override
+  late final GeneratedColumn<int> number = GeneratedColumn<int>(
+    'number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dateMeta = const VerificationMeta('date');
+  @override
+  late final GeneratedColumn<DateTime> date = GeneratedColumn<DateTime>(
+    'date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _transactionIdMeta = const VerificationMeta('transactionId');
+  @override
+  late final GeneratedColumn<int> transactionId = GeneratedColumn<int>(
+    'transaction_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, associationId, number, type, amount, date, transactionId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'association_payments';
+  @override
+  VerificationContext validateIntegrity(Insertable<AssociationPayment> instance, {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('association_id')) {
+      context.handle(_associationIdMeta, associationId.isAcceptableOrUnknown(data['association_id']!, _associationIdMeta));
+    } else if (isInserting) {
+      context.missing(_associationIdMeta);
+    }
+    if (data.containsKey('number')) {
+      context.handle(_numberMeta, number.isAcceptableOrUnknown(data['number']!, _numberMeta));
+    } else if (isInserting) {
+      context.missing(_numberMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(_typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('amount')) {
+      context.handle(_amountMeta, amount.isAcceptableOrUnknown(data['amount']!, _amountMeta));
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    if (data.containsKey('date')) {
+      context.handle(_dateMeta, date.isAcceptableOrUnknown(data['date']!, _dateMeta));
+    } else if (isInserting) {
+      context.missing(_dateMeta);
+    }
+    if (data.containsKey('transaction_id')) {
+      context.handle(_transactionIdMeta, transactionId.isAcceptableOrUnknown(data['transaction_id']!, _transactionIdMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {associationId, number, type},
+  ];
+  @override
+  AssociationPayment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AssociationPayment(
+      id: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      associationId: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}association_id'])!,
+      number: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}number'])!,
+      type: attachedDatabase.typeMapping.read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      amount: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}amount'])!,
+      date: attachedDatabase.typeMapping.read(DriftSqlType.dateTime, data['${effectivePrefix}date'])!,
+      transactionId: attachedDatabase.typeMapping.read(DriftSqlType.int, data['${effectivePrefix}transaction_id']),
+    );
+  }
+
+  @override
+  $AssociationPaymentsTable createAlias(String alias) {
+    return $AssociationPaymentsTable(attachedDatabase, alias);
+  }
+}
+
+class AssociationPayment extends DataClass implements Insertable<AssociationPayment> {
+  final int id;
+  final int associationId;
+  final int number;
+
+  /// 'pay' or 'receive'.
+  final String type;
+  final double amount;
+  final DateTime date;
+  final int? transactionId;
+  const AssociationPayment({
+    required this.id,
+    required this.associationId,
+    required this.number,
+    required this.type,
+    required this.amount,
+    required this.date,
+    this.transactionId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['association_id'] = Variable<int>(associationId);
+    map['number'] = Variable<int>(number);
+    map['type'] = Variable<String>(type);
+    map['amount'] = Variable<double>(amount);
+    map['date'] = Variable<DateTime>(date);
+    if (!nullToAbsent || transactionId != null) {
+      map['transaction_id'] = Variable<int>(transactionId);
+    }
+    return map;
+  }
+
+  AssociationPaymentsCompanion toCompanion(bool nullToAbsent) {
+    return AssociationPaymentsCompanion(
+      id: Value(id),
+      associationId: Value(associationId),
+      number: Value(number),
+      type: Value(type),
+      amount: Value(amount),
+      date: Value(date),
+      transactionId: transactionId == null && nullToAbsent ? const Value.absent() : Value(transactionId),
+    );
+  }
+
+  factory AssociationPayment.fromJson(Map<String, dynamic> json, {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AssociationPayment(
+      id: serializer.fromJson<int>(json['id']),
+      associationId: serializer.fromJson<int>(json['associationId']),
+      number: serializer.fromJson<int>(json['number']),
+      type: serializer.fromJson<String>(json['type']),
+      amount: serializer.fromJson<double>(json['amount']),
+      date: serializer.fromJson<DateTime>(json['date']),
+      transactionId: serializer.fromJson<int?>(json['transactionId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'associationId': serializer.toJson<int>(associationId),
+      'number': serializer.toJson<int>(number),
+      'type': serializer.toJson<String>(type),
+      'amount': serializer.toJson<double>(amount),
+      'date': serializer.toJson<DateTime>(date),
+      'transactionId': serializer.toJson<int?>(transactionId),
+    };
+  }
+
+  AssociationPayment copyWith({
+    int? id,
+    int? associationId,
+    int? number,
+    String? type,
+    double? amount,
+    DateTime? date,
+    Value<int?> transactionId = const Value.absent(),
+  }) => AssociationPayment(
+    id: id ?? this.id,
+    associationId: associationId ?? this.associationId,
+    number: number ?? this.number,
+    type: type ?? this.type,
+    amount: amount ?? this.amount,
+    date: date ?? this.date,
+    transactionId: transactionId.present ? transactionId.value : this.transactionId,
+  );
+  AssociationPayment copyWithCompanion(AssociationPaymentsCompanion data) {
+    return AssociationPayment(
+      id: data.id.present ? data.id.value : this.id,
+      associationId: data.associationId.present ? data.associationId.value : this.associationId,
+      number: data.number.present ? data.number.value : this.number,
+      type: data.type.present ? data.type.value : this.type,
+      amount: data.amount.present ? data.amount.value : this.amount,
+      date: data.date.present ? data.date.value : this.date,
+      transactionId: data.transactionId.present ? data.transactionId.value : this.transactionId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssociationPayment(')
+          ..write('id: $id, ')
+          ..write('associationId: $associationId, ')
+          ..write('number: $number, ')
+          ..write('type: $type, ')
+          ..write('amount: $amount, ')
+          ..write('date: $date, ')
+          ..write('transactionId: $transactionId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, associationId, number, type, amount, date, transactionId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AssociationPayment &&
+          other.id == this.id &&
+          other.associationId == this.associationId &&
+          other.number == this.number &&
+          other.type == this.type &&
+          other.amount == this.amount &&
+          other.date == this.date &&
+          other.transactionId == this.transactionId);
+}
+
+class AssociationPaymentsCompanion extends UpdateCompanion<AssociationPayment> {
+  final Value<int> id;
+  final Value<int> associationId;
+  final Value<int> number;
+  final Value<String> type;
+  final Value<double> amount;
+  final Value<DateTime> date;
+  final Value<int?> transactionId;
+  const AssociationPaymentsCompanion({
+    this.id = const Value.absent(),
+    this.associationId = const Value.absent(),
+    this.number = const Value.absent(),
+    this.type = const Value.absent(),
+    this.amount = const Value.absent(),
+    this.date = const Value.absent(),
+    this.transactionId = const Value.absent(),
+  });
+  AssociationPaymentsCompanion.insert({
+    this.id = const Value.absent(),
+    required int associationId,
+    required int number,
+    required String type,
+    required double amount,
+    required DateTime date,
+    this.transactionId = const Value.absent(),
+  }) : associationId = Value(associationId),
+       number = Value(number),
+       type = Value(type),
+       amount = Value(amount),
+       date = Value(date);
+  static Insertable<AssociationPayment> custom({
+    Expression<int>? id,
+    Expression<int>? associationId,
+    Expression<int>? number,
+    Expression<String>? type,
+    Expression<double>? amount,
+    Expression<DateTime>? date,
+    Expression<int>? transactionId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (associationId != null) 'association_id': associationId,
+      if (number != null) 'number': number,
+      if (type != null) 'type': type,
+      if (amount != null) 'amount': amount,
+      if (date != null) 'date': date,
+      if (transactionId != null) 'transaction_id': transactionId,
+    });
+  }
+
+  AssociationPaymentsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? associationId,
+    Value<int>? number,
+    Value<String>? type,
+    Value<double>? amount,
+    Value<DateTime>? date,
+    Value<int?>? transactionId,
+  }) {
+    return AssociationPaymentsCompanion(
+      id: id ?? this.id,
+      associationId: associationId ?? this.associationId,
+      number: number ?? this.number,
+      type: type ?? this.type,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      transactionId: transactionId ?? this.transactionId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (associationId.present) {
+      map['association_id'] = Variable<int>(associationId.value);
+    }
+    if (number.present) {
+      map['number'] = Variable<int>(number.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    if (date.present) {
+      map['date'] = Variable<DateTime>(date.value);
+    }
+    if (transactionId.present) {
+      map['transaction_id'] = Variable<int>(transactionId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AssociationPaymentsCompanion(')
+          ..write('id: $id, ')
+          ..write('associationId: $associationId, ')
+          ..write('number: $number, ')
+          ..write('type: $type, ')
+          ..write('amount: $amount, ')
+          ..write('date: $date, ')
+          ..write('transactionId: $transactionId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8601,6 +9571,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CarsTable cars = $CarsTable(this);
   late final $FuelTypesTable fuelTypes = $FuelTypesTable(this);
   late final $CarExpensesTable carExpenses = $CarExpensesTable(this);
+  late final $AssociationsTable associations = $AssociationsTable(this);
+  late final $AssociationPaymentsTable associationPayments = $AssociationPaymentsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables => allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
@@ -8625,6 +9597,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     cars,
     fuelTypes,
     carExpenses,
+    associations,
+    associationPayments,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -8639,6 +9613,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     WritePropagation(
       on: TableUpdateQuery.onTableName('transactions', limitUpdateKind: UpdateKind.delete),
       result: [TableUpdate('car_expenses', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName('associations', limitUpdateKind: UpdateKind.delete),
+      result: [TableUpdate('association_payments', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -12822,6 +13800,7 @@ typedef $$InstallmentsTableCreateCompanionBuilder =
       Value<String?> notes,
       Value<bool> remindersEnabled,
       Value<DateTime> createdAt,
+      Value<String> kind,
     });
 typedef $$InstallmentsTableUpdateCompanionBuilder =
     InstallmentsCompanion Function({
@@ -12836,6 +13815,7 @@ typedef $$InstallmentsTableUpdateCompanionBuilder =
       Value<String?> notes,
       Value<bool> remindersEnabled,
       Value<DateTime> createdAt,
+      Value<String> kind,
     });
 
 final class $$InstallmentsTableReferences extends BaseReferences<_$AppDatabase, $InstallmentsTable, Installment> {
@@ -12887,6 +13867,8 @@ class $$InstallmentsTableFilterComposer extends Composer<_$AppDatabase, $Install
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get kind => $composableBuilder(column: $table.kind, builder: (column) => ColumnFilters(column));
+
   Expression<bool> installmentPaymentsRefs(Expression<bool> Function($$InstallmentPaymentsTableFilterComposer f) f) {
     final $$InstallmentPaymentsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -12937,6 +13919,8 @@ class $$InstallmentsTableOrderingComposer extends Composer<_$AppDatabase, $Insta
       $composableBuilder(column: $table.remindersEnabled, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(column: $table.kind, builder: (column) => ColumnOrderings(column));
 }
 
 class $$InstallmentsTableAnnotationComposer extends Composer<_$AppDatabase, $InstallmentsTable> {
@@ -12968,6 +13952,8 @@ class $$InstallmentsTableAnnotationComposer extends Composer<_$AppDatabase, $Ins
   GeneratedColumn<bool> get remindersEnabled => $composableBuilder(column: $table.remindersEnabled, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get kind => $composableBuilder(column: $table.kind, builder: (column) => column);
 
   Expression<T> installmentPaymentsRefs<T extends Object>(Expression<T> Function($$InstallmentPaymentsTableAnnotationComposer a) f) {
     final $$InstallmentPaymentsTableAnnotationComposer composer = $composerBuilder(
@@ -13024,6 +14010,7 @@ class $$InstallmentsTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<bool> remindersEnabled = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
               }) => InstallmentsCompanion(
                 id: id,
                 title: title,
@@ -13036,6 +14023,7 @@ class $$InstallmentsTableTableManager
                 notes: notes,
                 remindersEnabled: remindersEnabled,
                 createdAt: createdAt,
+                kind: kind,
               ),
           createCompanionCallback:
               ({
@@ -13050,6 +14038,7 @@ class $$InstallmentsTableTableManager
                 Value<String?> notes = const Value.absent(),
                 Value<bool> remindersEnabled = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<String> kind = const Value.absent(),
               }) => InstallmentsCompanion.insert(
                 id: id,
                 title: title,
@@ -13062,6 +14051,7 @@ class $$InstallmentsTableTableManager
                 notes: notes,
                 remindersEnabled: remindersEnabled,
                 createdAt: createdAt,
+                kind: kind,
               ),
           withReferenceMapper: (p0) =>
               p0.map((e) => (e.readTable<$InstallmentsTable, Installment>(table), $$InstallmentsTableReferences(db, table, e))).toList(),
@@ -14104,6 +15094,567 @@ typedef $$CarExpensesTableProcessedTableManager =
       CarExpense,
       PrefetchHooks Function({bool carId, bool transactionId})
     >;
+typedef $$AssociationsTableCreateCompanionBuilder =
+    AssociationsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      required String owner,
+      required double totalAmount,
+      required double shareAmount,
+      required int months,
+      required int myTurn,
+      required DateTime startMonth,
+      required int payDay,
+      Value<String?> notes,
+      Value<DateTime> createdAt,
+    });
+typedef $$AssociationsTableUpdateCompanionBuilder =
+    AssociationsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> owner,
+      Value<double> totalAmount,
+      Value<double> shareAmount,
+      Value<int> months,
+      Value<int> myTurn,
+      Value<DateTime> startMonth,
+      Value<int> payDay,
+      Value<String?> notes,
+      Value<DateTime> createdAt,
+    });
+
+final class $$AssociationsTableReferences extends BaseReferences<_$AppDatabase, $AssociationsTable, Association> {
+  $$AssociationsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$AssociationPaymentsTable, List<AssociationPayment>> _associationPaymentsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.associationPayments, aliasName: 'associations__id__association_payments__association_id');
+
+  $$AssociationPaymentsTableProcessedTableManager get associationPaymentsRefs {
+    final manager = $$AssociationPaymentsTableTableManager(
+      $_db,
+      $_db.associationPayments,
+    ).filter((f) => f.associationId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_associationPaymentsRefsTable($_db));
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$AssociationsTableFilterComposer extends Composer<_$AppDatabase, $AssociationsTable> {
+  $$AssociationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get owner => $composableBuilder(column: $table.owner, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get totalAmount => $composableBuilder(column: $table.totalAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get shareAmount => $composableBuilder(column: $table.shareAmount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get months => $composableBuilder(column: $table.months, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get myTurn => $composableBuilder(column: $table.myTurn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get startMonth => $composableBuilder(column: $table.startMonth, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get payDay => $composableBuilder(column: $table.payDay, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> associationPaymentsRefs(Expression<bool> Function($$AssociationPaymentsTableFilterComposer f) f) {
+    final $$AssociationPaymentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.associationPayments,
+      getReferencedColumn: (t) => t.associationId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$AssociationPaymentsTableFilterComposer(
+            $db: $db,
+            $table: $db.associationPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$AssociationsTableOrderingComposer extends Composer<_$AppDatabase, $AssociationsTable> {
+  $$AssociationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get owner => $composableBuilder(column: $table.owner, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get totalAmount => $composableBuilder(column: $table.totalAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get shareAmount => $composableBuilder(column: $table.shareAmount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get months => $composableBuilder(column: $table.months, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get myTurn => $composableBuilder(column: $table.myTurn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get startMonth => $composableBuilder(column: $table.startMonth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get payDay => $composableBuilder(column: $table.payDay, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(column: $table.notes, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$AssociationsTableAnnotationComposer extends Composer<_$AppDatabase, $AssociationsTable> {
+  $$AssociationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id => $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name => $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get owner => $composableBuilder(column: $table.owner, builder: (column) => column);
+
+  GeneratedColumn<double> get totalAmount => $composableBuilder(column: $table.totalAmount, builder: (column) => column);
+
+  GeneratedColumn<double> get shareAmount => $composableBuilder(column: $table.shareAmount, builder: (column) => column);
+
+  GeneratedColumn<int> get months => $composableBuilder(column: $table.months, builder: (column) => column);
+
+  GeneratedColumn<int> get myTurn => $composableBuilder(column: $table.myTurn, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startMonth => $composableBuilder(column: $table.startMonth, builder: (column) => column);
+
+  GeneratedColumn<int> get payDay => $composableBuilder(column: $table.payDay, builder: (column) => column);
+
+  GeneratedColumn<String> get notes => $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt => $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  Expression<T> associationPaymentsRefs<T extends Object>(Expression<T> Function($$AssociationPaymentsTableAnnotationComposer a) f) {
+    final $$AssociationPaymentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.associationPayments,
+      getReferencedColumn: (t) => t.associationId,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) =>
+          $$AssociationPaymentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.associationPayments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$AssociationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AssociationsTable,
+          Association,
+          $$AssociationsTableFilterComposer,
+          $$AssociationsTableOrderingComposer,
+          $$AssociationsTableAnnotationComposer,
+          $$AssociationsTableCreateCompanionBuilder,
+          $$AssociationsTableUpdateCompanionBuilder,
+          (Association, $$AssociationsTableReferences),
+          Association,
+          PrefetchHooks Function({bool associationPaymentsRefs})
+        > {
+  $$AssociationsTableTableManager(_$AppDatabase db, $AssociationsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$AssociationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$AssociationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$AssociationsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> owner = const Value.absent(),
+                Value<double> totalAmount = const Value.absent(),
+                Value<double> shareAmount = const Value.absent(),
+                Value<int> months = const Value.absent(),
+                Value<int> myTurn = const Value.absent(),
+                Value<DateTime> startMonth = const Value.absent(),
+                Value<int> payDay = const Value.absent(),
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AssociationsCompanion(
+                id: id,
+                name: name,
+                owner: owner,
+                totalAmount: totalAmount,
+                shareAmount: shareAmount,
+                months: months,
+                myTurn: myTurn,
+                startMonth: startMonth,
+                payDay: payDay,
+                notes: notes,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                required String owner,
+                required double totalAmount,
+                required double shareAmount,
+                required int months,
+                required int myTurn,
+                required DateTime startMonth,
+                required int payDay,
+                Value<String?> notes = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => AssociationsCompanion.insert(
+                id: id,
+                name: name,
+                owner: owner,
+                totalAmount: totalAmount,
+                shareAmount: shareAmount,
+                months: months,
+                myTurn: myTurn,
+                startMonth: startMonth,
+                payDay: payDay,
+                notes: notes,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) =>
+              p0.map((e) => (e.readTable<$AssociationsTable, Association>(table), $$AssociationsTableReferences(db, table, e))).toList(),
+          prefetchHooksCallback: ({associationPaymentsRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (associationPaymentsRefs) db.associationPayments],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (associationPaymentsRefs)
+                    await $_getPrefetchedData<Association, $AssociationsTable, AssociationPayment>(
+                      currentTable: table,
+                      referencedTable: $$AssociationsTableReferences._associationPaymentsRefsTable(db),
+                      managerFromTypedResult: (p0) => $$AssociationsTableReferences(db, table, p0).associationPaymentsRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) => referencedItems.where((e) => e.associationId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AssociationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AssociationsTable,
+      Association,
+      $$AssociationsTableFilterComposer,
+      $$AssociationsTableOrderingComposer,
+      $$AssociationsTableAnnotationComposer,
+      $$AssociationsTableCreateCompanionBuilder,
+      $$AssociationsTableUpdateCompanionBuilder,
+      (Association, $$AssociationsTableReferences),
+      Association,
+      PrefetchHooks Function({bool associationPaymentsRefs})
+    >;
+typedef $$AssociationPaymentsTableCreateCompanionBuilder =
+    AssociationPaymentsCompanion Function({
+      Value<int> id,
+      required int associationId,
+      required int number,
+      required String type,
+      required double amount,
+      required DateTime date,
+      Value<int?> transactionId,
+    });
+typedef $$AssociationPaymentsTableUpdateCompanionBuilder =
+    AssociationPaymentsCompanion Function({
+      Value<int> id,
+      Value<int> associationId,
+      Value<int> number,
+      Value<String> type,
+      Value<double> amount,
+      Value<DateTime> date,
+      Value<int?> transactionId,
+    });
+
+final class $$AssociationPaymentsTableReferences extends BaseReferences<_$AppDatabase, $AssociationPaymentsTable, AssociationPayment> {
+  $$AssociationPaymentsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $AssociationsTable _associationIdTable(_$AppDatabase db) =>
+      db.associations.createAlias('association_payments__association_id__associations__id');
+
+  $$AssociationsTableProcessedTableManager get associationId {
+    final $_column = $_itemColumn<int>('association_id')!;
+
+    final manager = $$AssociationsTableTableManager($_db, $_db.associations).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_associationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$AssociationPaymentsTableFilterComposer extends Composer<_$AppDatabase, $AssociationPaymentsTable> {
+  $$AssociationPaymentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get number => $composableBuilder(column: $table.number, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get amount => $composableBuilder(column: $table.amount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get date => $composableBuilder(column: $table.date, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get transactionId => $composableBuilder(column: $table.transactionId, builder: (column) => ColumnFilters(column));
+
+  $$AssociationsTableFilterComposer get associationId {
+    final $$AssociationsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.associationId,
+      referencedTable: $db.associations,
+      getReferencedColumn: (t) => t.id,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) => $$AssociationsTableFilterComposer(
+        $db: $db,
+        $table: $db.associations,
+        $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+        joinBuilder: joinBuilder,
+        $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+      ),
+    );
+    return composer;
+  }
+}
+
+class $$AssociationPaymentsTableOrderingComposer extends Composer<_$AppDatabase, $AssociationPaymentsTable> {
+  $$AssociationPaymentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get number => $composableBuilder(column: $table.number, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get amount => $composableBuilder(column: $table.amount, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get date => $composableBuilder(column: $table.date, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get transactionId => $composableBuilder(column: $table.transactionId, builder: (column) => ColumnOrderings(column));
+
+  $$AssociationsTableOrderingComposer get associationId {
+    final $$AssociationsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.associationId,
+      referencedTable: $db.associations,
+      getReferencedColumn: (t) => t.id,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) => $$AssociationsTableOrderingComposer(
+        $db: $db,
+        $table: $db.associations,
+        $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+        joinBuilder: joinBuilder,
+        $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+      ),
+    );
+    return composer;
+  }
+}
+
+class $$AssociationPaymentsTableAnnotationComposer extends Composer<_$AppDatabase, $AssociationPaymentsTable> {
+  $$AssociationPaymentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id => $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get number => $composableBuilder(column: $table.number, builder: (column) => column);
+
+  GeneratedColumn<String> get type => $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<double> get amount => $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get date => $composableBuilder(column: $table.date, builder: (column) => column);
+
+  GeneratedColumn<int> get transactionId => $composableBuilder(column: $table.transactionId, builder: (column) => column);
+
+  $$AssociationsTableAnnotationComposer get associationId {
+    final $$AssociationsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.associationId,
+      referencedTable: $db.associations,
+      getReferencedColumn: (t) => t.id,
+      builder: (joinBuilder, {$addJoinBuilderToRootComposer, $removeJoinBuilderFromRootComposer}) => $$AssociationsTableAnnotationComposer(
+        $db: $db,
+        $table: $db.associations,
+        $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+        joinBuilder: joinBuilder,
+        $removeJoinBuilderFromRootComposer: $removeJoinBuilderFromRootComposer,
+      ),
+    );
+    return composer;
+  }
+}
+
+class $$AssociationPaymentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AssociationPaymentsTable,
+          AssociationPayment,
+          $$AssociationPaymentsTableFilterComposer,
+          $$AssociationPaymentsTableOrderingComposer,
+          $$AssociationPaymentsTableAnnotationComposer,
+          $$AssociationPaymentsTableCreateCompanionBuilder,
+          $$AssociationPaymentsTableUpdateCompanionBuilder,
+          (AssociationPayment, $$AssociationPaymentsTableReferences),
+          AssociationPayment,
+          PrefetchHooks Function({bool associationId})
+        > {
+  $$AssociationPaymentsTableTableManager(_$AppDatabase db, $AssociationPaymentsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () => $$AssociationPaymentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () => $$AssociationPaymentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () => $$AssociationPaymentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> associationId = const Value.absent(),
+                Value<int> number = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+                Value<DateTime> date = const Value.absent(),
+                Value<int?> transactionId = const Value.absent(),
+              }) => AssociationPaymentsCompanion(
+                id: id,
+                associationId: associationId,
+                number: number,
+                type: type,
+                amount: amount,
+                date: date,
+                transactionId: transactionId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int associationId,
+                required int number,
+                required String type,
+                required double amount,
+                required DateTime date,
+                Value<int?> transactionId = const Value.absent(),
+              }) => AssociationPaymentsCompanion.insert(
+                id: id,
+                associationId: associationId,
+                number: number,
+                type: type,
+                amount: amount,
+                date: date,
+                transactionId: transactionId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) =>
+                    (e.readTable<$AssociationPaymentsTable, AssociationPayment>(table), $$AssociationPaymentsTableReferences(db, table, e)),
+              )
+              .toList(),
+          prefetchHooksCallback: ({associationId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (associationId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.associationId,
+                                referencedTable: $$AssociationPaymentsTableReferences._associationIdTable(db),
+                                referencedColumn: $$AssociationPaymentsTableReferences._associationIdTable(db).id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$AssociationPaymentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AssociationPaymentsTable,
+      AssociationPayment,
+      $$AssociationPaymentsTableFilterComposer,
+      $$AssociationPaymentsTableOrderingComposer,
+      $$AssociationPaymentsTableAnnotationComposer,
+      $$AssociationPaymentsTableCreateCompanionBuilder,
+      $$AssociationPaymentsTableUpdateCompanionBuilder,
+      (AssociationPayment, $$AssociationPaymentsTableReferences),
+      AssociationPayment,
+      PrefetchHooks Function({bool associationId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14130,4 +15681,6 @@ class $AppDatabaseManager {
   $$CarsTableTableManager get cars => $$CarsTableTableManager(_db, _db.cars);
   $$FuelTypesTableTableManager get fuelTypes => $$FuelTypesTableTableManager(_db, _db.fuelTypes);
   $$CarExpensesTableTableManager get carExpenses => $$CarExpensesTableTableManager(_db, _db.carExpenses);
+  $$AssociationsTableTableManager get associations => $$AssociationsTableTableManager(_db, _db.associations);
+  $$AssociationPaymentsTableTableManager get associationPayments => $$AssociationPaymentsTableTableManager(_db, _db.associationPayments);
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
+import '../../features/associations/presentation/associations_screens.dart';
 import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/auth/presentation/setup_screen.dart';
 import '../../features/cars/presentation/car_report_screen.dart';
@@ -80,10 +81,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
       GoRoute(path: '/setup', builder: (context, state) => const SetupScreen()),
-      GoRoute(path: '/installments', builder: (context, state) => const InstallmentsScreen()),
+      GoRoute(
+        path: '/installments',
+        builder: (context, state) => InstallmentsScreen(initialFilter: state.uri.queryParameters['kind']),
+      ),
+      GoRoute(path: '/associations', builder: (context, state) => const AssociationsScreen()),
+      GoRoute(
+        path: '/associations/new',
+        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: AssociationFormScreen()),
+      ),
+      GoRoute(
+        path: '/associations/:id',
+        builder: (context, state) => AssociationDetailsScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/associations/:id/edit',
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: AssociationFormScreen(id: int.parse(state.pathParameters['id']!))),
+      ),
       GoRoute(
         path: '/installments/new',
-        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: InstallmentFormScreen()),
+        pageBuilder: (context, state) => MaterialPage(
+          key: ValueKey(state.uri.toString()),
+          fullscreenDialog: true,
+          child: InstallmentFormScreen(loan: state.uri.queryParameters['kind'] == 'loan'),
+        ),
       ),
       GoRoute(
         path: '/installments/:id',

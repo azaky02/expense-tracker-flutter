@@ -16,7 +16,22 @@ class ScaffoldWithNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      floatingActionButton: FloatingActionButton(onPressed: () => _showAddMenu(context), child: const Icon(Icons.add)),
+      // Raised green "+" with a gold ring.
+      floatingActionButton: Container(
+        padding: const EdgeInsets.all(3),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: DS.goldGradient,
+          boxShadow: [BoxShadow(color: DS.navy.withValues(alpha: 0.35), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: FloatingActionButton(
+          elevation: 0,
+          backgroundColor: DS.primary,
+          foregroundColor: Colors.white,
+          onPressed: () => _showAddMenu(context),
+          child: const Icon(Icons.add, size: 30),
+        ),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),

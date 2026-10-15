@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/db/tables.dart';
 import '../../../core/utils/date_utils.dart';
+import '../../../core/widgets/ds_widgets.dart';
 import 'transaction_form.dart';
 import 'transaction_form_state.dart';
 import 'transaction_providers.dart';
@@ -19,20 +20,21 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
 
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   bool _isSubmitting = false;
+  final _form = GlobalKey<TransactionFormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          switch (widget.type) {
-            TransactionType.income => 'transactions.addIncome',
-            TransactionType.transfer => 'transactions.addTransfer',
-            _ => 'transactions.addExpense',
-          }.tr(),
-        ),
+      appBar: BrandFormAppBar(
+        title: switch (widget.type) {
+          TransactionType.income => 'transactions.addIncome',
+          TransactionType.transfer => 'transactions.addTransfer',
+          _ => 'transactions.addExpense',
+        }.tr(),
+        onSave: () => _form.currentState?.submit(),
       ),
       body: TransactionForm(
+        key: _form,
         initialValues: TransactionFormValues(
           amount: 0,
           type: widget.type,

@@ -324,8 +324,12 @@ class PickerField extends StatelessWidget {
     this.leading,
     this.trailingIcon = Icons.keyboard_arrow_down,
     required this.onTap,
+    this.subtitle,
   });
   final String text;
+
+  /// Small second line (e.g. an account's balance).
+  final String? subtitle;
   final bool placeholder;
   final Widget? leading;
   final IconData trailingIcon;
@@ -348,10 +352,23 @@ class PickerField extends StatelessWidget {
           children: [
             if (leading != null) ...[leading!, const SizedBox(width: 10)],
             Expanded(
-              child: Text(
-                text,
-                overflow: TextOverflow.ellipsis,
-                style: placeholder ? TextStyle(color: theme.colorScheme.onSurfaceVariant) : null,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    text,
+                    overflow: TextOverflow.ellipsis,
+                    style: placeholder ? TextStyle(color: theme.colorScheme.onSurfaceVariant) : null,
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                ],
               ),
             ),
             Icon(trailingIcon, color: theme.colorScheme.onSurfaceVariant, size: 20),
@@ -515,6 +532,134 @@ class StickySaveLayout extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Curved green header for forms: back button, title, optional confirm (✓) and extra actions.
+class BrandFormAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const BrandFormAppBar({super.key, required this.title, this.onSave, this.actions = const []});
+  final String title;
+  final VoidCallback? onSave;
+  final List<Widget> actions;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 14);
+
+  @override
+  Widget build(BuildContext context) {
+    Widget circle(IconData icon, VoidCallback? onTap, {bool gold = false}) => Material(
+      color: Colors.white,
+      shape: CircleBorder(side: gold ? const BorderSide(color: DS.gold, width: 1.5) : BorderSide.none),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(7),
+          child: Icon(icon, color: onTap == null ? Colors.black26 : DS.primary, size: 22),
+        ),
+      ),
+    );
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: DS.navyGradient,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: SizedBox(
+          height: kToolbarHeight + 14,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                circle(Icons.arrow_back_ios_new_rounded, () => Navigator.of(context).maybePop()),
+                Expanded(
+                  child: Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                ...actions.map(
+                  (a) => IconTheme(
+                    data: const IconThemeData(color: Colors.white),
+                    child: a,
+                  ),
+                ),
+                if (onSave != null || actions.isEmpty) circle(Icons.check_rounded, onSave, gold: true),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A form field in its own card: icon and label on one side, the field on the other.
+class FormRowCard extends StatelessWidget {
+  const FormRowCard({super.key, required this.icon, required this.label, required this.child, this.labelWidth = 92, this.iconColor});
+  final IconData icon;
+  final String label;
+  final Widget child;
+  final double labelWidth;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(DS.radius),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.7)),
+        boxShadow: DS.softShadow(theme.brightness),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 21, color: iconColor ?? theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: labelWidth,
+            child: Text(label, style: theme.textTheme.labelLarge),
+          ),
+          Expanded(child: child),
+        ],
+      ),
+    );
+  }
+}
+
+/// Large save button with a gold edge (bottom of forms).
+class BigSaveButton extends StatelessWidget {
+  const BigSaveButton({super.key, required this.label, required this.onPressed, this.busy = false});
+  final String label;
+  final VoidCallback? onPressed;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(56),
+        backgroundColor: DS.primary,
+        foregroundColor: Colors.white,
+        textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: 17, fontWeight: FontWeight.w800),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+          side: BorderSide(color: onPressed == null ? Colors.transparent : DS.gold, width: 1.5),
+        ),
+      ),
+      onPressed: busy ? null : onPressed,
+      icon: busy
+          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+          : const Icon(Icons.save_rounded),
+      label: Text(label),
     );
   }
 }

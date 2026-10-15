@@ -273,6 +273,9 @@ class Installments extends Table {
   TextColumn get notes => text().nullable()();
   BoolColumn get remindersEnabled => boolean().withDefault(const Constant(true))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  /// 'installment' (bought on installments) or 'loan' (borrowed money paid back monthly).
+  TextColumn get kind => text().withDefault(const Constant('installment'))();
 }
 
 /// One paid installment (number 1..months). The optional expense it created is kept so deleting
@@ -325,4 +328,48 @@ class CarExpenses extends Table {
   RealColumn get pricePerLiter => real().nullable()();
   RealColumn get latitude => real().nullable()();
   RealColumn get longitude => real().nullable()();
+}
+
+/// جمعية (rotating savings group): everyone pays a monthly share; each month one member takes
+/// the whole pot. [myTurn] is the month (1-based) in which this user receives it.
+class Associations extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().withDefault(const Constant(''))();
+
+  /// صاحب الجمعية.
+  TextColumn get owner => text()();
+
+  /// مبلغ الجمعية (what this user receives in their turn).
+  RealColumn get totalAmount => real()();
+
+  /// قيمة السهم (paid every month).
+  RealColumn get shareAmount => real()();
+  IntColumn get months => integer()();
+  IntColumn get myTurn => integer()();
+
+  /// Month of the first payment.
+  DateTimeColumn get startMonth => dateTime()();
+
+  /// Day of the month the share is paid (the pot is received on the same day).
+  IntColumn get payDay => integer()();
+  TextColumn get notes => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// A month of an association: the share paid (and the expense it created), or the pot received.
+class AssociationPayments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get associationId => integer().references(Associations, #id, onDelete: KeyAction.cascade)();
+  IntColumn get number => integer()();
+
+  /// 'pay' or 'receive'.
+  TextColumn get type => text()();
+  RealColumn get amount => real()();
+  DateTimeColumn get date => dateTime()();
+  IntColumn get transactionId => integer().nullable()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {associationId, number, type},
+  ];
 }

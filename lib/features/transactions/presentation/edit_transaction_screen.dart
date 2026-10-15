@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/attachments.dart';
+import '../../../core/widgets/ds_widgets.dart';
 import 'transaction_form.dart';
 import 'transaction_form_state.dart';
 import 'transaction_providers.dart';
@@ -18,6 +19,7 @@ class EditTransactionScreen extends ConsumerStatefulWidget {
 
 class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
   bool _isSubmitting = false;
+  final _form = GlobalKey<TransactionFormState>();
 
   Future<void> _handleDelete(String? attachmentUri) async {
     final confirmed = await showDialog<bool>(
@@ -44,8 +46,9 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
     final transactionAsync = ref.watch(transactionByIdProvider(widget.transactionId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('common.edit'.tr()),
+      appBar: BrandFormAppBar(
+        title: 'common.edit'.tr(),
+        onSave: () => _form.currentState?.submit(),
         actions: [
           transactionAsync.maybeWhen(
             data: (t) => IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _handleDelete(t?.transaction.attachmentUri)),
@@ -57,6 +60,7 @@ class _EditTransactionScreenState extends ConsumerState<EditTransactionScreen> {
         data: (t) {
           if (t == null) return const SizedBox.shrink();
           return TransactionForm(
+            key: _form,
             initialValues: TransactionFormValues(
               amount: t.transaction.amount,
               type: t.transaction.type,

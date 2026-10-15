@@ -35,6 +35,8 @@ part 'database.g.dart';
     Cars,
     FuelTypes,
     CarExpenses,
+    Associations,
+    AssociationPayments,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -44,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -114,6 +116,14 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(cars, cars.oilIntervalMonths);
         await m.addColumn(cars, cars.licenseExpiry);
         await m.addColumn(cars, cars.insuranceExpiry);
+      }
+      if (from >= 5 && from < 7) {
+        // v7: installments can be loans (v5 databases already have the installments table).
+        await m.addColumn(installments, installments.kind);
+      }
+      if (from < 7) {
+        await m.createTable(associations);
+        await m.createTable(associationPayments);
       }
     },
   );

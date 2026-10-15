@@ -110,7 +110,8 @@
       "income": "Income",
       "expense": "Expense",
       "transfer": "Transfer"
-    }
+    },
+    "currentBalance": "Balance: {amount}"
   },
   "categories": {
     "food": "Food & Drink",
@@ -345,7 +346,7 @@
   "add": {
     "expense": "Expense",
     "income": "Income",
-    "ledger": "Transaction with a person",
+    "ledger": "Custody with a person",
     "settlement": "Settlement",
     "title": "Add a new entry",
     "expenseHint": "Record an expense",
@@ -391,7 +392,7 @@
   "ledger": {
     "kind": {
       "loan": "Loan",
-      "advance": "Advance",
+      "advance": "Custody",
       "settlement": "Settlement",
       "other": "Other"
     },
@@ -409,18 +410,18 @@
     "cancel": "Cancel transaction",
     "rejectReason": "Reason",
     "direction": "Direction",
-    "kindLabel": "Type",
+    "kindLabel": "Direction",
     "person": "Person",
     "choosePerson": "Choose a person",
     "description": "Description",
-    "save": "Save transaction",
-    "newTitle": "Transaction with a person",
+    "save": "Save",
+    "newTitle": "Custody with a person",
     "settlementTitle": "Record a settlement",
     "createdByOther": "Recorded by {name}",
     "rejectedBecause": "Rejected: {reason}",
     "sharedHint": "If {name} has an account, the entry reaches them and needs their confirmation.",
     "localHint": "{name} has no email: the entry is final on your side.",
-    "descriptionHint": "e.g. loan for…",
+    "descriptionHint": "e.g. custody for buying…",
     "notifyOther": "Notify the other party",
     "payInFull": "Pay the full balance",
     "paymentMethod": "Payment method",
@@ -541,7 +542,7 @@
     "recoveredNotice": "The previous data on this phone could not be opened (its encryption key was lost, usually after uninstalling and reinstalling), so the app started fresh. If you have a backup, restore it from More → Backup."
   },
   "installments": {
-    "title": "Installments",
+    "title": "Installments & loans",
     "add": "Add installment plan",
     "edit": "Edit installment plan",
     "emptyTitle": "No installments yet",
@@ -584,7 +585,15 @@
     "reminderTitle": "Installment reminder: {title}",
     "reminderBody": "Installment {number} to {provider}, {amount} EGP, due {date} ({days} days left)",
     "reminderToday": "Installment {number} to {provider}, {amount} EGP, is due today",
-    "missingFields": "Fill in the name, provider, total, installment amount and months"
+    "missingFields": "Fill in the name, provider, total, installment amount and months",
+    "kindInstallment": "Installment",
+    "kindLoan": "Loan",
+    "addLoan": "Add loan",
+    "editLoan": "Edit loan",
+    "loanTitle": "Loan name",
+    "loanHint": "e.g. Personal loan / car loan",
+    "lender": "Lender",
+    "lenderHint": "e.g. Banque Misr / a person"
   },
   "cars": {
     "title": "Car",
@@ -643,7 +652,12 @@
     "insuranceExpiry": "Insurance expiry",
     "chooseDate": "Choose a date",
     "stationHintShort": "e.g. Wataniya",
-    "editExpenseFor": "Edit {car} expense"
+    "editExpenseFor": "Edit {car} expense",
+    "addCarExpense": "Add car expense",
+    "expenseType": "Expense type",
+    "otherExpense": "Other",
+    "odometerReading": "Odometer",
+    "plateLine": "Plate: {plate}"
   },
   "fuel": {
     "title": "Fuel prices",
@@ -749,9 +763,17 @@
   },
   "home": {
     "carExpense": "Car expense",
-    "loan": "Loan",
+    "loan": "Custody",
     "myCars": "My cars",
-    "budgets": "Budgets"
+    "budgets": "Budgets",
+    "loans": "Loans",
+    "associations": "Associations",
+    "hello": "Hello {name}",
+    "lastUpdate": "Updated {time}",
+    "more": "More",
+    "thisMonth": "This month",
+    "allDetails": "All details",
+    "net": "Net"
   },
   "stats": {
     "title": "Statistics",
@@ -804,5 +826,52 @@
     "salaryBody": "It's salary day – record it as income in Masarefy",
     "dailyShort": "Daily",
     "salaryShort": "Salary day {day}"
+  },
+  "associations": {
+    "title": "Associations",
+    "add": "Add association",
+    "edit": "Edit association",
+    "emptyTitle": "No associations yet",
+    "emptyMessage": "Add a savings association and your turn; you get a reminder at the start of the month you receive.",
+    "owner": "Organiser",
+    "ownerHint": "e.g. Om Ahmed",
+    "ownerLine": "Organiser: {owner}",
+    "share": "Monthly share",
+    "months": "Months",
+    "total": "Pot amount",
+    "myTurnLabel": "My turn",
+    "startDate": "Start",
+    "payDay": "Pay / receive day",
+    "perMonth": "per month",
+    "progress": "{paid} of {months} paid",
+    "receiveOn": "Receive {date}",
+    "receivedDone": "Received",
+    "youReceive": "You receive",
+    "turnLine": "Turn {turn} – {date}",
+    "paidSoFar": "Paid so far",
+    "schedule": "Months",
+    "sharePaid": "Share paid",
+    "shareDue": "Share",
+    "myTurn": "Your turn",
+    "receive": "Record receipt",
+    "payTitle": "Pay share {n} of {months}",
+    "receiveTitle": "Receive the pot – month {n} of {months}",
+    "asExpense": "Record as an expense (Association)",
+    "asIncome": "Record as income",
+    "undoTitle": "Undo?",
+    "deleteTitle": "Delete association?",
+    "deleteMessage": "The association and its schedule are deleted. Recorded entries stay.",
+    "name": "Name",
+    "nameHint": "e.g. Work association",
+    "receivePreview": "You receive {amount} EGP on {date}",
+    "reminderHint": "You get a reminder at the start of your month and on the day.",
+    "missingOwner": "Enter the organiser",
+    "missingShare": "Enter the monthly share",
+    "missingMonths": "Months must be 2 to 60",
+    "badTurn": "Your turn must be between 1 and the number of months",
+    "missingTotal": "Enter the pot amount",
+    "reminderTitle": "Association 💰",
+    "reminderMonth": "Your turn in {name} this month: {amount} EGP on {date}",
+    "reminderDay": "Today you receive {name}: {amount} EGP"
   }
 }
