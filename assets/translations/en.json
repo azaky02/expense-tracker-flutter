@@ -618,7 +618,8 @@
     "licenseExpiry": "Licence expiry",
     "insuranceExpiry": "Insurance expiry",
     "chooseDate": "Choose a date",
-    "stationHintShort": "e.g. Wataniya"
+    "stationHintShort": "e.g. Wataniya",
+    "editExpenseFor": "Edit {car} expense"
   },
   "fuel": {
     "title": "Fuel prices",
@@ -721,5 +722,63 @@
     "l100": "L/100km",
     "status": "Item",
     "due": "Due"
+  },
+  "home": {
+    "carExpense": "Car expense",
+    "loan": "Loan",
+    "myCars": "My cars",
+    "budgets": "Budgets"
+  },
+  "stats": {
+    "title": "Statistics",
+    "summary": "Summary",
+    "details": "Details",
+    "currentMonth": "This month",
+    "pastMonths": "Past months",
+    "years": "Years",
+    "custom": "Custom",
+    "pickMonth": "Choose a month",
+    "pickYear": "Choose a year",
+    "savingsRate": "Savings rate",
+    "dailyAverage": "Daily average spend",
+    "count": "Transactions",
+    "installmentsDue": "Installments due in this period and not paid yet: {amount}",
+    "trend": "Activity",
+    "dailyExpenses": "Spending per day",
+    "monthlyIncomeExpenses": "Income (green) and spending (red) per month",
+    "byCategory": "Spending by main category",
+    "byAccount": "Spending by account",
+    "income": "Income",
+    "expenses": "Expenses",
+    "items": "{n} entries",
+    "empty": "No entries in this period",
+    "dueOn": "Due {date}",
+    "customTitle": "Custom period",
+    "from": "From",
+    "to": "To",
+    "mainCategory": "Main category",
+    "allCategories": "All categories",
+    "apply": "Show",
+    "last7": "Last 7 days",
+    "last30": "Last 30 days",
+    "last90": "Last 3 months"
+  },
+  "reminders": {
+    "title": "Reminders & salary day",
+    "daily": "Daily reminder",
+    "dailyToggle": "Remind me to record my expenses",
+    "dailyHint": "Up to 3 times a day, at the times you choose",
+    "time": "Reminder {n}",
+    "off": "Off",
+    "dailyTitle": "Masarefy",
+    "dailyBody": "Don't forget to record today's expenses 📝",
+    "salaryDay": "Salary day",
+    "salaryHint": "A reminder on payday; \"This month\" in Statistics starts on your salary day",
+    "notSet": "Not set",
+    "noSalaryDay": "No salary day",
+    "salaryTitle": "Payday 💰",
+    "salaryBody": "It's salary day – record it as income in Masarefy",
+    "dailyShort": "Daily",
+    "salaryShort": "Salary day {day}"
   }
 }

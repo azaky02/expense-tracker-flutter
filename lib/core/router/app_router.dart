@@ -26,7 +26,9 @@ import '../../features/payment_methods/presentation/payment_methods_screen.dart'
 import '../../features/reports/presentation/reports_screen.dart';
 import '../../features/backup/presentation/backup_screen.dart';
 import '../../features/settings/presentation/account_sync_screen.dart';
+import '../../features/settings/presentation/reminders_screen.dart';
 import '../../features/settings/presentation/security_screen.dart';
+import '../../features/stats/presentation/stats_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/transactions/presentation/add_transaction_screen.dart';
 import '../../features/transactions/presentation/edit_transaction_screen.dart';
@@ -107,8 +109,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/cars/:id/expense',
         pageBuilder: (context, state) => MaterialPage(
+          key: ValueKey(state.uri.toString()),
           fullscreenDialog: true,
-          child: CarExpenseFormScreen(carId: int.parse(state.pathParameters['id']!)),
+          child: CarExpenseFormScreen(
+            carId: int.parse(state.pathParameters['id']!),
+            expenseId: int.tryParse(state.uri.queryParameters['edit'] ?? ''),
+          ),
         ),
       ),
       GoRoute(path: '/unlock', builder: (context, state) => const UnlockScreen()),
@@ -188,6 +194,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/budgets', builder: (context, state) => const BudgetsScreen()),
       GoRoute(path: '/security', builder: (context, state) => const SecurityScreen()),
+      GoRoute(path: '/reminders', builder: (context, state) => const RemindersScreen()),
+      GoRoute(path: '/stats', builder: (context, state) => const StatsScreen()),
       GoRoute(path: '/backup', builder: (context, state) => const BackupScreen()),
       GoRoute(
         path: '/transactions/filters',

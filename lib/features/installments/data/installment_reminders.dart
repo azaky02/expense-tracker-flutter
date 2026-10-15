@@ -120,6 +120,31 @@ class InstallmentReminders {
     }
   }
 
+  /// Repeats every day at [hour]:[minute].
+  Future<void> scheduleDaily({required int id, required int hour, required int minute, required String title, required String body}) async {
+    if (!_supported) return;
+    try {
+      await _init();
+      final now = tz.TZDateTime.now(tz.local);
+      var first = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+      if (!first.isAfter(now)) first = first.add(const Duration(days: 1));
+      await _plugin.zonedSchedule(
+        id: id,
+        scheduledDate: first,
+        notificationDetails: const NotificationDetails(
+          android: AndroidNotificationDetails('daily', 'Daily reminder', channelDescription: 'Reminder to record the expenses of the day'),
+          iOS: DarwinNotificationDetails(),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
+        title: title,
+        body: body,
+      );
+    } catch (e) {
+      debugPrint('daily reminder: $e');
+    }
+  }
+
   Future<void> showNow({required int id, required String title, required String body}) async {
     if (!_supported) return;
     try {

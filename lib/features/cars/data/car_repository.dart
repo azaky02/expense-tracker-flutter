@@ -225,6 +225,54 @@ class CarRepository {
     });
   }
 
+  /// The expense with its transaction, for editing.
+  Future<(CarExpense, Transaction)?> loadExpense(int expenseId) async {
+    final e = await (_db.select(_db.carExpenses)..where((x) => x.id.equals(expenseId))).getSingleOrNull();
+    if (e == null) return null;
+    final t = await (_db.select(_db.transactions)..where((x) => x.id.equals(e.transactionId))).getSingleOrNull();
+    return t == null ? null : (e, t);
+  }
+
+  /// The user's own note, without the "car name – " prefix [addExpense] stores.
+  static String userNote(String? stored, String carName) {
+    if (stored == null || stored == carName) return '';
+    final prefix = '$carName – ';
+    return stored.startsWith(prefix) ? stored.substring(prefix.length) : stored;
+  }
+
+  /// Saves changes to an existing car expense (and its transaction). The recorded location stays.
+  Future<void> updateExpense(int expenseId, CarExpenseInput input) async {
+    await _db.transaction(() async {
+      final e = await (_db.select(_db.carExpenses)..where((x) => x.id.equals(expenseId))).getSingle();
+      final account = await (_db.select(_db.accounts)..where((a) => a.id.equals(input.accountId))).getSingle();
+      final car = await (_db.select(_db.cars)..where((c) => c.id.equals(input.carId))).getSingle();
+      final note = [car.name, if (input.note != null && input.note!.trim().isNotEmpty) input.note!.trim()].join(' – ');
+      await (_db.update(_db.transactions)..where((t) => t.id.equals(e.transactionId))).write(
+        TransactionsCompanion(
+          amount: Value(input.amount),
+          categoryId: Value(input.categoryId),
+          paymentMethodType: Value(account.cardId != null ? PaymentMethodType.card : PaymentMethodType.cash),
+          cardId: Value(account.cardId),
+          date: Value(input.date),
+          note: Value(note),
+          beneficiaryName: Value(input.beneficiary?.trim().isEmpty ?? true ? null : input.beneficiary!.trim()),
+          accountId: Value(input.accountId),
+        ),
+      );
+      await (_db.update(_db.carExpenses)..where((x) => x.id.equals(expenseId))).write(
+        CarExpensesCompanion(
+          carId: Value(input.carId),
+          odometer: Value(input.odometer),
+          liters: Value(input.liters),
+          fuelTypeId: Value(input.fuelTypeId),
+          pricePerLiter: Value(input.pricePerLiter),
+          latitude: input.latitude == null ? const Value.absent() : Value(input.latitude),
+          longitude: input.longitude == null ? const Value.absent() : Value(input.longitude),
+        ),
+      );
+    });
+  }
+
   Future<void> deleteExpense(CarExpense e) => _db.transaction(() => _deleteExpenseRow(e));
 
   Future<void> _deleteExpenseRow(CarExpense e) async {

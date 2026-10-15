@@ -50,8 +50,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
   Future<bool> _checkPin() async {
     if (!await _store.hasPinSet()) {
       try {
-        return await LockNotifier.runWithoutLock(
-            () => LocalAuthentication().authenticate(localizedReason: 'security.unlockPrompt'.tr()));
+        return await LockNotifier.runWithoutLock(() => LocalAuthentication().authenticate(localizedReason: 'security.unlockPrompt'.tr()));
       } catch (_) {
         return false;
       }
@@ -108,7 +107,8 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     }
     try {
       final ok = await LockNotifier.runWithoutLock(
-          () => LocalAuthentication().authenticate(localizedReason: 'security.enableBiometrics'.tr()));
+        () => LocalAuthentication().authenticate(localizedReason: 'security.enableBiometrics'.tr()),
+      );
       if (ok) await ref.read(settingsProvider.notifier).setBiometricEnabled(true);
     } catch (_) {
       _toast('security.biometricsFailed');
@@ -126,45 +126,48 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           AppCard(
-            child: Row(children: [
-              IconBubble(icon: Icons.verified_user_outlined, color: theme.colorScheme.primary, size: 48),
-              const SizedBox(width: 12),
-              Expanded(child: Text('security.intro'.tr(), style: theme.textTheme.bodyMedium)),
-            ]),
+            child: Row(
+              children: [
+                IconBubble(icon: Icons.verified_user_outlined, color: theme.colorScheme.primary, size: 48),
+                const SizedBox(width: 12),
+                Expanded(child: Text('security.intro'.tr(), style: theme.textTheme.bodyMedium)),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(children: [
-              SwitchListTile(
-                value: settings.appLockEnabled,
-                onChanged: (v) => v ? _enable() : _disable(),
-                title: Text('security.enableAppLock'.tr()),
-                subtitle: Text('security.lockOnLeave'.tr()),
-              ),
-              if (settings.appLockEnabled) ...[
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.password),
-                  title: Text('security.changePin'.tr()),
-                  onTap: _change,
+            child: Column(
+              children: [
+                SwitchListTile(
+                  value: settings.appLockEnabled,
+                  onChanged: (v) => v ? _enable() : _disable(),
+                  title: Text('security.enableAppLock'.tr()),
+                  subtitle: Text('security.lockOnLeave'.tr()),
                 ),
-                if (biometrics) ...[
+                if (settings.appLockEnabled) ...[
                   const Divider(height: 1),
-                  SwitchListTile(
-                    value: settings.biometricEnabled,
-                    onChanged: _toggleBiometrics,
-                    secondary: const Icon(Icons.fingerprint),
-                    title: Text('security.enableBiometrics'.tr()),
-                  ),
+                  ListTile(leading: const Icon(Icons.password), title: Text('security.changePin'.tr()), onTap: _change),
+                  if (biometrics) ...[
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      value: settings.biometricEnabled,
+                      onChanged: _toggleBiometrics,
+                      secondary: const Icon(Icons.fingerprint),
+                      title: Text('security.enableBiometrics'.tr()),
+                    ),
+                  ],
                 ],
               ],
-            ]),
+            ),
           ),
           if (settings.appLockEnabled)
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Text('security.forgotPinNote'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              child: Text(
+                'security.forgotPinNote'.tr(),
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
             ),
         ],
       ),

@@ -30,22 +30,27 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           AppCard(
             onTap: () => sync.signedIn ? context.push('/account') : _editName(context, ref, settings.userName),
-            child: Row(children: [
-              PersonAvatar(name: settings.userName.isEmpty ? '؟' : settings.userName, color: DS.primary, size: 52),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(settings.userName.isEmpty ? 'settings.noName'.tr() : settings.userName, style: theme.textTheme.titleMedium),
-                  Text(
-                    sync.signedIn
-                        ? sync.session!.email
-                        : (settings.userPhone.isNotEmpty ? settings.userPhone : 'settings.notSignedIn'.tr()),
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            child: Row(
+              children: [
+                PersonAvatar(name: settings.userName.isEmpty ? '؟' : settings.userName, color: DS.primary, size: 52),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(settings.userName.isEmpty ? 'settings.noName'.tr() : settings.userName, style: theme.textTheme.titleMedium),
+                      Text(
+                        sync.signedIn
+                            ? sync.session!.email
+                            : (settings.userPhone.isNotEmpty ? settings.userPhone : 'settings.notSignedIn'.tr()),
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
-                ]),
-              ),
-              if (sync.signedIn) const SyncStatusBadge() else const Icon(Icons.phone_android, size: 20),
-            ]),
+                ),
+                if (sync.signedIn) const SyncStatusBadge() else const Icon(Icons.phone_android, size: 20),
+              ],
+            ),
           ),
           _Section('settings.sectionManage'.tr(), [
             _Item(Icons.account_balance_wallet_outlined, 'accounts.title'.tr(), () => context.push('/accounts')),
@@ -60,8 +65,12 @@ class SettingsScreen extends ConsumerWidget {
           ]),
           _Section('settings.sectionAccount'.tr(), [
             _Item(Icons.cloud_sync_outlined, 'settings.accountSync'.tr(), () => context.push(sync.signedIn ? '/account' : '/login')),
-            _Item(Icons.person_outline, 'settings.yourName'.tr(), () => _editName(context, ref, settings.userName),
-                trailing: settings.userName),
+            _Item(
+              Icons.person_outline,
+              'settings.yourName'.tr(),
+              () => _editName(context, ref, settings.userName),
+              trailing: settings.userName,
+            ),
             _Item(Icons.phone_iphone, 'setup.phone'.tr(), null, trailing: settings.userPhone),
           ]),
           _Section('settings.sectionPreferences'.tr(), [
@@ -70,18 +79,39 @@ class SettingsScreen extends ConsumerWidget {
               await ref.read(settingsProvider.notifier).setLanguage(code);
               if (context.mounted) await context.setLocale(Locale(code));
             }, trailing: context.locale.languageCode == 'ar' ? 'العربية' : 'English'),
-            _Item(Icons.dark_mode_outlined, 'settings.theme'.tr(), () => _pickTheme(context, ref, settings.themeMode),
-                trailing: 'settings.themeMode.${settings.themeMode.name}'.tr()),
+            _Item(
+              Icons.dark_mode_outlined,
+              'settings.theme'.tr(),
+              () => _pickTheme(context, ref, settings.themeMode),
+              trailing: 'settings.themeMode.${settings.themeMode.name}'.tr(),
+            ),
             _Item(Icons.payments_outlined, 'settings.currency'.tr(), null, trailing: 'EGP'),
+            _Item(
+              Icons.alarm,
+              'reminders.title'.tr(),
+              () => context.push('/reminders'),
+              trailing: [
+                if (settings.dailyReminder) 'reminders.dailyShort'.tr(),
+                if (settings.salaryDay > 0) 'reminders.salaryShort'.tr(namedArgs: {'day': '${settings.salaryDay}'}),
+              ].join(' · '),
+            ),
           ]),
           _Section('settings.sectionSecurity'.tr(), [
-            _Item(Icons.lock_outline, 'settings.appLock'.tr(), () => context.push('/security'),
-                trailing: (settings.appLockEnabled ? 'security.on' : 'security.off').tr()),
+            _Item(
+              Icons.lock_outline,
+              'settings.appLock'.tr(),
+              () => context.push('/security'),
+              trailing: (settings.appLockEnabled ? 'security.on' : 'security.off').tr(),
+            ),
             _Item(Icons.backup_outlined, 'settings.backup'.tr(), () => context.push('/backup')),
           ]),
           _Section('settings.sectionAbout'.tr(), [
-            _Item(Icons.info_outline, 'settings.version'.tr(), null,
-                trailing: _appVersion.isEmpty ? _releaseCode : '$_appVersion ($_releaseCode)'),
+            _Item(
+              Icons.info_outline,
+              'settings.version'.tr(),
+              null,
+              trailing: _appVersion.isEmpty ? _releaseCode : '$_appVersion ($_releaseCode)',
+            ),
           ]),
         ],
       ),
@@ -94,7 +124,11 @@ class SettingsScreen extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('settings.yourName'.tr()),
-        content: TextField(controller: c, autofocus: true, decoration: InputDecoration(hintText: 'settings.yourNamePlaceholder'.tr())),
+        content: TextField(
+          controller: c,
+          autofocus: true,
+          decoration: InputDecoration(hintText: 'settings.yourNamePlaceholder'.tr()),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr())),
           FilledButton(
@@ -116,9 +150,12 @@ class SettingsScreen extends ConsumerWidget {
         child: RadioGroup<AppThemeMode>(
           groupValue: current,
           onChanged: (m) => Navigator.pop(ctx, m),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            for (final m in AppThemeMode.values) RadioListTile<AppThemeMode>(value: m, title: Text('settings.themeMode.${m.name}'.tr())),
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final m in AppThemeMode.values) RadioListTile<AppThemeMode>(value: m, title: Text('settings.themeMode.${m.name}'.tr())),
+            ],
+          ),
         ),
       ),
     );
@@ -133,18 +170,20 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      SectionHeader(title),
-      AppCard(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Column(children: [
-          for (var i = 0; i < items.length; i++) ...[
-            items[i],
-            if (i < items.length - 1) const Divider(indent: 56, height: 1),
-          ],
-        ]),
-      ),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(title),
+        AppCard(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              for (var i = 0; i < items.length; i++) ...[items[i], if (i < items.length - 1) const Divider(indent: 56, height: 1)],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -161,14 +200,21 @@ class _Item extends StatelessWidget {
     return ListTile(
       leading: IconBubble(icon: icon, color: theme.colorScheme.primary, size: 36),
       title: Text(title),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (trailing != null)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 140),
-            child: Text(trailing!, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          ),
-        if (onTap != null) Icon(Icons.arrow_forward_ios, size: 14, color: theme.colorScheme.onSurfaceVariant),
-      ]),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (trailing != null)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 140),
+              child: Text(
+                trailing!,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              ),
+            ),
+          if (onTap != null) Icon(Icons.arrow_forward_ios, size: 14, color: theme.colorScheme.onSurfaceVariant),
+        ],
+      ),
       onTap: onTap,
     );
   }

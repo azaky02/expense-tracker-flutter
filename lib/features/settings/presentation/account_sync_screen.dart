@@ -40,7 +40,10 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, 'wipe'),
-            child: Text('sync.signOutWipe'.tr(context: ctx), style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+            child: Text(
+              'sync.signOutWipe'.tr(context: ctx),
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx),
@@ -59,18 +62,27 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('sync.deleteTitle'.tr(context: ctx)),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('sync.deleteBody'.tr(context: ctx)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: pw,
-            obscureText: true,
-            decoration: InputDecoration(labelText: 'sync.password'.tr(context: ctx)),
-          ),
-        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('sync.deleteBody'.tr(context: ctx)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pw,
+              obscureText: true,
+              decoration: InputDecoration(labelText: 'sync.password'.tr(context: ctx)),
+            ),
+          ],
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr(context: ctx))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text('common.delete'.tr(context: ctx))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('common.cancel'.tr(context: ctx)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('common.delete'.tr(context: ctx)),
+          ),
         ],
       ),
     );
@@ -110,7 +122,10 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
         actionLabel: 'auth.signIn'.tr(context: context),
         onAction: () => context.push('/login'),
       ),
-      TextButton(onPressed: () => context.push('/register'), child: Text('auth.createAccount'.tr(context: context))),
+      TextButton(
+        onPressed: () => context.push('/register'),
+        child: Text('auth.createAccount'.tr(context: context)),
+      ),
     ];
   }
 
@@ -131,21 +146,33 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
       ListTile(
         leading: syncing
             ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-            : Icon(sync.status == SyncStatus.error ? Icons.cloud_off : Icons.cloud_done_outlined,
-                color: sync.status == SyncStatus.error ? theme.colorScheme.error : null),
-        title: Text(syncing
-            ? 'sync.syncing'.tr(context: context)
-            : sync.status == SyncStatus.error
-                ? _message(context, sync.errorCode ?? 'unexpected')
-                : 'sync.synced'.tr(context: context)),
-        subtitle: Text(last == null
-            ? 'sync.neverSynced'.tr(context: context)
-            : 'sync.lastSync'.tr(namedArgs: {'time': DateFormat.yMd(context.locale.languageCode).add_Hm().format(last)}, context: context)),
+            : Icon(
+                sync.status == SyncStatus.error ? Icons.cloud_off : Icons.cloud_done_outlined,
+                color: sync.status == SyncStatus.error ? theme.colorScheme.error : null,
+              ),
+        title: Text(
+          syncing
+              ? 'sync.syncing'.tr(context: context)
+              : sync.status == SyncStatus.error
+              ? _message(context, sync.errorCode ?? 'unexpected')
+              : 'sync.synced'.tr(context: context),
+        ),
+        subtitle: Text(
+          last == null
+              ? 'sync.neverSynced'.tr(context: context)
+              : 'sync.lastSync'.tr(
+                  namedArgs: {'time': DateFormat.yMd(context.locale.languageCode).add_Hm().format(last)},
+                  context: context,
+                ),
+        ),
       ),
       if (skipped > 0)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text('sync.skipped'.tr(namedArgs: {'count': '$skipped'}, context: context), style: theme.textTheme.bodySmall),
+          child: Text(
+            'sync.skipped'.tr(namedArgs: {'count': '$skipped'}, context: context),
+            style: theme.textTheme.bodySmall,
+          ),
         ),
       if (_error != null)
         Padding(
@@ -159,10 +186,16 @@ class _AccountSyncScreenState extends ConsumerState<AccountSyncScreen> {
         label: Text('sync.syncNow'.tr(context: context)),
       ),
       const SizedBox(height: 8),
-      OutlinedButton(onPressed: _confirmSignOut, child: Text('sync.signOut'.tr(context: context))),
+      OutlinedButton(
+        onPressed: _confirmSignOut,
+        child: Text('sync.signOut'.tr(context: context)),
+      ),
       TextButton(
         onPressed: _confirmDelete,
-        child: Text('sync.deleteAccount'.tr(context: context), style: TextStyle(color: theme.colorScheme.error)),
+        child: Text(
+          'sync.deleteAccount'.tr(context: context),
+          style: TextStyle(color: theme.colorScheme.error),
+        ),
       ),
     ];
   }

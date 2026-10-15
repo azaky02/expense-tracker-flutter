@@ -11,6 +11,9 @@ const _kThemeMode = 'settings.themeMode';
 const _kHasOnboarded = 'settings.hasOnboarded';
 const _kAppLockEnabled = 'settings.appLockEnabled';
 const _kBiometricEnabled = 'settings.biometricEnabled';
+const _kDailyReminder = 'settings.dailyReminder';
+const _kReminderTimes = 'settings.reminderTimes';
+const _kSalaryDay = 'settings.salaryDay';
 
 /// Plain (non-secret) user preferences persisted via shared_preferences. Security-relevant
 /// secrets (PIN hash, DB key) live in SecureStorageService instead — see core/security/.
@@ -35,6 +38,9 @@ class SettingsNotifier extends Notifier<SettingsState> {
       hasOnboarded: _prefs.getBool(_kHasOnboarded) ?? false,
       appLockEnabled: _prefs.getBool(_kAppLockEnabled) ?? false,
       biometricEnabled: _prefs.getBool(_kBiometricEnabled) ?? false,
+      dailyReminder: _prefs.getBool(_kDailyReminder) ?? false,
+      reminderTimes: _prefs.getStringList(_kReminderTimes) ?? SettingsState.defaultReminderTimes,
+      salaryDay: _prefs.getInt(_kSalaryDay) ?? 0,
     );
   }
 
@@ -71,6 +77,21 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setAppLockEnabled(bool enabled) async {
     state = state.copyWith(appLockEnabled: enabled);
     await _prefs.setBool(_kAppLockEnabled, enabled);
+  }
+
+  Future<void> setDailyReminder(bool enabled) async {
+    state = state.copyWith(dailyReminder: enabled);
+    await _prefs.setBool(_kDailyReminder, enabled);
+  }
+
+  Future<void> setReminderTimes(List<String> times) async {
+    state = state.copyWith(reminderTimes: times);
+    await _prefs.setStringList(_kReminderTimes, times);
+  }
+
+  Future<void> setSalaryDay(int day) async {
+    state = state.copyWith(salaryDay: day);
+    await _prefs.setInt(_kSalaryDay, day);
   }
 
   Future<void> setBiometricEnabled(bool enabled) async {

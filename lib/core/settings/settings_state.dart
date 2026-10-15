@@ -13,7 +13,12 @@ class SettingsState {
     this.hasOnboarded = false,
     this.appLockEnabled = false,
     this.biometricEnabled = false,
+    this.dailyReminder = false,
+    this.reminderTimes = defaultReminderTimes,
+    this.salaryDay = 0,
   });
+
+  static const defaultReminderTimes = ['09:00', '15:00', '21:00'];
 
   final String userName;
   final String userPhone;
@@ -25,6 +30,11 @@ class SettingsState {
   final bool hasOnboarded;
   final bool appLockEnabled;
   final bool biometricEnabled;
+  /// "Record your expenses" reminder, up to three times a day (HH:mm, empty = off).
+  final bool dailyReminder;
+  final List<String> reminderTimes;
+  /// Day of the month the salary arrives (1-31), 0 = not set.
+  final int salaryDay;
 
   SettingsState copyWith({
     String? userName,
@@ -35,6 +45,9 @@ class SettingsState {
     bool? hasOnboarded,
     bool? appLockEnabled,
     bool? biometricEnabled,
+    bool? dailyReminder,
+    List<String>? reminderTimes,
+    int? salaryDay,
   }) {
     return SettingsState(
       userName: userName ?? this.userName,
@@ -46,6 +59,9 @@ class SettingsState {
       hasOnboarded: hasOnboarded ?? this.hasOnboarded,
       appLockEnabled: appLockEnabled ?? this.appLockEnabled,
       biometricEnabled: biometricEnabled ?? this.biometricEnabled,
+      dailyReminder: dailyReminder ?? this.dailyReminder,
+      reminderTimes: reminderTimes ?? this.reminderTimes,
+      salaryDay: salaryDay ?? this.salaryDay,
     );
   }
 }

@@ -618,7 +618,8 @@
     "licenseExpiry": "انتهاء الرخصة",
     "insuranceExpiry": "انتهاء التأمين",
     "chooseDate": "اختار التاريخ",
-    "stationHintShort": "مثال: وطنية"
+    "stationHintShort": "مثال: وطنية",
+    "editExpenseFor": "تعديل مصروف {car}"
   },
   "fuel": {
     "title": "أسعار الوقود",
@@ -721,5 +722,63 @@
     "l100": "لتر/100كم",
     "status": "البند",
     "due": "الميعاد"
+  },
+  "home": {
+    "carExpense": "مصروف سيارة",
+    "loan": "قرض / سلفة",
+    "myCars": "سياراتي",
+    "budgets": "الميزانيات"
+  },
+  "stats": {
+    "title": "الإحصائيات",
+    "summary": "ملخص",
+    "details": "تفاصيل",
+    "currentMonth": "الشهر الحالي",
+    "pastMonths": "شهور سابقة",
+    "years": "السنوات",
+    "custom": "مخصص",
+    "pickMonth": "اختار الشهر",
+    "pickYear": "اختار السنة",
+    "savingsRate": "نسبة الادخار",
+    "dailyAverage": "متوسط المصروف اليومي",
+    "count": "عدد الحركات",
+    "installmentsDue": "أقساط مستحقة في الفترة دي ولسه ما اتدفعتش: {amount}",
+    "trend": "حركة الفترة",
+    "dailyExpenses": "المصروف اليومي",
+    "monthlyIncomeExpenses": "الدخل (أخضر) والمصروف (أحمر) كل شهر",
+    "byCategory": "المصروفات حسب البند الرئيسي",
+    "byAccount": "المصروفات حسب الحساب",
+    "income": "الدخل",
+    "expenses": "المصاريف",
+    "items": "{n} حركة",
+    "empty": "مفيش حركات في الفترة دي",
+    "dueOn": "مستحق {date}",
+    "customTitle": "فترة مخصصة",
+    "from": "من تاريخ",
+    "to": "إلى تاريخ",
+    "mainCategory": "البند الرئيسي",
+    "allCategories": "كل البنود",
+    "apply": "عرض",
+    "last7": "آخر 7 أيام",
+    "last30": "آخر 30 يوم",
+    "last90": "آخر 3 شهور"
+  },
+  "reminders": {
+    "title": "التذكيرات ويوم الراتب",
+    "daily": "التذكير اليومي",
+    "dailyToggle": "فكّرني أسجّل مصروفاتي",
+    "dailyHint": "لحد 3 مرات في اليوم، في المواعيد اللي تختارها",
+    "time": "التذكير {n}",
+    "off": "مقفول",
+    "dailyTitle": "مصروفي",
+    "dailyBody": "متنساش تسجّل مصروفاتك النهارده 📝",
+    "salaryDay": "يوم الراتب",
+    "salaryHint": "تذكير يوم نزول الراتب، و«الشهر الحالي» في الإحصائيات بيبدأ من يوم الراتب",
+    "notSet": "مش محدد",
+    "noSalaryDay": "بدون يوم راتب",
+    "salaryTitle": "يوم الراتب 💰",
+    "salaryBody": "النهارده يوم الراتب – سجّله كدخل في مصروفي",
+    "dailyShort": "يومي",
+    "salaryShort": "راتب يوم {day}"
   }
 }

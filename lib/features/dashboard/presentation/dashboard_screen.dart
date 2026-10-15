@@ -12,6 +12,7 @@ import '../../accounts/data/account_repository.dart';
 import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_widgets.dart';
 import '../../budgets/data/budget_repository.dart';
+import '../../cars/presentation/cars_screens.dart';
 import '../../budgets/presentation/budget_providers.dart';
 import '../../payment_methods/presentation/payment_method_providers.dart';
 import '../../people/data/ledger_repository.dart';
@@ -73,6 +74,7 @@ class DashboardScreen extends ConsumerWidget {
                     offset: const Offset(0, -28),
                     child: _BalanceCard(total: total, income: income, expense: expense),
                   ),
+                  Transform.translate(offset: const Offset(0, -16), child: const _QuickActions()),
                   const _Alerts(),
                   if (accounts.isNotEmpty) ...[
                     SectionHeader('dashboard.accounts'.tr(), action: 'common.viewAll'.tr(), onAction: () => context.push('/accounts')),
@@ -98,15 +100,26 @@ class DashboardScreen extends ConsumerWidget {
                       children: [for (final p in people) _PersonChip(p)],
                     ),
                   ],
-                  SectionHeader('dashboard.spendingThisMonth'.tr(), action: 'dashboard.reports'.tr(), onAction: () => context.push('/reports')),
+                  SectionHeader(
+                    'dashboard.spendingThisMonth'.tr(),
+                    action: 'dashboard.reports'.tr(),
+                    onAction: () => context.push('/reports'),
+                  ),
                   if (breakdown.isEmpty)
-                    AppCard(child: Text('dashboard.noSpending'.tr(), style: TextStyle(color: theme.colorScheme.onSurfaceVariant)))
+                    AppCard(
+                      child: Text('dashboard.noSpending'.tr(), style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                    )
                   else
                     AppCard(child: _SpendingBars(items: breakdown.take(5).toList())),
-                  SectionHeader('dashboard.recentTransactions'.tr(), action: 'common.viewAll'.tr(), onAction: () => context.go('/transactions')),
+                  SectionHeader(
+                    'dashboard.recentTransactions'.tr(),
+                    action: 'common.viewAll'.tr(),
+                    onAction: () => context.go('/transactions'),
+                  ),
                   recent.when(
                     loading: () => const SkeletonList(count: 3),
-                    error: (e, _) => ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(recentTransactionsProvider(6))),
+                    error: (e, _) =>
+                        ErrorState(message: 'common.loadError'.tr(), onRetry: () => ref.invalidate(recentTransactionsProvider(6))),
                     data: (items) => items.isEmpty
                         ? AppCard(
                             child: EmptyState(
@@ -118,10 +131,16 @@ class DashboardScreen extends ConsumerWidget {
                           )
                         : AppCard(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            child: Column(children: [
-                              for (final t in items)
-                                TransactionTile(item: t, showDate: true, onTap: () => context.push('/transactions/${t.transaction.id}/edit')),
-                            ]),
+                            child: Column(
+                              children: [
+                                for (final t in items)
+                                  TransactionTile(
+                                    item: t,
+                                    showDate: true,
+                                    onTap: () => context.push('/transactions/${t.transaction.id}/edit'),
+                                  ),
+                              ],
+                            ),
                           ),
                   ),
                 ],
@@ -153,26 +172,33 @@ class _Header extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('app.name'.tr(), style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
-                Text(greeting, style: const TextStyle(color: Colors.white70)),
-              ]),
-            ),
-            const IconTheme(data: IconThemeData(color: Colors.white), child: SyncStatusBadge()),
-            const IconTheme(data: IconThemeData(color: Colors.white), child: NotificationsBell()),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('app.name'.tr(), style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
+                    Text(greeting, style: const TextStyle(color: Colors.white70)),
+                  ],
+                ),
+              ),
+              const IconTheme(
+                data: IconThemeData(color: Colors.white),
+                child: SyncStatusBadge(),
+              ),
+              const IconTheme(
+                data: IconThemeData(color: Colors.white),
+                child: NotificationsBell(),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: Container(
               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(24)),
-              child: MonthSelector(
-                month: month,
-                light: true,
-                onChanged: (m) => ref.read(dashboardMonthProvider.notifier).set(m),
-              ),
+              child: MonthSelector(month: month, light: true, onChanged: (m) => ref.read(dashboardMonthProvider.notifier).set(m)),
             ),
           ),
         ],
@@ -204,16 +230,24 @@ class _BalanceCard extends StatelessWidget {
           const SizedBox(height: 4),
           AmountText(total, color: Colors.white, size: 30, weight: FontWeight.w800),
           const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: _Mini(label: 'dashboard.income'.tr(), amount: income, color: DS.success, icon: Icons.south_west)),
-            const SizedBox(width: 10),
-            Expanded(child: _Mini(label: 'dashboard.expenses'.tr(), amount: expense, color: DS.danger, icon: Icons.north_east)),
-          ]),
+          Row(
+            children: [
+              Expanded(
+                child: _Mini(label: 'dashboard.income'.tr(), amount: income, color: DS.success, icon: Icons.south_west),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _Mini(label: 'dashboard.expenses'.tr(), amount: expense, color: DS.danger, icon: Icons.north_east),
+              ),
+            ],
+          ),
           const SizedBox(height: 10),
-          Row(children: [
-            Text('${'dashboard.netFlow'.tr()}: ', style: const TextStyle(color: Colors.white70)),
-            AmountText(net, color: Colors.white, size: 14, signed: true),
-          ]),
+          Row(
+            children: [
+              Text('${'dashboard.netFlow'.tr()}: ', style: const TextStyle(color: Colors.white70)),
+              AmountText(net, color: Colors.white, size: 14, signed: true),
+            ],
+          ),
         ],
       ),
     );
@@ -232,15 +266,20 @@ class _Mini extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(DS.radius)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(color: DS.textMuted, fontSize: 12)),
-        ]),
-        const SizedBox(height: 2),
-        AmountText(amount, color: DS.text, size: 17),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(color: DS.textMuted, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 2),
+          AmountText(amount, color: DS.text, size: 17),
+        ],
+      ),
     );
   }
 }
@@ -287,7 +326,9 @@ class _Alerts extends ConsumerWidget {
         ),
     ];
     if (items.isEmpty) return const SizedBox.shrink();
-    return Column(children: [for (final w in items) Padding(padding: const EdgeInsets.only(bottom: 8), child: w)]);
+    return Column(
+      children: [for (final w in items) Padding(padding: const EdgeInsets.only(bottom: 8), child: w)],
+    );
   }
 }
 
@@ -304,12 +345,14 @@ class _AlertTile extends StatelessWidget {
       onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       color: color.withValues(alpha: Theme.of(context).brightness == Brightness.dark ? 0.18 : 0.10),
-      child: Row(children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 10),
-        Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
-        Icon(Icons.arrow_forward_ios, color: color, size: 14),
-      ]),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
+          Icon(Icons.arrow_forward_ios, color: color, size: 14),
+        ],
+      ),
     );
   }
 }
@@ -326,14 +369,22 @@ class _AccountChip extends StatelessWidget {
       child: AppCard(
         padding: const EdgeInsets.all(12),
         onTap: () => context.push('/accounts/${a.account.id}'),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(children: [
-            AccountBubble(a, size: 30),
-            const SizedBox(width: 6),
-            Expanded(child: Text(a.account.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge)),
-          ]),
-          AmountText(a.balance, size: 16, color: negative ? Theme.of(context).colorScheme.error : null),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                AccountBubble(a, size: 30),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(a.account.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelLarge),
+                ),
+              ],
+            ),
+            AmountText(a.balance, size: 16, color: negative ? Theme.of(context).colorScheme.error : null),
+          ],
+        ),
       ),
     );
   }
@@ -349,17 +400,23 @@ class _PersonChip extends StatelessWidget {
     return AppCard(
       padding: const EdgeInsets.all(12),
       onTap: () => context.push('/people/${p.person.id}'),
-      child: Row(children: [
-        IconBubble(icon: Icons.person_outline, color: netColor(context, net), size: 36),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text(p.person.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
-            Text(netLabel(context, net), style: Theme.of(context).textTheme.bodySmall),
-            AmountText(net.abs(), size: 13, color: netColor(context, net)),
-          ]),
-        ),
-      ]),
+      child: Row(
+        children: [
+          IconBubble(icon: Icons.person_outline, color: netColor(context, net), size: 36),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(p.person.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall),
+                Text(netLabel(context, net), style: Theme.of(context).textTheme.bodySmall),
+                AmountText(net.abs(), size: 13, color: netColor(context, net)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -371,28 +428,91 @@ class _SpendingBars extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final max = items.fold<double>(0, (m, i) => i.total > m ? i.total : m);
-    return Column(children: [
-      for (final i in items)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Row(children: [
-            Container(width: 10, height: 10, decoration: BoxDecoration(color: colorFromHex(i.categoryColor), shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            SizedBox(width: 84, child: Text(i.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis)),
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: max == 0 ? 0 : i.total / max,
-                  minHeight: 8,
-                  color: colorFromHex(i.categoryColor),
+    return Column(
+      children: [
+        for (final i in items)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(color: colorFromHex(i.categoryColor), shape: BoxShape.circle),
                 ),
+                const SizedBox(width: 8),
+                SizedBox(width: 84, child: Text(i.categoryName, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(value: max == 0 ? 0 : i.total / max, minHeight: 8, color: colorFromHex(i.categoryColor)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 78,
+                  child: Align(alignment: AlignmentDirectional.centerEnd, child: AmountText(i.total, size: 12)),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Shortcuts to every section, right under the balance card.
+class _QuickActions extends ConsumerWidget {
+  const _QuickActions();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final actions = <(IconData, String, Color, VoidCallback)>[
+      (Icons.local_gas_station_rounded, 'home.carExpense'.tr(), const Color(0xFF1250C4), () => startCarExpense(context, ref)),
+      (Icons.handshake_outlined, 'home.loan'.tr(), const Color(0xFF0E8C7F), () => context.push('/ledger/new')),
+      (Icons.event_repeat_rounded, 'installments.title'.tr(), const Color(0xFF7C3AED), () => context.push('/installments')),
+      (Icons.insights_rounded, 'stats.title'.tr(), const Color(0xFFDB2777), () => context.push('/stats')),
+      (Icons.directions_car_filled_outlined, 'home.myCars'.tr(), const Color(0xFF0A2A66), () => context.push('/cars')),
+      (Icons.account_balance_wallet_outlined, 'accounts.title'.tr(), const Color(0xFF16A34A), () => context.push('/accounts')),
+      (Icons.pie_chart_outline_rounded, 'home.budgets'.tr(), const Color(0xFFF59E0B), () => context.push('/budgets')),
+      (Icons.bar_chart_rounded, 'reports.title'.tr(), const Color(0xFF64748B), () => context.push('/reports')),
+    ];
+    final theme = Theme.of(context);
+    return AppCard(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      child: GridView.count(
+        crossAxisCount: 4,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 6,
+        childAspectRatio: 0.95,
+        children: [
+          for (final (icon, label, color, onTap) in actions)
+            InkWell(
+              borderRadius: BorderRadius.circular(DS.radius),
+              onTap: onTap,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(14)),
+                    child: Icon(icon, color: color, size: 24),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 10),
-            SizedBox(width: 78, child: Align(alignment: AlignmentDirectional.centerEnd, child: AmountText(i.total, size: 12))),
-          ]),
-        ),
-    ]);
+        ],
+      ),
+    );
   }
 }

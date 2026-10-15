@@ -518,6 +518,15 @@ class CarDetailsScreen extends ConsumerWidget {
                 if (e.expense.latitude != null)
                   row('cars.location'.tr(), '${e.expense.latitude!.toStringAsFixed(5)}, ${e.expense.longitude!.toStringAsFixed(5)}'),
                 const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    context.push('/cars/${e.expense.carId}/expense?edit=${e.expense.id}');
+                  },
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text('common.edit'.tr()),
+                ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
                     if (e.expense.latitude != null)
@@ -556,8 +565,11 @@ enum _LocationState { locating, found, denied, off, failed }
 /// Records a car expense: category/sub-category, odometer, litres × price, amount, how it was paid
 /// and the GPS position where it was recorded.
 class CarExpenseFormScreen extends ConsumerStatefulWidget {
-  const CarExpenseFormScreen({super.key, required this.carId});
+  const CarExpenseFormScreen({super.key, required this.carId, this.expenseId});
   final int carId;
+
+  /// Set when editing an existing car expense.
+  final int? expenseId;
 
   @override
   ConsumerState<CarExpenseFormScreen> createState() => _CarExpenseFormScreenState();
@@ -585,10 +597,50 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
     super.initState();
     final db = ref.read(databaseProvider);
     seededCategoryId(db, 'seed-cat-car-fuel').then((id) {
-      if (mounted) setState(() => _categoryId ??= _fuelCategoryId = id);
+      if (!mounted) return;
+      setState(() {
+        _fuelCategoryId = id;
+        if (widget.expenseId == null) _categoryId ??= id;
+      });
     });
-    _locate();
+    if (widget.expenseId == null) {
+      _locate();
+    } else {
+      _loadForEdit(widget.expenseId!);
+    }
   }
+
+  /// Editing: fill the form from the saved expense; its recorded location is kept.
+  Future<void> _loadForEdit(int id) async {
+    final repo = ref.read(carRepositoryProvider);
+    final loaded = await repo.loadExpense(id);
+    if (loaded == null || !mounted) return;
+    final (e, t) = loaded;
+    final cars = await repo.loadCars();
+    final carName = cars.where((c) => c.car.id == e.carId).firstOrNull?.car.name ?? '';
+    if (!mounted) return;
+    setState(() {
+      _carId = e.carId;
+      _categoryId = t.categoryId;
+      _accountId = t.accountId;
+      _date = t.date;
+      _amount.text = t.amount.toStringAsFixed(2);
+      _amountEdited = true;
+      _odometer.text = e.odometer?.toString() ?? '';
+      _liters.text = e.liters == null ? '' : e.liters!.toString();
+      _fuelTypeId = e.fuelTypeId ?? _fuelTypeId;
+      _station.text = t.beneficiaryName ?? '';
+      _note.text = CarRepository.userNote(t.note, carName);
+      _location = e.latitude == null ? _LocationState.failed : _LocationState.found;
+      _savedLat = e.latitude;
+      _savedLng = e.longitude;
+    });
+  }
+
+  double? _savedLat;
+  double? _savedLng;
+  double? get _lat => _position?.latitude ?? _savedLat;
+  double? get _lng => _position?.longitude ?? _savedLng;
 
   @override
   void dispose() {
@@ -666,25 +718,27 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
     final fuel = _fuel(types);
     final liters = _parse(_liters.text);
     try {
-      await ref
-          .read(carRepositoryProvider)
-          .addExpense(
-            CarExpenseInput(
-              carId: _carId,
-              categoryId: _categoryId!,
-              amount: _parse(_amount.text),
-              accountId: _accountId!,
-              date: _date,
-              odometer: int.tryParse(asciiDigits(_odometer.text).trim()),
-              liters: liters > 0 ? liters : null,
-              fuelTypeId: liters > 0 ? fuel?.id : null,
-              pricePerLiter: liters > 0 ? fuel?.pricePerLiter : null,
-              latitude: _position?.latitude,
-              longitude: _position?.longitude,
-              note: _note.text,
-              beneficiary: _station.text,
-            ),
-          );
+      final input = CarExpenseInput(
+        carId: _carId,
+        categoryId: _categoryId!,
+        amount: _parse(_amount.text),
+        accountId: _accountId!,
+        date: _date,
+        odometer: int.tryParse(asciiDigits(_odometer.text).trim()),
+        liters: liters > 0 ? liters : null,
+        fuelTypeId: liters > 0 ? fuel?.id : null,
+        pricePerLiter: liters > 0 ? fuel?.pricePerLiter : null,
+        latitude: _position?.latitude ?? _savedLat,
+        longitude: _position?.longitude ?? _savedLng,
+        note: _note.text,
+        beneficiary: _station.text,
+      );
+      final repo = ref.read(carRepositoryProvider);
+      if (widget.expenseId == null) {
+        await repo.addExpense(input);
+      } else {
+        await repo.updateExpense(widget.expenseId!, input);
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
@@ -712,7 +766,9 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
     final lastOdo = car?.lastOdometer;
 
     return Scaffold(
-      appBar: AppBar(title: Text('cars.addExpenseFor'.tr(namedArgs: {'car': car?.car.name ?? ''}))),
+      appBar: AppBar(
+        title: Text((widget.expenseId == null ? 'cars.addExpenseFor' : 'cars.editExpenseFor').tr(namedArgs: {'car': car?.car.name ?? ''})),
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
         children: [
@@ -854,7 +910,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
                   child: Text(switch (_location) {
                     _LocationState.locating => 'cars.locating'.tr(),
                     _LocationState.found => 'cars.locationFound'.tr(
-                      namedArgs: {'lat': _position!.latitude.toStringAsFixed(5), 'lng': _position!.longitude.toStringAsFixed(5)},
+                      namedArgs: {'lat': _lat!.toStringAsFixed(5), 'lng': _lng!.toStringAsFixed(5)},
                     ),
                     _LocationState.denied => 'cars.locationDenied'.tr(),
                     _LocationState.off => 'cars.locationOff'.tr(),
@@ -864,7 +920,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
                 if (_location == _LocationState.locating)
                   const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                 else if (_location == _LocationState.found)
-                  IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_position!.latitude, _position!.longitude))
+                  IconButton(icon: const Icon(Icons.map_outlined), onPressed: () => openMap(_lat!, _lng!))
                 else
                   IconButton(icon: const Icon(Icons.refresh), onPressed: _locate),
               ],

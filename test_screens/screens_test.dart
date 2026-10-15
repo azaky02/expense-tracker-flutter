@@ -210,6 +210,8 @@ void main() {
       '25_car': '/cars/1',
       '27_fuel': '/fuel-prices',
       '30_car_report': '/cars/1/report',
+      '31_stats': '/stats',
+      '32_reminders': '/reminders',
       '28_home_categories': '/home',
     });
   });
