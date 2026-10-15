@@ -41,7 +41,7 @@ bool isValidPhone(String raw) {
 
 bool isValidEmail(String s) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]{2,}$').hasMatch(s.trim());
 
-const _questions = ['wizard.q.mother', 'wizard.q.school', 'wizard.q.friend', 'wizard.q.city', 'wizard.q.custom'];
+const recoveryQuestions = ['wizard.q.mother', 'wizard.q.school', 'wizard.q.friend', 'wizard.q.city', 'wizard.q.custom'];
 
 /// An extra account added in the wizard.
 class _NewAccount {
@@ -77,7 +77,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   // Protection.
   SetupLock _lock = SetupLock.pin;
   // Recovery.
-  String _questionKey = _questions.first;
+  String _questionKey = recoveryQuestions.first;
   final _customQuestion = TextEditingController();
   final _answer = TextEditingController();
   // Accounts.
@@ -440,7 +440,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
           isExpanded: true,
           initialValue: _questionKey,
           items: [
-            for (final q in _questions)
+            for (final q in recoveryQuestions)
               DropdownMenuItem(
                 value: q,
                 child: Text(q.tr(), overflow: TextOverflow.ellipsis),

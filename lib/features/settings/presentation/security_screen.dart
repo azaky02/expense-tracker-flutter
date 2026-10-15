@@ -7,6 +7,7 @@ import '../../../core/security/lock_provider.dart';
 import '../../../core/security/secure_storage.dart';
 import '../../../core/settings/settings_provider.dart';
 import '../../../core/widgets/ds_widgets.dart';
+import '../../auth/presentation/setup_screen.dart' show recoveryQuestions;
 import '../../lock/presentation/pin_entry_screen.dart';
 
 final _biometricsAvailableProvider = FutureProvider<bool>((ref) async {
@@ -86,6 +87,88 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
     _toast('security.lockDisabled');
   }
 
+  String? _question;
+  bool _questionLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadQuestion();
+  }
+
+  Future<void> _loadQuestion() async {
+    String? q;
+    try {
+      q = await _store.recoveryQuestion();
+    } catch (_) {}
+    if (mounted) {
+      setState(() {
+        _question = q;
+        _questionLoaded = true;
+      });
+    }
+  }
+
+  /// Set or change the security question used to recover a forgotten PIN.
+  Future<void> _editQuestion() async {
+    if (_question != null && !await _checkPin()) return;
+    if (!mounted) return;
+    var key = recoveryQuestions.first;
+    final custom = TextEditingController();
+    final answer = TextEditingController();
+    String? error;
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
+          child: SafeArea(
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text('wizard.recoveryTitle'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text('wizard.recoveryHint'.tr(), style: Theme.of(ctx).textTheme.bodySmall),
+              FieldLabel('wizard.question'.tr()),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                initialValue: key,
+                items: [for (final q in recoveryQuestions) DropdownMenuItem(value: q, child: Text(q.tr(), overflow: TextOverflow.ellipsis))],
+                onChanged: (v) => setSheet(() => key = v ?? key),
+              ),
+              if (key == 'wizard.q.custom') ...[
+                FieldLabel('wizard.customQuestion'.tr()),
+                TextField(controller: custom),
+              ],
+              FieldLabel('wizard.answer'.tr()),
+              TextField(controller: answer, decoration: InputDecoration(hintText: 'recover.answerHint'.tr())),
+              if (error != null)
+                Padding(padding: const EdgeInsets.only(top: 6), child: Text(error!, style: TextStyle(color: Theme.of(ctx).colorScheme.error))),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () async {
+                  final q = key == 'wizard.q.custom' ? custom.text.trim() : key.tr();
+                  if (q.isEmpty || answer.text.trim().length < 2) {
+                    setSheet(() => error = 'wizard.needAnswer'.tr());
+                    return;
+                  }
+                  await _store.setRecovery(q, answer.text);
+                  if (ctx.mounted) Navigator.pop(ctx, true);
+                },
+                child: Text('common.save'.tr()),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
+    custom.dispose();
+    answer.dispose();
+    if (saved == true) {
+      await _loadQuestion();
+      _toast('security.questionSaved');
+    }
+  }
+
   Future<void> _change() async {
     if (!await _checkPin()) return;
     final pin = await _newPin();
@@ -148,6 +231,19 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                 if (settings.appLockEnabled) ...[
                   const Divider(height: 1),
                   ListTile(leading: const Icon(Icons.password), title: Text('security.changePin'.tr()), onTap: _change),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.key_outlined),
+                    title: Text('wizard.recoveryTitle'.tr()),
+                    subtitle: Text(
+                      !_questionLoaded ? '' : (_question ?? 'security.noQuestion'.tr()),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Text((_question == null ? 'security.setQuestion' : 'security.changeQuestion').tr(),
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                    onTap: _editQuestion,
+                  ),
                   if (biometrics) ...[
                     const Divider(height: 1),
                     SwitchListTile(

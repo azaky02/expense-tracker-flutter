@@ -259,7 +259,11 @@
     "changePin": "Change PIN",
     "on": "On",
     "off": "Off",
-    "forgotPinNote": "Forgot the PIN? Clear the app data from the phone settings, then restore a backup or sign in to your account."
+    "forgotPinNote": "Forgot the PIN? Clear the app data from the phone settings, then restore a backup or sign in to your account.",
+    "noQuestion": "Not set – needed if you forget your PIN",
+    "setQuestion": "Set",
+    "changeQuestion": "Change",
+    "questionSaved": "Security question saved"
   },
   "backup": {
     "description": "Export all your data (transactions, cards, categories) to a file, or restore it from a previous file. Attached receipt photos are not included.",
