@@ -174,7 +174,12 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
     container.dispose();
-    await tester.runAsync(db.close);
+    // The in-memory database is left open: closing it waits forever on stream queries that were
+    // started inside the test's fake-async zone.
+    for (var i = 0; i < 3; i++) {
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
   }
 
   testWidgets('auth screens', (tester) async {
@@ -208,6 +213,7 @@ void main() {
       '23_installment_form': '/installments/new',
       '24_cars': '/cars',
       '25_car': '/cars/1',
+      '26_car_expense': '/cars/1/expense',
       '27_fuel': '/fuel-prices',
       '30_car_report': '/cars/1/report',
       '31_stats': '/stats',
@@ -221,7 +227,12 @@ void main() {
   });
 
   testWidgets('dark home', (tester) async {
-    await shoot(tester, onboarded: true, shots: {'05_home_dark': '/home', '10_people_dark': '/people'}, brightness: Brightness.dark);
+    await shoot(
+      tester,
+      onboarded: true,
+      shots: {'05_home_dark': '/home', '10_people_dark': '/people', '31_stats_dark': '/stats', '30_car_report_dark': '/cars/1/report'},
+      brightness: Brightness.dark,
+    );
   });
 
   // Keep ui import used for the image format on some SDKs.
