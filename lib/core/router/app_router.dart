@@ -61,10 +61,8 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final settings = ref.read(settingsProvider);
-      final isUnlocked = ref.read(lockProvider);
       // Welcome, sign-in and registration are all reachable before onboarding is complete.
       final goingToOnboarding = const {'/onboarding', '/login', '/register', '/setup'}.contains(state.matchedLocation);
-      final goingToUnlock = state.matchedLocation == '/unlock' || state.matchedLocation == '/recover';
 
       // Splash for 3 seconds at every start, then the PIN screen, then Home.
       if (!ref.read(splashDoneProvider)) {
@@ -74,9 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (!settings.hasOnboarded) {
         return goingToOnboarding ? null : '/onboarding';
       }
-      if (settings.appLockEnabled && !isUnlocked) {
-        return goingToUnlock ? null : '/unlock';
-      }
+      // Locking is a cover over the app (see app.dart), not a page, so the open page survives.
       // Users from before on-device sign-up (no mobile number yet) complete it once.
       if (settings.loaded && settings.userPhone.isEmpty) {
         return state.matchedLocation == '/setup' ? null : '/setup';

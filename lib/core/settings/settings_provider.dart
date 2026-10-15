@@ -18,6 +18,7 @@ const _kUserEmail = 'settings.userEmail';
 const _kSalaryAmount = 'settings.salaryAmount';
 const _kDisabledModules = 'settings.disabledModules';
 const _kHiddenModules = 'settings.hiddenModules';
+const _kLockAfter = 'settings.lockAfterMinutes';
 
 /// Plain (non-secret) user preferences persisted via shared_preferences. Security-relevant
 /// secrets (PIN hash, DB key) live in SecureStorageService instead — see core/security/.
@@ -49,6 +50,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       salaryAmount: _prefs.getDouble(_kSalaryAmount) ?? 0,
       disabledModules: _prefs.getStringList(_kDisabledModules) ?? const [],
       hiddenModules: _prefs.getStringList(_kHiddenModules) ?? const [],
+      lockAfterMinutes: _prefs.getInt(_kLockAfter) ?? 5,
     );
   }
 
@@ -127,6 +129,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
     state = state.copyWith(disabledModules: disabled, hiddenModules: hidden);
     await _prefs.setStringList(_kDisabledModules, disabled);
     await _prefs.setStringList(_kHiddenModules, hidden);
+  }
+
+  Future<void> setLockAfterMinutes(int minutes) async {
+    state = state.copyWith(lockAfterMinutes: minutes);
+    await _prefs.setInt(_kLockAfter, minutes);
   }
 
   Future<void> setBiometricEnabled(bool enabled) async {

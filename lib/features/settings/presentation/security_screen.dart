@@ -233,6 +233,24 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                   ListTile(leading: const Icon(Icons.password), title: Text('security.changePin'.tr()), onTap: _change),
                   const Divider(height: 1),
                   ListTile(
+                    leading: const Icon(Icons.timer_outlined),
+                    title: Text('security.lockAfter'.tr()),
+                    subtitle: Text('security.lockAfterHint'.tr()),
+                    trailing: DropdownButton<int>(
+                      value: settings.lockAfterMinutes,
+                      underline: const SizedBox(),
+                      items: [
+                        for (final m in const [0, 1, 5, 15, 30])
+                          DropdownMenuItem(
+                            value: m,
+                            child: Text(m == 0 ? 'security.lockNow'.tr() : 'security.lockMinutes'.tr(namedArgs: {'n': '$m'})),
+                          ),
+                      ],
+                      onChanged: (v) => ref.read(settingsProvider.notifier).setLockAfterMinutes(v ?? 5),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
                     leading: const Icon(Icons.key_outlined),
                     title: Text('wizard.recoveryTitle'.tr()),
                     subtitle: Text(

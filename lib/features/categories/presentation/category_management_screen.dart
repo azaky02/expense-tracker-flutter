@@ -30,6 +30,55 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
     super.dispose();
   }
 
+  /// "+": a new main item, or a sub-item under a chosen main item.
+  Future<void> _addMenu() async {
+    final type = _currentType;
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          ListTile(
+            leading: const Icon(Icons.folder_outlined),
+            title: Text('categories.addCategory'.tr()),
+            subtitle: Text('categories.mainHint'.tr()),
+            onTap: () => Navigator.pop(ctx, 'main'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.subdirectory_arrow_left),
+            title: Text('categories.addSubCategory'.tr()),
+            subtitle: Text('categories.subHint'.tr()),
+            onTap: () => Navigator.pop(ctx, 'sub'),
+          ),
+        ]),
+      ),
+    );
+    if (choice == null || !mounted) return;
+    if (choice == 'main') return _openEditor(type: type);
+    final tree = ref.read(categoryTreeProvider(type)).value ?? const [];
+    final parentId = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
+          child: ListView(shrinkWrap: true, children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text('categories.chooseMain'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
+            ),
+            for (final n in tree)
+              ListTile(
+                leading: Text(n.main.icon, style: const TextStyle(fontSize: 22)),
+                title: Text(n.main.name),
+                onTap: () => Navigator.pop(ctx, n.main.id),
+              ),
+          ]),
+        ),
+      ),
+    );
+    if (parentId != null && mounted) await _openEditor(type: type, parentCategoryId: parentId);
+  }
+
   CategoryType get _currentType => _tabController.index == 0 ? CategoryType.expense : CategoryType.income;
 
   Future<void> _openEditor({required CategoryType type, int? parentCategoryId, Category? existing}) async {
@@ -86,9 +135,11 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _openEditor(type: _currentType),
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        shape: const StadiumBorder(),
+        onPressed: _addMenu,
+        icon: const Icon(Icons.add),
+        label: Text('common.add'.tr()),
       ),
     );
   }

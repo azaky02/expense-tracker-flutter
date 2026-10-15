@@ -130,7 +130,10 @@
     "noCategories": "No categories yet",
     "name": "Name",
     "icon": "Icon (emoji)",
-    "color": "Color"
+    "color": "Color",
+    "mainHint": "A new item such as Education or Gifts",
+    "subHint": "Inside an existing item, e.g. Lessons under Education",
+    "chooseMain": "Choose the main item"
   },
   "cards": {
     "paymentMethods": "Payment methods",
@@ -263,7 +266,11 @@
     "noQuestion": "Not set – needed if you forget your PIN",
     "setQuestion": "Set",
     "changeQuestion": "Change",
-    "questionSaved": "Security question saved"
+    "questionSaved": "Security question saved",
+    "lockAfter": "Lock after",
+    "lockAfterHint": "Asks for the PIN after the app has been in the background this long",
+    "lockNow": "Immediately",
+    "lockMinutes": "{n} min"
   },
   "backup": {
     "description": "Export all your data (transactions, cards, categories) to a file, or restore it from a previous file. Attached receipt photos are not included.",
@@ -665,7 +672,9 @@
     "fuelValue": "Fuel value (litres × price)",
     "tips": "Tips",
     "tipsHint": "Enter what you actually paid; anything above the fuel value is recorded as tips.",
-    "tipsTotal": "Total tips"
+    "tipsTotal": "Total tips",
+    "fuelTotal": "Fuel total",
+    "totalPaid": "Total paid"
   },
   "fuel": {
     "title": "Fuel prices",

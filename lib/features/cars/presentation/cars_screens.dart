@@ -917,54 +917,22 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
               padding: const EdgeInsets.only(top: 6),
               child: Text(categoryPath, style: theme.textTheme.bodySmall),
             ),
+          // Order: date → odometer → fuel type → litres → fuel value → paid → tips.
           FormRowCard(
-            icon: Icons.payments_outlined,
-            iconColor: DS.gold,
-            label: 'transactions.amount'.tr(),
-            child: AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
+            key: const ValueKey('date'),
+            icon: Icons.calendar_month_outlined,
+            label: 'transactions.date'.tr(),
+            child: PickerField(
+              text: DateFormat.yMMMMd(context.locale.languageCode).format(_date),
+              trailingIcon: Icons.calendar_today_outlined,
+              onTap: () async {
+                final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2000), lastDate: DateTime(2100));
+                if (d != null) setState(() => _date = d);
+              },
+            ),
           ),
-          if (_fuelValue(types) != null)
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(color: DS.goldSoft, borderRadius: BorderRadius.circular(DS.radius)),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('cars.fuelValue'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.textMuted)),
-                        AmountText(_fuelValue(types)!, size: 15, color: DS.text),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('cars.tips'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.textMuted)),
-                        AmountText(_tips(types), size: 15, color: _tips(types) > 0 ? DS.gold : DS.textMuted),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (_fuelValue(types) != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text('cars.tipsHint'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-            ),
-          if (_isFuel && _fuel(types) != null && _parse(_amount.text) > 0 && _parse(_liters.text) == 0)
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: TextButton(
-                onPressed: () => setState(() => _liters.text = (_parse(_amount.text) / _fuel(types)!.pricePerLiter).toStringAsFixed(2)),
-                child: Text('cars.calcLiters'.tr()),
-              ),
-            ),
           FormRowCard(
+            key: const ValueKey('odometer'),
             icon: Icons.speed_rounded,
             label: 'cars.odometerReading'.tr(),
             child: TextField(
@@ -979,6 +947,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
           ),
           if (_isFuel || _liters.text.isNotEmpty) ...[
             FormRowCard(
+              key: const ValueKey('fuelType'),
               icon: Icons.local_gas_station_outlined,
               label: 'fuel.type'.tr(),
               child: DropdownButtonFormField<int>(
@@ -986,10 +955,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
                 initialValue: _fuelTypeId,
                 items: [
                   for (final f in types)
-                    DropdownMenuItem(
-                      value: f.id,
-                      child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis),
-                    ),
+                    DropdownMenuItem(value: f.id, child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis)),
                 ],
                 onChanged: (v) => setState(() {
                   _fuelTypeId = v;
@@ -998,29 +964,55 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
               ),
             ),
             FormRowCard(
+              key: const ValueKey('liters'),
               icon: Icons.water_drop_outlined,
               label: 'cars.liters'.tr(),
               child: TextField(
                 controller: _liters,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: const [AsciiDigitsFormatter()],
+                // Up to 4 digits before and 4 after the decimal point (e.g. 57.7923).
+                inputFormatters: [const AsciiDigitsFormatter(), FilteringTextInputFormatter.allow(RegExp(r'^\d{0,4}([.]\d{0,4})?'))],
                 decoration: InputDecoration(suffixText: 'cars.litersUnit'.tr()),
                 onChanged: (_) => setState(() => _recalc(types)),
               ),
             ),
+            FormRowCard(
+              key: const ValueKey('fuelValue'),
+              icon: Icons.calculate_outlined,
+              label: 'cars.fuelTotal'.tr(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                child: AmountText(_fuelValue(types) ?? 0, size: 17, color: theme.colorScheme.onSurface),
+              ),
+            ),
           ],
           FormRowCard(
-            icon: Icons.calendar_month_outlined,
-            label: 'transactions.date'.tr(),
-            child: PickerField(
-              text: DateFormat.yMMMMd(context.locale.languageCode).format(_date),
-              trailingIcon: Icons.calendar_today_outlined,
-              onTap: () async {
-                final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2000), lastDate: DateTime(2100));
-                if (d != null) setState(() => _date = d);
-              },
-            ),
+            key: const ValueKey('amount'),
+            icon: Icons.payments_outlined,
+            iconColor: DS.gold,
+            label: (_isFuel ? 'cars.totalPaid' : 'transactions.amount').tr(),
+            child: AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
           ),
+          if (_isFuel || _liters.text.isNotEmpty)
+            FormRowCard(
+              key: const ValueKey('tips'),
+              icon: Icons.volunteer_activism_outlined,
+              iconColor: DS.gold,
+              label: 'cars.tips'.tr(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                child: AmountText(_tips(types), size: 17, color: _tips(types) > 0 ? DS.gold : theme.colorScheme.onSurfaceVariant),
+              ),
+            ),
+          if (_isFuel && _fuel(types) != null && _parse(_amount.text) > 0 && _parse(_liters.text) == 0)
+            Align(
+              key: const ValueKey('calcLiters'),
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton(
+                onPressed: () => setState(() => _liters.text = (_parse(_amount.text) / _fuel(types)!.pricePerLiter).toStringAsFixed(2)),
+                child: Text('cars.calcLiters'.tr()),
+              ),
+            ),
           FormRowCard(
             icon: Icons.account_balance_wallet_outlined,
             label: 'transactions.account'.tr(),

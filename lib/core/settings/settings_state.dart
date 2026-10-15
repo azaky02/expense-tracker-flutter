@@ -20,6 +20,7 @@ class SettingsState {
     this.salaryAmount = 0,
     this.disabledModules = const [],
     this.hiddenModules = const [],
+    this.lockAfterMinutes = 5,
   });
 
   static const defaultReminderTimes = ['09:00', '15:00', '21:00'];
@@ -53,6 +54,9 @@ class SettingsState {
   final List<String> disabledModules;
   final List<String> hiddenModules;
 
+  /// Lock only after the app has been in the background this long (0 = straight away).
+  final int lockAfterMinutes;
+
   bool moduleEnabled(String key) => !disabledModules.contains(key);
   bool moduleShown(String key) => moduleEnabled(key) && !hiddenModules.contains(key);
 
@@ -72,6 +76,7 @@ class SettingsState {
     double? salaryAmount,
     List<String>? disabledModules,
     List<String>? hiddenModules,
+    int? lockAfterMinutes,
   }) {
     return SettingsState(
       userName: userName ?? this.userName,
@@ -90,6 +95,7 @@ class SettingsState {
       salaryAmount: salaryAmount ?? this.salaryAmount,
       disabledModules: disabledModules ?? this.disabledModules,
       hiddenModules: hiddenModules ?? this.hiddenModules,
+      lockAfterMinutes: lockAfterMinutes ?? this.lockAfterMinutes,
     );
   }
 }

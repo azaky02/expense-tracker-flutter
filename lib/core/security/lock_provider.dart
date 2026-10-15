@@ -31,16 +31,30 @@ final lockProvider = NotifierProvider<LockNotifier, bool>(LockNotifier.new);
 /// Takes plain callbacks rather than a Ref/WidgetRef so it works from either ConsumerState
 /// (WidgetRef, in Riverpod 3.x no longer a subtype of Ref) or a plain Ref context.
 class AppLifecycleLockObserver extends WidgetsBindingObserver {
-  AppLifecycleLockObserver({required this.isAppLockEnabled, required this.onLock});
+  AppLifecycleLockObserver({required this.isAppLockEnabled, required this.onLock, this.lockAfter = _noDelay});
+
+  static Duration _noDelay() => Duration.zero;
 
   final bool Function() isAppLockEnabled;
   final VoidCallback onLock;
+
+  /// How long the app may stay in the background before it locks.
+  final Duration Function() lockAfter;
+  DateTime? _leftAt;
+
+  /// Pure decision, for tests: lock when away at least [delay].
+  static bool shouldLock(DateTime leftAt, DateTime now, Duration delay) => now.difference(leftAt) >= delay;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // `paused` only: `inactive` also fires for the notification shade and the biometric dialog.
     if (state == AppLifecycleState.paused && isAppLockEnabled() && !LockNotifier.suspended) {
-      onLock();
+      _leftAt ??= DateTime.now();
+      if (lockAfter() == Duration.zero) onLock();
+    } else if (state == AppLifecycleState.resumed) {
+      final left = _leftAt;
+      _leftAt = null;
+      if (left != null && isAppLockEnabled() && shouldLock(left, DateTime.now(), lockAfter())) onLock();
     }
   }
 }

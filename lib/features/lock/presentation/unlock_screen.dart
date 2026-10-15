@@ -3,13 +3,13 @@ import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 
 import '../../../core/security/lock_provider.dart';
 import '../../../core/security/secure_storage.dart';
 import '../../../core/settings/settings_provider.dart';
 import 'pin_entry_screen.dart';
+import 'recover_pin_screen.dart';
 
 class UnlockScreen extends ConsumerStatefulWidget {
   const UnlockScreen({super.key});
@@ -155,7 +155,10 @@ class _UnlockScreenState extends ConsumerState<UnlockScreen> {
                 ),
               ],
               if (biometricEnabled && _hasPin) TextButton(onPressed: _maybeTryBiometrics, child: Text('security.useBiometrics'.tr())),
-              TextButton(onPressed: () => context.push('/recover'), child: Text('recover.forgot'.tr())),
+              TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const RecoverPinScreen())),
+                child: Text('recover.forgot'.tr()),
+              ),
             ],
           ),
         ),
@@ -180,5 +183,15 @@ class _PadKey extends StatelessWidget {
         child: Text(label, style: Theme.of(context).textTheme.headlineSmall),
       ),
     );
+  }
+}
+
+/// The lock cover: its own navigator so "Forgot PIN?" can open the recovery screen above it.
+class LockGate extends StatelessWidget {
+  const LockGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Navigator(onGenerateRoute: (_) => MaterialPageRoute<void>(builder: (_) => const UnlockScreen()));
   }
 }

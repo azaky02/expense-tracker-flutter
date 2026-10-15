@@ -9,6 +9,8 @@ import 'core/settings/settings_provider.dart';
 import 'core/settings/settings_state.dart';
 import 'core/sync/sync_controller.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/splash_screen.dart';
+import 'features/lock/presentation/unlock_screen.dart';
 import 'features/associations/data/association_repository.dart';
 import 'features/cars/data/car_reminders.dart';
 import 'features/installments/data/installment_reminders.dart';
@@ -31,6 +33,7 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
       _lockObserver = AppLifecycleLockObserver(
         isAppLockEnabled: () => ref.read(settingsProvider).appLockEnabled,
         onLock: () => ref.read(lockProvider.notifier).lock(),
+        lockAfter: () => Duration(minutes: ref.read(settingsProvider).lockAfterMinutes),
       );
       WidgetsBinding.instance.addObserver(_lockObserver!);
     }
@@ -80,6 +83,15 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
         final router = ref.watch(routerProvider);
         return MaterialApp.router(
           routerConfig: router,
+          // The PIN screen covers the app instead of replacing the current page, so a form that
+          // was being filled in is still there after unlocking.
+          builder: (context, child) {
+            final locked = settings.appLockEnabled && settings.hasOnboarded && !ref.watch(lockProvider) && ref.watch(splashDoneProvider);
+            return Stack(children: [
+              child ?? const SizedBox(),
+              if (locked) const Positioned.fill(child: LockGate()),
+            ]);
+          },
           debugShowCheckedModeBanner: false,
           localizationsDelegates: context.localizationDelegates,
           supportedLocales: context.supportedLocales,
