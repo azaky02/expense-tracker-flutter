@@ -14,6 +14,10 @@ const _kBiometricEnabled = 'settings.biometricEnabled';
 const _kDailyReminder = 'settings.dailyReminder';
 const _kReminderTimes = 'settings.reminderTimes';
 const _kSalaryDay = 'settings.salaryDay';
+const _kUserEmail = 'settings.userEmail';
+const _kSalaryAmount = 'settings.salaryAmount';
+const _kDisabledModules = 'settings.disabledModules';
+const _kHiddenModules = 'settings.hiddenModules';
 
 /// Plain (non-secret) user preferences persisted via shared_preferences. Security-relevant
 /// secrets (PIN hash, DB key) live in SecureStorageService instead — see core/security/.
@@ -41,6 +45,10 @@ class SettingsNotifier extends Notifier<SettingsState> {
       dailyReminder: _prefs.getBool(_kDailyReminder) ?? false,
       reminderTimes: _prefs.getStringList(_kReminderTimes) ?? SettingsState.defaultReminderTimes,
       salaryDay: _prefs.getInt(_kSalaryDay) ?? 0,
+      userEmail: _prefs.getString(_kUserEmail) ?? '',
+      salaryAmount: _prefs.getDouble(_kSalaryAmount) ?? 0,
+      disabledModules: _prefs.getStringList(_kDisabledModules) ?? const [],
+      hiddenModules: _prefs.getStringList(_kHiddenModules) ?? const [],
     );
   }
 
@@ -92,6 +100,33 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setSalaryDay(int day) async {
     state = state.copyWith(salaryDay: day);
     await _prefs.setInt(_kSalaryDay, day);
+  }
+
+  Future<void> setUserEmail(String email) async {
+    state = state.copyWith(userEmail: email);
+    await _prefs.setString(_kUserEmail, email);
+  }
+
+  Future<void> setSalaryAmount(double amount) async {
+    state = state.copyWith(salaryAmount: amount);
+    await _prefs.setDouble(_kSalaryAmount, amount);
+  }
+
+  /// [enabled] false switches the section off everywhere; [shown] false only hides it on Home.
+  Future<void> setModule(String key, {bool? enabled, bool? shown}) async {
+    final disabled = [...state.disabledModules];
+    final hidden = [...state.hiddenModules];
+    if (enabled != null) {
+      disabled.remove(key);
+      if (!enabled) disabled.add(key);
+    }
+    if (shown != null) {
+      hidden.remove(key);
+      if (!shown) hidden.add(key);
+    }
+    state = state.copyWith(disabledModules: disabled, hiddenModules: hidden);
+    await _prefs.setStringList(_kDisabledModules, disabled);
+    await _prefs.setStringList(_kHiddenModules, hidden);
   }
 
   Future<void> setBiometricEnabled(bool enabled) async {

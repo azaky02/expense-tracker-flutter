@@ -258,6 +258,13 @@ class CarReportScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                if (a.totalTips > 0)
+                  Row(
+                    children: [
+                      kpi('cars.tipsTotal'.tr(), money(a.totalTips), icon: Icons.volunteer_activism_outlined),
+                      const Expanded(child: SizedBox()),
+                    ],
+                  ),
                 if (insights.isNotEmpty) ...[
                   SectionHeader('carReport.insights'.tr()),
                   AppCard(

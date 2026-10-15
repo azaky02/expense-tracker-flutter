@@ -8269,8 +8269,17 @@ class $CarExpensesTable extends CarExpenses with TableInfo<$CarExpensesTable, Ca
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _tipsMeta = const VerificationMeta('tips');
   @override
-  List<GeneratedColumn> get $columns => [id, carId, transactionId, odometer, liters, fuelTypeId, pricePerLiter, latitude, longitude];
+  late final GeneratedColumn<double> tips = GeneratedColumn<double>(
+    'tips',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, carId, transactionId, odometer, liters, fuelTypeId, pricePerLiter, latitude, longitude, tips];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -8311,6 +8320,9 @@ class $CarExpensesTable extends CarExpenses with TableInfo<$CarExpensesTable, Ca
     if (data.containsKey('longitude')) {
       context.handle(_longitudeMeta, longitude.isAcceptableOrUnknown(data['longitude']!, _longitudeMeta));
     }
+    if (data.containsKey('tips')) {
+      context.handle(_tipsMeta, tips.isAcceptableOrUnknown(data['tips']!, _tipsMeta));
+    }
     return context;
   }
 
@@ -8329,6 +8341,7 @@ class $CarExpensesTable extends CarExpenses with TableInfo<$CarExpensesTable, Ca
       pricePerLiter: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}price_per_liter']),
       latitude: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}latitude']),
       longitude: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}longitude']),
+      tips: attachedDatabase.typeMapping.read(DriftSqlType.double, data['${effectivePrefix}tips']),
     );
   }
 
@@ -8348,6 +8361,9 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
   final double? pricePerLiter;
   final double? latitude;
   final double? longitude;
+
+  /// Paid on top of the fuel value (litres × price), e.g. a tip for the attendant.
+  final double? tips;
   const CarExpense({
     required this.id,
     required this.carId,
@@ -8358,6 +8374,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
     this.pricePerLiter,
     this.latitude,
     this.longitude,
+    this.tips,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -8383,6 +8400,9 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
     if (!nullToAbsent || longitude != null) {
       map['longitude'] = Variable<double>(longitude);
     }
+    if (!nullToAbsent || tips != null) {
+      map['tips'] = Variable<double>(tips);
+    }
     return map;
   }
 
@@ -8397,6 +8417,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
       pricePerLiter: pricePerLiter == null && nullToAbsent ? const Value.absent() : Value(pricePerLiter),
       latitude: latitude == null && nullToAbsent ? const Value.absent() : Value(latitude),
       longitude: longitude == null && nullToAbsent ? const Value.absent() : Value(longitude),
+      tips: tips == null && nullToAbsent ? const Value.absent() : Value(tips),
     );
   }
 
@@ -8412,6 +8433,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
       pricePerLiter: serializer.fromJson<double?>(json['pricePerLiter']),
       latitude: serializer.fromJson<double?>(json['latitude']),
       longitude: serializer.fromJson<double?>(json['longitude']),
+      tips: serializer.fromJson<double?>(json['tips']),
     );
   }
   @override
@@ -8427,6 +8449,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
       'pricePerLiter': serializer.toJson<double?>(pricePerLiter),
       'latitude': serializer.toJson<double?>(latitude),
       'longitude': serializer.toJson<double?>(longitude),
+      'tips': serializer.toJson<double?>(tips),
     };
   }
 
@@ -8440,6 +8463,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
     Value<double?> pricePerLiter = const Value.absent(),
     Value<double?> latitude = const Value.absent(),
     Value<double?> longitude = const Value.absent(),
+    Value<double?> tips = const Value.absent(),
   }) => CarExpense(
     id: id ?? this.id,
     carId: carId ?? this.carId,
@@ -8450,6 +8474,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
     pricePerLiter: pricePerLiter.present ? pricePerLiter.value : this.pricePerLiter,
     latitude: latitude.present ? latitude.value : this.latitude,
     longitude: longitude.present ? longitude.value : this.longitude,
+    tips: tips.present ? tips.value : this.tips,
   );
   CarExpense copyWithCompanion(CarExpensesCompanion data) {
     return CarExpense(
@@ -8462,6 +8487,7 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
       pricePerLiter: data.pricePerLiter.present ? data.pricePerLiter.value : this.pricePerLiter,
       latitude: data.latitude.present ? data.latitude.value : this.latitude,
       longitude: data.longitude.present ? data.longitude.value : this.longitude,
+      tips: data.tips.present ? data.tips.value : this.tips,
     );
   }
 
@@ -8476,13 +8502,14 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
           ..write('fuelTypeId: $fuelTypeId, ')
           ..write('pricePerLiter: $pricePerLiter, ')
           ..write('latitude: $latitude, ')
-          ..write('longitude: $longitude')
+          ..write('longitude: $longitude, ')
+          ..write('tips: $tips')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, carId, transactionId, odometer, liters, fuelTypeId, pricePerLiter, latitude, longitude);
+  int get hashCode => Object.hash(id, carId, transactionId, odometer, liters, fuelTypeId, pricePerLiter, latitude, longitude, tips);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -8495,7 +8522,8 @@ class CarExpense extends DataClass implements Insertable<CarExpense> {
           other.fuelTypeId == this.fuelTypeId &&
           other.pricePerLiter == this.pricePerLiter &&
           other.latitude == this.latitude &&
-          other.longitude == this.longitude);
+          other.longitude == this.longitude &&
+          other.tips == this.tips);
 }
 
 class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
@@ -8508,6 +8536,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
   final Value<double?> pricePerLiter;
   final Value<double?> latitude;
   final Value<double?> longitude;
+  final Value<double?> tips;
   const CarExpensesCompanion({
     this.id = const Value.absent(),
     this.carId = const Value.absent(),
@@ -8518,6 +8547,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
     this.pricePerLiter = const Value.absent(),
     this.latitude = const Value.absent(),
     this.longitude = const Value.absent(),
+    this.tips = const Value.absent(),
   });
   CarExpensesCompanion.insert({
     this.id = const Value.absent(),
@@ -8529,6 +8559,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
     this.pricePerLiter = const Value.absent(),
     this.latitude = const Value.absent(),
     this.longitude = const Value.absent(),
+    this.tips = const Value.absent(),
   }) : carId = Value(carId),
        transactionId = Value(transactionId);
   static Insertable<CarExpense> custom({
@@ -8541,6 +8572,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
     Expression<double>? pricePerLiter,
     Expression<double>? latitude,
     Expression<double>? longitude,
+    Expression<double>? tips,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -8552,6 +8584,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
       if (pricePerLiter != null) 'price_per_liter': pricePerLiter,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
+      if (tips != null) 'tips': tips,
     });
   }
 
@@ -8565,6 +8598,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
     Value<double?>? pricePerLiter,
     Value<double?>? latitude,
     Value<double?>? longitude,
+    Value<double?>? tips,
   }) {
     return CarExpensesCompanion(
       id: id ?? this.id,
@@ -8576,6 +8610,7 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
       pricePerLiter: pricePerLiter ?? this.pricePerLiter,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      tips: tips ?? this.tips,
     );
   }
 
@@ -8609,6 +8644,9 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
     if (longitude.present) {
       map['longitude'] = Variable<double>(longitude.value);
     }
+    if (tips.present) {
+      map['tips'] = Variable<double>(tips.value);
+    }
     return map;
   }
 
@@ -8623,7 +8661,8 @@ class CarExpensesCompanion extends UpdateCompanion<CarExpense> {
           ..write('fuelTypeId: $fuelTypeId, ')
           ..write('pricePerLiter: $pricePerLiter, ')
           ..write('latitude: $latitude, ')
-          ..write('longitude: $longitude')
+          ..write('longitude: $longitude, ')
+          ..write('tips: $tips')
           ..write(')'))
         .toString();
   }
@@ -14746,6 +14785,7 @@ typedef $$CarExpensesTableCreateCompanionBuilder =
       Value<double?> pricePerLiter,
       Value<double?> latitude,
       Value<double?> longitude,
+      Value<double?> tips,
     });
 typedef $$CarExpensesTableUpdateCompanionBuilder =
     CarExpensesCompanion Function({
@@ -14758,6 +14798,7 @@ typedef $$CarExpensesTableUpdateCompanionBuilder =
       Value<double?> pricePerLiter,
       Value<double?> latitude,
       Value<double?> longitude,
+      Value<double?> tips,
     });
 
 final class $$CarExpensesTableReferences extends BaseReferences<_$AppDatabase, $CarExpensesTable, CarExpense> {
@@ -14808,6 +14849,8 @@ class $$CarExpensesTableFilterComposer extends Composer<_$AppDatabase, $CarExpen
   ColumnFilters<double> get latitude => $composableBuilder(column: $table.latitude, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get longitude => $composableBuilder(column: $table.longitude, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get tips => $composableBuilder(column: $table.tips, builder: (column) => ColumnFilters(column));
 
   $$CarsTableFilterComposer get carId {
     final $$CarsTableFilterComposer composer = $composerBuilder(
@@ -14867,6 +14910,8 @@ class $$CarExpensesTableOrderingComposer extends Composer<_$AppDatabase, $CarExp
 
   ColumnOrderings<double> get longitude => $composableBuilder(column: $table.longitude, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<double> get tips => $composableBuilder(column: $table.tips, builder: (column) => ColumnOrderings(column));
+
   $$CarsTableOrderingComposer get carId {
     final $$CarsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -14923,6 +14968,8 @@ class $$CarExpensesTableAnnotationComposer extends Composer<_$AppDatabase, $CarE
   GeneratedColumn<double> get latitude => $composableBuilder(column: $table.latitude, builder: (column) => column);
 
   GeneratedColumn<double> get longitude => $composableBuilder(column: $table.longitude, builder: (column) => column);
+
+  GeneratedColumn<double> get tips => $composableBuilder(column: $table.tips, builder: (column) => column);
 
   $$CarsTableAnnotationComposer get carId {
     final $$CarsTableAnnotationComposer composer = $composerBuilder(
@@ -14993,6 +15040,7 @@ class $$CarExpensesTableTableManager
                 Value<double?> pricePerLiter = const Value.absent(),
                 Value<double?> latitude = const Value.absent(),
                 Value<double?> longitude = const Value.absent(),
+                Value<double?> tips = const Value.absent(),
               }) => CarExpensesCompanion(
                 id: id,
                 carId: carId,
@@ -15003,6 +15051,7 @@ class $$CarExpensesTableTableManager
                 pricePerLiter: pricePerLiter,
                 latitude: latitude,
                 longitude: longitude,
+                tips: tips,
               ),
           createCompanionCallback:
               ({
@@ -15015,6 +15064,7 @@ class $$CarExpensesTableTableManager
                 Value<double?> pricePerLiter = const Value.absent(),
                 Value<double?> latitude = const Value.absent(),
                 Value<double?> longitude = const Value.absent(),
+                Value<double?> tips = const Value.absent(),
               }) => CarExpensesCompanion.insert(
                 id: id,
                 carId: carId,
@@ -15025,6 +15075,7 @@ class $$CarExpensesTableTableManager
                 pricePerLiter: pricePerLiter,
                 latitude: latitude,
                 longitude: longitude,
+                tips: tips,
               ),
           withReferenceMapper: (p0) =>
               p0.map((e) => (e.readTable<$CarExpensesTable, CarExpense>(table), $$CarExpensesTableReferences(db, table, e))).toList(),

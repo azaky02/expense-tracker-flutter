@@ -8,6 +8,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../../core/settings/settings_provider.dart';
+import '../../../core/settings/settings_state.dart';
 import '../../../core/utils/currency.dart';
 import 'installment_repository.dart';
 
@@ -219,8 +221,12 @@ class InstallmentReminders {
 
 /// Keeps the scheduled reminders in step with the installments (watched by the app root).
 final installmentRemindersProvider = Provider<void>((ref) {
-  ref.listen(installmentsProvider, (_, next) {
-    final plans = next.value;
-    if (plans != null) InstallmentReminders.instance.reschedule(plans);
-  }, fireImmediately: true);
+  void run() {
+    final plans = ref.read(installmentsProvider).value;
+    if (plans == null) return;
+    InstallmentReminders.instance.reschedule(ref.read(settingsProvider).moduleEnabled(AppModule.installments.key) ? plans : const []);
+  }
+
+  ref.listen(installmentsProvider, (_, _) => run(), fireImmediately: true);
+  ref.listen(settingsProvider.select((s) => s.moduleEnabled(AppModule.installments.key)), (_, _) => run());
 });

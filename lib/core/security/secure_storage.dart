@@ -64,6 +64,30 @@ class SecureStorageService {
     return candidate == storedHash;
   }
 
+  static const _questionKey = 'recovery-question';
+  static const _answerHashKey = 'recovery-answer-hash';
+  static const _answerSaltKey = 'recovery-answer-salt';
+
+  /// Answers are compared ignoring case, spaces and Arabic letter variants (أ/إ/آ → ا, ة → ه, ى → ي).
+  static String normalizeAnswer(String a) =>
+      a.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ').replaceAll(RegExp('[أإآ]'), 'ا').replaceAll('ة', 'ه').replaceAll('ى', 'ي');
+
+  Future<String?> recoveryQuestion() => _storage.read(key: _questionKey);
+
+  Future<void> setRecovery(String question, String answer) async {
+    final salt = _randomHex(16);
+    await _storage.write(key: _questionKey, value: question.trim());
+    await _storage.write(key: _answerSaltKey, value: salt);
+    await _storage.write(key: _answerHashKey, value: await _hashPin(normalizeAnswer(answer), salt));
+  }
+
+  Future<bool> verifyRecoveryAnswer(String answer) async {
+    final salt = await _storage.read(key: _answerSaltKey);
+    final hash = await _storage.read(key: _answerHashKey);
+    if (salt == null || hash == null) return false;
+    return await _hashPin(normalizeAnswer(answer), salt) == hash;
+  }
+
   Future<void> clearPin() async {
     await _storage.delete(key: _pinHashKey);
     await _storage.delete(key: _pinSaltKey);

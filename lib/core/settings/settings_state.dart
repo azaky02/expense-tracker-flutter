@@ -16,6 +16,10 @@ class SettingsState {
     this.dailyReminder = false,
     this.reminderTimes = defaultReminderTimes,
     this.salaryDay = 0,
+    this.userEmail = '',
+    this.salaryAmount = 0,
+    this.disabledModules = const [],
+    this.hiddenModules = const [],
   });
 
   static const defaultReminderTimes = ['09:00', '15:00', '21:00'];
@@ -39,6 +43,19 @@ class SettingsState {
   /// Day of the month the salary arrives (1-31), 0 = not set.
   final int salaryDay;
 
+  /// For password recovery (sending a reset code once a mail server is set up).
+  final String userEmail;
+
+  /// Monthly salary; when set it is recorded as income on [salaryDay] automatically.
+  final double salaryAmount;
+
+  /// Sections switched off (not used at all) / not shown on the home screen. See [AppModule].
+  final List<String> disabledModules;
+  final List<String> hiddenModules;
+
+  bool moduleEnabled(String key) => !disabledModules.contains(key);
+  bool moduleShown(String key) => moduleEnabled(key) && !hiddenModules.contains(key);
+
   SettingsState copyWith({
     String? userName,
     String? userPhone,
@@ -51,6 +68,10 @@ class SettingsState {
     bool? dailyReminder,
     List<String>? reminderTimes,
     int? salaryDay,
+    String? userEmail,
+    double? salaryAmount,
+    List<String>? disabledModules,
+    List<String>? hiddenModules,
   }) {
     return SettingsState(
       userName: userName ?? this.userName,
@@ -65,6 +86,26 @@ class SettingsState {
       dailyReminder: dailyReminder ?? this.dailyReminder,
       reminderTimes: reminderTimes ?? this.reminderTimes,
       salaryDay: salaryDay ?? this.salaryDay,
+      userEmail: userEmail ?? this.userEmail,
+      salaryAmount: salaryAmount ?? this.salaryAmount,
+      disabledModules: disabledModules ?? this.disabledModules,
+      hiddenModules: hiddenModules ?? this.hiddenModules,
     );
   }
+}
+
+/// Sections of the app that can be switched off or hidden from the home screen.
+enum AppModule {
+  cars('cars', 'cars.title'),
+  installments('installments', 'installments.title'),
+  associations('associations', 'associations.title'),
+  custody('custody', 'modules.custody'),
+  budgets('budgets', 'budgets.screenTitle'),
+  stats('stats', 'stats.title'),
+  reports('reports', 'reports.title'),
+  accounts('accounts', 'accounts.title');
+
+  const AppModule(this.key, this.labelKey);
+  final String key;
+  final String labelKey;
 }

@@ -637,7 +637,8 @@ class FormRowCard extends StatelessWidget {
 
 /// Large save button with a gold edge (bottom of forms).
 class BigSaveButton extends StatelessWidget {
-  const BigSaveButton({super.key, required this.label, required this.onPressed, this.busy = false});
+  const BigSaveButton({super.key, required this.label, required this.onPressed, this.busy = false, this.icon = Icons.save_rounded});
+  final IconData icon;
   final String label;
   final VoidCallback? onPressed;
   final bool busy;
@@ -658,7 +659,7 @@ class BigSaveButton extends StatelessWidget {
       onPressed: busy ? null : onPressed,
       icon: busy
           ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-          : const Icon(Icons.save_rounded),
+          : Icon(icon),
       label: Text(label),
     );
   }

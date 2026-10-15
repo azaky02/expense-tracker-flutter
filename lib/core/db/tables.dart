@@ -328,6 +328,9 @@ class CarExpenses extends Table {
   RealColumn get pricePerLiter => real().nullable()();
   RealColumn get latitude => real().nullable()();
   RealColumn get longitude => real().nullable()();
+
+  /// Paid on top of the fuel value (litres × price), e.g. a tip for the attendant.
+  RealColumn get tips => real().nullable()();
 }
 
 /// جمعية (rotating savings group): everyone pays a monthly share; each month one member takes

@@ -552,10 +552,11 @@ class _InstallmentFormScreenState extends ConsumerState<InstallmentFormScreen> {
     final last = dueDateFor(_startMonth, _dueDay, _monthsValue < 1 ? 1 : _monthsValue);
     return Scaffold(
       appBar: BrandFormAppBar(
-        title: (widget.installmentId == null
-                ? (_isLoan ? 'installments.addLoan' : 'installments.add')
-                : (_isLoan ? 'installments.editLoan' : 'installments.edit'))
-            .tr(),
+        title:
+            (widget.installmentId == null
+                    ? (_isLoan ? 'installments.addLoan' : 'installments.add')
+                    : (_isLoan ? 'installments.editLoan' : 'installments.edit'))
+                .tr(),
         onSave: _saving ? null : _save,
       ),
       body: !_loaded

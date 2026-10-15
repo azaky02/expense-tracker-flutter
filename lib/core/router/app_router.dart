@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +7,8 @@ import '../../features/accounts/presentation/accounts_screen.dart';
 import '../../features/associations/presentation/associations_screens.dart';
 import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/auth/presentation/setup_screen.dart';
+import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/lock/presentation/recover_pin_screen.dart';
 import '../../features/cars/presentation/car_report_screen.dart';
 import '../../features/cars/presentation/cars_screens.dart';
 import '../../features/installments/presentation/installments_screens.dart';
@@ -45,6 +48,7 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   _RouterRefreshNotifier(Ref ref) {
     ref.listen(lockProvider, (_, _) => notifyListeners());
     ref.listen(settingsProvider, (_, _) => notifyListeners());
+    ref.listen(splashDoneProvider, (_, _) => notifyListeners());
   }
 }
 
@@ -60,8 +64,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isUnlocked = ref.read(lockProvider);
       // Welcome, sign-in and registration are all reachable before onboarding is complete.
       final goingToOnboarding = const {'/onboarding', '/login', '/register', '/setup'}.contains(state.matchedLocation);
-      final goingToUnlock = state.matchedLocation == '/unlock';
+      final goingToUnlock = state.matchedLocation == '/unlock' || state.matchedLocation == '/recover';
 
+      // Splash for 3 seconds at every start, then the PIN screen, then Home.
+      if (!ref.read(splashDoneProvider)) {
+        return state.matchedLocation == '/splash' ? null : '/splash';
+      }
+      if (state.matchedLocation == '/splash') return settings.hasOnboarded ? '/home' : '/onboarding';
       if (!settings.hasOnboarded) {
         return goingToOnboarding ? null : '/onboarding';
       }
@@ -73,10 +82,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return state.matchedLocation == '/setup' ? null : '/setup';
       }
       // Login/register stay reachable later (e.g. from More); only the welcome page is one-time.
-      if (state.matchedLocation == '/onboarding' || goingToUnlock) return '/home';
+      if (state.matchedLocation == '/onboarding' || state.matchedLocation == '/unlock') return '/home';
       return null;
     },
     routes: [
+      GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+      GoRoute(path: '/recover', builder: (context, state) => const RecoverPinScreen()),
       GoRoute(path: '/onboarding', builder: (context, state) => const WelcomeScreen()),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
@@ -194,6 +205,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/budgets', builder: (context, state) => const BudgetsScreen()),
       GoRoute(path: '/security', builder: (context, state) => const SecurityScreen()),
       GoRoute(path: '/reminders', builder: (context, state) => const RemindersScreen()),
+      GoRoute(
+        path: '/modules',
+        builder: (context, state) => Scaffold(
+          appBar: AppBar(title: Text('modules.title'.tr())),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [Text('modules.hint'.tr()), const SizedBox(height: 12), const ModulesList()],
+          ),
+        ),
+      ),
       GoRoute(path: '/stats', builder: (context, state) => const StatsScreen()),
       GoRoute(path: '/backup', builder: (context, state) => const BackupScreen()),
       GoRoute(

@@ -19,6 +19,8 @@ import '../../people/presentation/people_screen.dart';
 import '../../transactions/data/transaction_models.dart';
 import '../../transactions/presentation/transaction_providers.dart';
 import 'home_widgets.dart';
+import '../../../core/settings/settings_provider.dart';
+import '../../../core/settings/settings_state.dart';
 
 /// Month shown on the dashboard (first day of that month).
 final dashboardMonthProvider = NotifierProvider<MonthNotifier, DateTime>(MonthNotifier.new);
@@ -53,6 +55,7 @@ class DashboardScreen extends ConsumerWidget {
         .take(4)
         .toList();
     final theme = Theme.of(context);
+    final settings = ref.watch(settingsProvider);
     final income = summary?.income ?? 0;
     final expense = summary?.expense ?? 0;
 
@@ -106,7 +109,7 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                           ),
                   ),
-                  if (accounts.isNotEmpty) ...[
+                  if (accounts.isNotEmpty && settings.moduleShown(AppModule.accounts.key)) ...[
                     SectionHeader('dashboard.accounts'.tr(), action: 'common.viewAll'.tr(), onAction: () => context.push('/accounts')),
                     SizedBox(
                       height: 104,
@@ -118,7 +121,7 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  if (people.isNotEmpty) ...[
+                  if (people.isNotEmpty && settings.moduleShown(AppModule.custody.key)) ...[
                     SectionHeader('dashboard.people'.tr(), action: 'common.viewAll'.tr(), onAction: () => context.go('/people')),
                     GridView.count(
                       crossAxisCount: 2,

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../installments/data/installment_reminders.dart';
+import '../../../core/settings/settings_provider.dart';
+import '../../../core/settings/settings_state.dart';
 import 'car_analytics.dart';
 import 'car_repository.dart';
 
@@ -69,8 +71,12 @@ Future<void> rescheduleCarReminders(List<CarWithStats> cars) async {
 
 /// Keeps car reminders in step with the cars and their expenses (watched by the app root).
 final carRemindersProvider = Provider<void>((ref) {
-  ref.listen(carsProvider, (_, next) {
-    final cars = next.value;
-    if (cars != null) rescheduleCarReminders(cars);
-  }, fireImmediately: true);
+  void run() {
+    final cars = ref.read(carsProvider).value;
+    if (cars == null) return;
+    rescheduleCarReminders(ref.read(settingsProvider).moduleEnabled(AppModule.cars.key) ? cars : const []);
+  }
+
+  ref.listen(carsProvider, (_, _) => run(), fireImmediately: true);
+  ref.listen(settingsProvider.select((s) => s.moduleEnabled(AppModule.cars.key)), (_, _) => run());
 });

@@ -8,6 +8,7 @@ import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense_tracker_flutter/app.dart';
+import 'package:expense_tracker_flutter/features/auth/presentation/splash_screen.dart';
 import 'package:expense_tracker_flutter/core/db/database.dart';
 import 'package:expense_tracker_flutter/core/db/database_provider.dart';
 import 'package:expense_tracker_flutter/core/db/seed.dart';
@@ -115,6 +116,7 @@ void main() {
 
   setUpAll(() async {
     AppTheme.useGoogleFonts = false;
+    SplashDoneNotifier.skip = true;
     const segoe = r'C:\Windows\Fonts\segoeui.ttf';
     const segoeBold = r'C:\Windows\Fonts\segoeuib.ttf';
     for (final family in ['Cairo', 'Inter', 'Roboto']) {
@@ -232,6 +234,9 @@ void main() {
       '35_association_form': '/associations/new',
       '36_loan_form': '/installments/new?kind=loan',
       '37_custody_form': '/ledger/new?personId=1',
+      '38_recover': '/recover',
+      '39_modules': '/modules',
+      '40_fuel_prices': '/fuel-prices',
       '32_reminders': '/reminders',
       '28_home_categories': '/home',
     });

@@ -75,6 +75,7 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
         ref.watch(installmentRemindersProvider);
         ref.watch(carRemindersProvider);
         ref.watch(generalRemindersProvider);
+        ref.watch(salaryIncomeProvider);
         ref.watch(associationRemindersProvider);
         final router = ref.watch(routerProvider);
         return MaterialApp.router(

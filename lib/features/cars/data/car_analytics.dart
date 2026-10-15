@@ -137,8 +137,11 @@ class CarAnalytics {
     final priced = car.expenses.where((e) => (e.expense.liters ?? 0) > 0).toList();
     final liters = priced.fold<double>(0, (s, e) => s + e.expense.liters!);
     if (liters == 0) return null;
-    return priced.fold<double>(0, (s, e) => s + e.transaction.amount) / liters;
+    // Tips are not part of the fuel price.
+    return priced.fold<double>(0, (s, e) => s + e.transaction.amount - (e.expense.tips ?? 0)) / liters;
   }
+
+  double get totalTips => car.expenses.fold(0, (s, e) => s + (e.expense.tips ?? 0));
 
   /// Months covered by the expenses (at least 1).
   int get monthsCovered {

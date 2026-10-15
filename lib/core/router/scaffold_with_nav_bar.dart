@@ -52,11 +52,12 @@ class ScaffoldWithNavBar extends StatelessWidget {
               onTap: () => navigationShell.goBranch(1),
             ),
             const SizedBox(width: 48), // room for the docked FAB
+            // Statistics replaces People here; People stays reachable from Home and More.
             _NavItem(
-              icon: Icons.people_alt_outlined,
-              label: 'nav.people'.tr(context: context),
-              selected: navigationShell.currentIndex == 2,
-              onTap: () => navigationShell.goBranch(2),
+              icon: Icons.insights_rounded,
+              label: 'stats.title'.tr(context: context),
+              selected: false,
+              onTap: () => context.push('/stats'),
             ),
             _NavItem(
               icon: Icons.more_horiz,

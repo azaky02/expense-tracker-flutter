@@ -657,7 +657,11 @@
     "expenseType": "Expense type",
     "otherExpense": "Other",
     "odometerReading": "Odometer",
-    "plateLine": "Plate: {plate}"
+    "plateLine": "Plate: {plate}",
+    "fuelValue": "Fuel value (litres × price)",
+    "tips": "Tips",
+    "tipsHint": "Enter what you actually paid; anything above the fuel value is recorded as tips.",
+    "tipsTotal": "Total tips"
   },
   "fuel": {
     "title": "Fuel prices",
@@ -666,7 +670,9 @@
     "perLiter": "EGP/L",
     "add": "Add fuel type",
     "edit": "Edit price",
-    "hint": "Litre prices used to work out fuel costs automatically. Update them when prices change."
+    "hint": "Litre prices used to work out fuel costs automatically. Update them when prices change.",
+    "deleteTitle": "Delete {name}?",
+    "deleteHint": "Past expenses are not affected."
   },
   "export": {
     "title": "Export report",
@@ -773,7 +779,9 @@
     "more": "More",
     "thisMonth": "This month",
     "allDetails": "All details",
-    "net": "Net"
+    "net": "Net",
+    "loansAndInstallments": "Loans & installments",
+    "association": "Association"
   },
   "stats": {
     "title": "Statistics",
@@ -873,5 +881,69 @@
     "reminderTitle": "Association 💰",
     "reminderMonth": "Your turn in {name} this month: {amount} EGP on {date}",
     "reminderDay": "Today you receive {name}: {amount} EGP"
+  },
+  "modules": {
+    "title": "App sections",
+    "hint": "\"On\" switches a section (and its reminders) on or off completely. \"Show\" only shows or hides it on the home screen.",
+    "enabled": "On",
+    "shown": "Show",
+    "custody": "Custody & people"
+  },
+  "recover": {
+    "forgot": "Forgot PIN?",
+    "title": "Recover PIN",
+    "deviceHint": "Confirm you own this phone with your fingerprint, face or phone passcode, then choose a new PIN.",
+    "useDevice": "Use the phone lock",
+    "deviceReason": "Confirm it is you to recover your Masarefy PIN",
+    "deviceFailed": "Phone lock was not confirmed. Answer your security question.",
+    "useQuestion": "Use the security question",
+    "answerHint": "Answer",
+    "check": "Confirm",
+    "wrongAnswer": "Wrong answer",
+    "tooMany": "Too many wrong answers. Use the phone lock.",
+    "emailSoon": "Sending a recovery code to {email} will work once the mail server is set up.",
+    "emailNone": "Add your e-mail in Settings to receive a recovery code when this service is on."
+  },
+  "wizard": {
+    "stepOf": "{n} of {total}",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Start using the app",
+    "protectNow": "Turn on protection",
+    "languageTitle": "Choose your language",
+    "detailsTitle": "Your details",
+    "email": "E-mail",
+    "emailHint": "To recover your PIN if you forget it.",
+    "needName": "Enter your name",
+    "badEmail": "Invalid e-mail",
+    "protectedDone": "Protection is on ✓",
+    "failed": "Something went wrong, try again",
+    "recoveryTitle": "Security question",
+    "recoveryHint": "If you forget your PIN and cannot use the phone lock, you will answer this.",
+    "question": "Question",
+    "customQuestion": "Your question",
+    "answer": "Answer",
+    "needAnswer": "Pick a question and type an answer (2+ letters)",
+    "q": {
+      "mother": "Your mother's first name?",
+      "school": "Name of your first school?",
+      "friend": "Your best childhood friend?",
+      "city": "City you were born in?",
+      "custom": "My own question…"
+    },
+    "accountsTitle": "Accounts and opening balances",
+    "accountsHint": "Cash on hand now; add bank accounts or cards if you like.",
+    "cashBalance": "Cash balance",
+    "addAccount": "Add account",
+    "openingBalance": "Current balance",
+    "salaryHint": "A reminder on payday; enter the amount to record it as income every month.",
+    "salaryAmount": "Salary amount",
+    "carTitle": "Your car",
+    "carHint": "Add your car to track fuel, service and consumption.",
+    "needCar": "Fill in name, make and year, or tap Skip",
+    "remindersHint": "A daily reminder to record your spending; change the times in Settings.",
+    "doneTitle": "All set 🎉",
+    "doneHint": "You can change anything later from More."
   }
 }

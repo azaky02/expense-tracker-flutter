@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/settings/settings_provider.dart';
+import '../../../core/settings/settings_state.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/color_utils.dart';
 import '../../../core/widgets/ds_widgets.dart';
@@ -208,9 +209,10 @@ class HomeActions extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     label,
-                    maxLines: 1,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13),
+                    style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 12, height: 1.1),
                   ),
                 ],
               ),
@@ -219,6 +221,7 @@ class HomeActions extends ConsumerWidget {
         ),
       ),
     );
+    final settings = ref.watch(settingsProvider);
     final surface = Theme.of(context).colorScheme.surface;
     final onSurface = Theme.of(context).colorScheme.primary;
     return IntrinsicHeight(
@@ -256,27 +259,34 @@ class HomeActions extends ConsumerWidget {
                 ),
                 Row(
                   children: [
-                    tile(
-                      Icons.directions_car_filled_rounded,
-                      'cars.car'.tr(),
-                      const Color(0xFFF6E7C4),
-                      const Color(0xFF7A5A12),
-                      () => startCarExpense(context, ref),
-                    ),
-                    tile(
-                      Icons.account_balance_rounded,
-                      'home.loans'.tr(),
-                      const Color(0xFFE9DDF8),
-                      const Color(0xFF6D28D9),
-                      () => context.push('/installments?kind=loan'),
-                    ),
-                    tile(
-                      Icons.event_repeat_rounded,
-                      'installments.kindInstallment'.tr(),
-                      const Color(0xFFF59E0B),
-                      Colors.white,
-                      () => context.push('/installments?kind=installment'),
-                    ),
+                    if (settings.moduleShown(AppModule.cars.key))
+                      tile(
+                        Icons.directions_car_filled_rounded,
+                        'cars.car'.tr(),
+                        const Color(0xFFF6E7C4),
+                        const Color(0xFF7A5A12),
+                        () => startCarExpense(context, ref),
+                      ),
+                    if (settings.moduleShown(AppModule.installments.key))
+                      tile(
+                        Icons.account_balance_rounded,
+                        'home.loansAndInstallments'.tr(),
+                        const Color(0xFFE9DDF8),
+                        const Color(0xFF6D28D9),
+                        () => context.push('/installments'),
+                      ),
+                    if (settings.moduleShown(AppModule.associations.key))
+                      tile(
+                        Icons.groups_2_rounded,
+                        'home.association'.tr(),
+                        const Color(0xFFF59E0B),
+                        Colors.white,
+                        () => context.push('/associations'),
+                      ),
+                    if (!settings.moduleShown(AppModule.cars.key) &&
+                        !settings.moduleShown(AppModule.installments.key) &&
+                        !settings.moduleShown(AppModule.associations.key))
+                      tile(Icons.insights_rounded, 'stats.title'.tr(), const Color(0xFFDDEFE6), DS.primary, () => context.push('/stats')),
                   ],
                 ),
               ],
@@ -317,15 +327,21 @@ class HomeActions extends ConsumerWidget {
 
 /// Every other section, from the "more" tile.
 void showHomeMoreSheet(BuildContext context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  final st = container.read(settingsProvider);
+  bool on(AppModule m) => st.moduleEnabled(m.key);
   final items = <(IconData, String, String)>[
-    (Icons.insights_rounded, 'stats.title', '/stats'),
-    (Icons.groups_2_outlined, 'associations.title', '/associations'),
-    (Icons.handshake_outlined, 'home.loan', '/ledger/new'),
-    (Icons.directions_car_filled_outlined, 'home.myCars', '/cars'),
-    (Icons.account_balance_wallet_outlined, 'accounts.title', '/accounts'),
-    (Icons.pie_chart_outline_rounded, 'home.budgets', '/budgets'),
-    (Icons.bar_chart_rounded, 'reports.title', '/reports'),
-    (Icons.local_gas_station_outlined, 'fuel.title', '/fuel-prices'),
+    if (on(AppModule.stats)) (Icons.insights_rounded, 'stats.title', '/stats'),
+    if (on(AppModule.installments)) (Icons.account_balance_rounded, 'home.loansAndInstallments', '/installments'),
+    if (on(AppModule.associations)) (Icons.groups_2_outlined, 'associations.title', '/associations'),
+    if (on(AppModule.custody)) (Icons.handshake_outlined, 'home.loan', '/ledger/new'),
+    if (on(AppModule.custody)) (Icons.people_alt_outlined, 'nav.people', '/people'),
+    if (on(AppModule.cars)) (Icons.directions_car_filled_outlined, 'home.myCars', '/cars'),
+    if (on(AppModule.cars)) (Icons.local_gas_station_outlined, 'fuel.title', '/fuel-prices'),
+    if (on(AppModule.accounts)) (Icons.account_balance_wallet_outlined, 'accounts.title', '/accounts'),
+    if (on(AppModule.budgets)) (Icons.pie_chart_outline_rounded, 'home.budgets', '/budgets'),
+    if (on(AppModule.reports)) (Icons.bar_chart_rounded, 'reports.title', '/reports'),
+    (Icons.dashboard_customize_outlined, 'modules.title', '/modules'),
   ];
   showModalBottomSheet<void>(
     context: context,
@@ -344,7 +360,11 @@ void showHomeMoreSheet(BuildContext context) {
                   borderRadius: BorderRadius.circular(DS.radius),
                   onTap: () {
                     Navigator.pop(ctx);
-                    context.push(route);
+                    if (route == '/people') {
+                      context.go(route);
+                    } else {
+                      context.push(route);
+                    }
                   },
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,

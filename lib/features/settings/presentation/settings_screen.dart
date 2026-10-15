@@ -56,6 +56,8 @@ class SettingsScreen extends ConsumerWidget {
             _Item(Icons.account_balance_wallet_outlined, 'accounts.title'.tr(), () => context.push('/accounts')),
             _Item(Icons.credit_card, 'settings.cards'.tr(), () => context.push('/cards')),
             _Item(Icons.category_outlined, 'categories.manageCategories'.tr(), () => context.push('/categories')),
+            _Item(Icons.dashboard_customize_outlined, 'modules.title'.tr(), () => context.push('/modules')),
+            _Item(Icons.people_alt_outlined, 'nav.people'.tr(), () => context.go('/people')),
             _Item(Icons.event_repeat, 'installments.title'.tr(), () => context.push('/installments')),
             _Item(Icons.groups_2_outlined, 'associations.title'.tr(), () => context.push('/associations')),
             _Item(Icons.directions_car_outlined, 'cars.title'.tr(), () => context.push('/cars')),
@@ -73,6 +75,12 @@ class SettingsScreen extends ConsumerWidget {
               trailing: settings.userName,
             ),
             _Item(Icons.phone_iphone, 'setup.phone'.tr(), null, trailing: settings.userPhone),
+            _Item(
+              Icons.mail_outline,
+              'wizard.email'.tr(),
+              () => _editEmail(context, ref, settings.userEmail),
+              trailing: settings.userEmail,
+            ),
           ]),
           _Section('settings.sectionPreferences'.tr(), [
             _Item(Icons.language, 'settings.language'.tr(), () async {
@@ -117,6 +125,32 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _editEmail(BuildContext context, WidgetRef ref, String current) async {
+    final c = TextEditingController(text: current);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('wizard.email'.tr()),
+        content: TextField(
+          controller: c,
+          autofocus: true,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(hintText: 'name@example.com'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr())),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(88, 44)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('common.save'.tr()),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) await ref.read(settingsProvider.notifier).setUserEmail(c.text.trim());
+    c.dispose();
   }
 
   Future<void> _editName(BuildContext context, WidgetRef ref, String current) async {

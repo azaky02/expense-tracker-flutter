@@ -1,6 +1,12 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/db/database.dart';
+import '../../../core/db/database_provider.dart';
+import '../../../core/db/seed.dart';
+import '../../../core/db/tables.dart';
 import '../../../core/settings/settings_provider.dart';
 import '../../../core/settings/settings_state.dart';
 import '../../installments/data/installment_reminders.dart';
@@ -58,5 +64,40 @@ Future<void> rescheduleGeneralReminders(SettingsState s) async {
 final generalRemindersProvider = Provider<void>((ref) {
   ref.listen(settingsProvider.select((s) => (s.loaded, s.dailyReminder, s.reminderTimes.join(','), s.salaryDay)), (_, next) {
     if (next.$1) rescheduleGeneralReminders(ref.read(settingsProvider));
+  }, fireImmediately: true);
+});
+
+const _lastSalaryKey = 'salary.lastRecordedMonth';
+
+/// On or after the salary day, records the monthly salary once as income on the cash account
+/// (under "راتب"). Returns true when it recorded one.
+Future<bool> recordSalaryIfDue(AppDatabase db, SettingsState s, {DateTime? now}) async {
+  if (s.salaryDay <= 0 || s.salaryAmount <= 0) return false;
+  final today = now ?? DateTime.now();
+  final last = DateTime(today.year, today.month + 1, 0).day;
+  final payDay = DateTime(today.year, today.month, s.salaryDay.clamp(1, last));
+  if (today.isBefore(payDay)) return false;
+  final prefs = await SharedPreferences.getInstance();
+  final key = '${today.year}-${today.month}';
+  if (prefs.getString(_lastSalaryKey) == key) return false;
+  final category = await seededCategoryId(db, 'seed-cat-10'); // راتب
+  final cash = await (db.select(db.accounts)..where((a) => a.type.equalsValue(AccountType.cash))).get();
+  if (category == null) return false;
+  await db.into(db.transactions).insert(TransactionsCompanion.insert(
+        amount: s.salaryAmount,
+        type: TransactionType.income,
+        categoryId: category,
+        paymentMethodType: PaymentMethodType.cash,
+        date: payDay,
+        note: const Value('راتب – تسجيل تلقائي'),
+        accountId: Value(cash.firstOrNull?.id),
+      ));
+  await prefs.setString(_lastSalaryKey, key);
+  return true;
+}
+
+final salaryIncomeProvider = Provider<void>((ref) {
+  ref.listen(settingsProvider.select((s) => (s.loaded, s.salaryDay, s.salaryAmount)), (_, next) {
+    if (next.$1) recordSalaryIfDue(ref.read(databaseProvider), ref.read(settingsProvider));
   }, fireImmediately: true);
 });

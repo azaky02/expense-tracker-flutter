@@ -32,6 +32,7 @@ List<(String, String)> carKpis(CarAnalytics a, Tr t) {
     (t('cars.totalLiters'), '${_n1.format(a.totalLiters)} ${t('cars.litersUnit')}'),
     (t('carReport.monthlyAvg'), money(a.avgMonthlySpend)),
     (t('carReport.kmPerMonth'), a.avgKmPerMonth == null ? '—' : '${_int.format(a.avgKmPerMonth!.round())} ${t('cars.km')}'),
+    (t('cars.tipsTotal'), money(a.totalTips)),
     (t('cars.odometer'), a.lastOdometer == null ? '—' : '${_int.format(a.lastOdometer)} ${t('cars.km')}'),
   ];
 }

@@ -6,6 +6,8 @@ import '../../../core/db/database.dart';
 import '../../../core/db/database_provider.dart';
 import '../../../core/db/seed.dart';
 import '../../../core/db/tables.dart';
+import '../../../core/settings/settings_provider.dart';
+import '../../../core/settings/settings_state.dart';
 import '../../../core/utils/currency.dart';
 import '../../installments/data/installment_reminders.dart';
 import '../../installments/data/installment_repository.dart' show dueDateFor;
@@ -165,8 +167,12 @@ Future<void> rescheduleAssociationReminders(List<AssociationWithSchedule> list) 
 }
 
 final associationRemindersProvider = Provider<void>((ref) {
-  ref.listen(associationsProvider, (_, next) {
-    final list = next.value;
-    if (list != null) rescheduleAssociationReminders(list);
-  }, fireImmediately: true);
+  void run() {
+    final list = ref.read(associationsProvider).value;
+    if (list == null) return;
+    rescheduleAssociationReminders(ref.read(settingsProvider).moduleEnabled(AppModule.associations.key) ? list : const []);
+  }
+
+  ref.listen(associationsProvider, (_, _) => run(), fireImmediately: true);
+  ref.listen(settingsProvider.select((s) => s.moduleEnabled(AppModule.associations.key)), (_, _) => run());
 });

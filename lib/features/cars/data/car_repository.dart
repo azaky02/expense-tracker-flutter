@@ -74,6 +74,7 @@ class CarExpenseInput {
     this.pricePerLiter,
     this.latitude,
     this.longitude,
+    this.tips,
     this.note,
     this.beneficiary,
   });
@@ -88,6 +89,7 @@ class CarExpenseInput {
   final double? pricePerLiter;
   final double? latitude;
   final double? longitude;
+  final double? tips;
   final String? note;
   final String? beneficiary;
 }
@@ -219,6 +221,7 @@ class CarRepository {
               fuelTypeId: Value(input.fuelTypeId),
               pricePerLiter: Value(input.pricePerLiter),
               latitude: Value(input.latitude),
+              tips: Value(input.tips),
               longitude: Value(input.longitude),
             ),
           );
@@ -267,6 +270,7 @@ class CarRepository {
           fuelTypeId: Value(input.fuelTypeId),
           pricePerLiter: Value(input.pricePerLiter),
           latitude: input.latitude == null ? const Value.absent() : Value(input.latitude),
+          tips: Value(input.tips),
           longitude: input.longitude == null ? const Value.absent() : Value(input.longitude),
         ),
       );

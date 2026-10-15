@@ -689,6 +689,22 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
 
   FuelType? _fuel(List<FuelType> types) => types.where((f) => f.id == _fuelTypeId).firstOrNull;
 
+  /// Litres × price of the chosen fuel (null when not a fuel fill).
+  double? _fuelValue(List<FuelType> types) {
+    final fuel = _fuel(types);
+    final liters = _parse(_liters.text);
+    if (fuel == null || liters <= 0) return null;
+    return double.parse((liters * fuel.pricePerLiter).toStringAsFixed(2));
+  }
+
+  /// What was paid above the fuel value (e.g. 1,120 paid for 1,112.50 of fuel → 7.50).
+  double _tips(List<FuelType> types) {
+    final value = _fuelValue(types);
+    if (value == null) return 0;
+    final diff = _parse(_amount.text) - value;
+    return diff > 0.004 ? double.parse(diff.toStringAsFixed(2)) : 0;
+  }
+
   bool get _isFuel => _categoryId != null && _categoryId == _fuelCategoryId;
 
   /// Litres × price fills the amount until the user types an amount themselves.
@@ -732,6 +748,7 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
         pricePerLiter: liters > 0 ? fuel?.pricePerLiter : null,
         latitude: _position?.latitude ?? _savedLat,
         longitude: _position?.longitude ?? _savedLng,
+        tips: _tips(types) > 0 ? _tips(types) : null,
         note: _note.text,
         beneficiary: _station.text,
       );
@@ -906,6 +923,39 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
             label: 'transactions.amount'.tr(),
             child: AmountField(controller: _amount, onChanged: (_) => setState(() => _amountEdited = true)),
           ),
+          if (_fuelValue(types) != null)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(color: DS.goldSoft, borderRadius: BorderRadius.circular(DS.radius)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('cars.fuelValue'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.textMuted)),
+                        AmountText(_fuelValue(types)!, size: 15, color: DS.text),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('cars.tips'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: DS.textMuted)),
+                        AmountText(_tips(types), size: 15, color: _tips(types) > 0 ? DS.gold : DS.textMuted),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (_fuelValue(types) != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('cars.tipsHint'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+            ),
           if (_isFuel && _fuel(types) != null && _parse(_amount.text) > 0 && _parse(_liters.text) == 0)
             Align(
               alignment: AlignmentDirectional.centerEnd,
@@ -1108,7 +1158,32 @@ class FuelPricesScreen extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Icons.local_gas_station_outlined),
                     title: Text(f.name),
-                    trailing: Text('${formatAmount(f.pricePerLiter)} ${'fuel.perLiter'.tr()}', style: theme.textTheme.titleSmall),
+                    subtitle: Text('${formatAmount(f.pricePerLiter)} ${'fuel.perLiter'.tr()}', style: theme.textTheme.titleSmall),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      IconButton(tooltip: 'common.edit'.tr(), icon: const Icon(Icons.edit_outlined), onPressed: () => _edit(context, ref, f)),
+                      IconButton(
+                        tooltip: 'common.delete'.tr(),
+                        icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                        onPressed: () async {
+                          final ok = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text('fuel.deleteTitle'.tr(namedArgs: {'name': f.name})),
+                              content: Text('fuel.deleteHint'.tr()),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr())),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error, minimumSize: const Size(88, 44)),
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: Text('common.delete'.tr()),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (ok == true) await ref.read(carRepositoryProvider).deleteFuelType(f.id);
+                        },
+                      ),
+                    ]),
                     onTap: () => _edit(context, ref, f),
                   ),
               ],
