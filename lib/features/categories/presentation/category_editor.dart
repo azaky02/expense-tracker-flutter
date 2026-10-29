@@ -27,6 +27,7 @@ Future<int?> showCategoryEditor(
   required CategoryType type,
   int? parentCategoryId,
   Category? existing,
+  VoidCallback? onDelete,
 }) async {
   final nameController = TextEditingController(text: existing?.name ?? '');
   final iconController = TextEditingController(text: existing?.icon ?? '📦');
@@ -83,6 +84,16 @@ Future<int?> showCategoryEditor(
           ),
         ),
         actions: [
+          if (existing != null && onDelete != null)
+            TextButton.icon(
+              style: TextButton.styleFrom(foregroundColor: Theme.of(ctx).colorScheme.error),
+              onPressed: () {
+                Navigator.of(ctx).pop(false);
+                onDelete();
+              },
+              icon: const Icon(Icons.delete_outline),
+              label: Text('common.delete'.tr(context: ctx)),
+            ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text('common.cancel'.tr(context: ctx)),

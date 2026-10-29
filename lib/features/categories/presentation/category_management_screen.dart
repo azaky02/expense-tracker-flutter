@@ -89,7 +89,14 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
   CategoryType get _currentType => _tabController.index == 0 ? CategoryType.expense : CategoryType.income;
 
   Future<void> _openEditor({required CategoryType type, int? parentCategoryId, Category? existing}) async {
-    await showCategoryEditor(context, ref, type: type, parentCategoryId: parentCategoryId, existing: existing);
+    await showCategoryEditor(
+      context,
+      ref,
+      type: type,
+      parentCategoryId: parentCategoryId,
+      existing: existing,
+      onDelete: existing == null || CategoryRepository.isProtected(existing) ? null : () => _confirmDelete(existing),
+    );
   }
 
   Future<void> _confirmDelete(Category category) async {
