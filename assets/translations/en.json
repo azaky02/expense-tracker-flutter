@@ -133,7 +133,11 @@
     "color": "Color",
     "mainHint": "A new item such as Education or Gifts",
     "subHint": "Inside an existing item, e.g. Lessons under Education",
-    "chooseMain": "Choose the main item"
+    "chooseMain": "Choose the main item",
+    "protected": "Built-in item used by another section – you can rename it but not delete it.",
+    "moveBeforeDelete": "\"{name}\" has {n} transactions. Choose where to move them before deleting:",
+    "deleteMoved": "{n} transactions will be moved and \"{name}\" with its sub-items deleted.",
+    "deleted": "Deleted"
   },
   "cards": {
     "paymentMethods": "Payment methods",

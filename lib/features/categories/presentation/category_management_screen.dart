@@ -1,3 +1,4 @@
+import '../data/category_repository.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,20 +37,23 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
     final choice = await showModalBottomSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(
-            leading: const Icon(Icons.folder_outlined),
-            title: Text('categories.addCategory'.tr()),
-            subtitle: Text('categories.mainHint'.tr()),
-            onTap: () => Navigator.pop(ctx, 'main'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.subdirectory_arrow_left),
-            title: Text('categories.addSubCategory'.tr()),
-            subtitle: Text('categories.subHint'.tr()),
-            onTap: () => Navigator.pop(ctx, 'sub'),
-          ),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.folder_outlined),
+              title: Text('categories.addCategory'.tr()),
+              subtitle: Text('categories.mainHint'.tr()),
+              onTap: () => Navigator.pop(ctx, 'main'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.subdirectory_arrow_left),
+              title: Text('categories.addSubCategory'.tr()),
+              subtitle: Text('categories.subHint'.tr()),
+              onTap: () => Navigator.pop(ctx, 'sub'),
+            ),
+          ],
+        ),
       ),
     );
     if (choice == null || !mounted) return;
@@ -61,18 +65,21 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
       builder: (ctx) => SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
-          child: ListView(shrinkWrap: true, children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text('categories.chooseMain'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
-            ),
-            for (final n in tree)
-              ListTile(
-                leading: Text(n.main.icon, style: const TextStyle(fontSize: 22)),
-                title: Text(n.main.name),
-                onTap: () => Navigator.pop(ctx, n.main.id),
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Text('categories.chooseMain'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
               ),
-          ]),
+              for (final n in tree)
+                ListTile(
+                  leading: Text(n.main.icon, style: const TextStyle(fontSize: 22)),
+                  title: Text(n.main.name),
+                  onTap: () => Navigator.pop(ctx, n.main.id),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -86,19 +93,82 @@ class _CategoryManagementScreenState extends ConsumerState<CategoryManagementScr
   }
 
   Future<void> _confirmDelete(Category category) async {
+    final repo = ref.read(categoryRepositoryProvider);
+    if (await repo.hasProtected(category.id)) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('categories.protected'.tr())));
+      return;
+    }
+    final used = await repo.usageCount(category.id);
+    if (!mounted) return;
+    int? moveTo;
+    if (used > 0) {
+      final tree = ref.read(categoryTreeProvider(category.type)).value ?? const [];
+      final excluded = <int>{
+        category.id,
+        for (final n in tree)
+          if (n.main.id == category.id) ...n.children.map((c) => c.id),
+      };
+      moveTo = await showModalBottomSheet<int>(
+        context: context,
+        isScrollControlled: true,
+        builder: (ctx) => SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.75),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'categories.moveBeforeDelete'.tr(namedArgs: {'name': category.name, 'n': '$used'}),
+                    style: Theme.of(ctx).textTheme.titleSmall,
+                  ),
+                ),
+                for (final n in tree)
+                  if (!excluded.contains(n.main.id)) ...[
+                    ListTile(
+                      leading: Text(n.main.icon, style: const TextStyle(fontSize: 20)),
+                      title: Text(n.main.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      onTap: () => Navigator.pop(ctx, n.main.id),
+                    ),
+                    for (final c in n.children)
+                      if (!excluded.contains(c.id))
+                        ListTile(
+                          contentPadding: const EdgeInsetsDirectional.only(start: 40, end: 16),
+                          leading: Text(c.icon, style: const TextStyle(fontSize: 18)),
+                          title: Text('${n.main.name} › ${c.name}'),
+                          onTap: () => Navigator.pop(ctx, c.id),
+                        ),
+                  ],
+              ],
+            ),
+          ),
+        ),
+      );
+      if (moveTo == null || !mounted) return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('categories.deleteCategory'.tr()),
-        content: Text('categories.deleteConfirm'.tr(namedArgs: {'name': category.name})),
+        content: Text(
+          used > 0
+              ? 'categories.deleteMoved'.tr(namedArgs: {'name': category.name, 'n': '$used'})
+              : 'categories.deleteConfirm'.tr(namedArgs: {'name': category.name}),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text('common.cancel'.tr())),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text('common.delete'.tr())),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('common.delete'.tr()),
+          ),
         ],
       ),
     );
     if (confirmed == true) {
-      await ref.read(categoryRepositoryProvider).delete(category.id);
+      await repo.delete(category.id, moveTo: moveTo);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('categories.deleted'.tr())));
     }
   }
 
@@ -193,7 +263,9 @@ class _CategoryList extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(icon: const Icon(Icons.edit, size: 18), onPressed: () => onEdit(child, type)),
-                          if (!child.isDefault)
+                          if (CategoryRepository.isProtected(child))
+                            Tooltip(message: 'categories.protected'.tr(), child: const Icon(Icons.lock_outline, size: 18))
+                          else
                             IconButton(icon: const Icon(Icons.delete_outline, size: 18), onPressed: () => onDelete(child)),
                         ],
                       ),
@@ -212,7 +284,7 @@ class _CategoryList extends ConsumerWidget {
                         label: Text('common.edit'.tr()),
                         onPressed: () => onEdit(node.main, type),
                       ),
-                      if (!node.main.isDefault)
+                      if (!CategoryRepository.isProtected(node.main))
                         TextButton.icon(
                           icon: const Icon(Icons.delete_outline, size: 18),
                           label: Text('common.delete'.tr()),
