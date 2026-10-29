@@ -1,20 +1,16 @@
-import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
-import '../../../core/security/lock_provider.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/widgets/ds_widgets.dart';
 import '../data/car_analytics.dart';
 import '../data/car_repository.dart';
 import 'car_report_export.dart';
+import '../../../core/utils/file_share.dart';
 
 String _n1(double v) => NumberFormat('#,##0.0', 'en').format(v);
 String _km(int v) => NumberFormat.decimalPattern('en').format(v);
@@ -600,29 +596,22 @@ class _CarExportSheetState extends State<_CarExportSheet> {
     final rtl = lang == 'ar';
     final generated = 'export.generatedAt'.tr(namedArgs: {'date': DateFormat.yMMMd(lang).add_Hm().format(DateTime.now())});
     final carName = widget.a.car.car.name;
-    final box = context.findRenderObject() as RenderBox?;
     setState(() => _busy = true);
     try {
       final bytes = pdf
           ? await buildCarReportPdf(widget.a, trKey, rtl: rtl, generatedAt: generated)
           : buildCarReportXlsx(widget.a, trKey, rtl: rtl);
-      final dir = await getTemporaryDirectory();
       final stamp = DateFormat('yyyyMMdd', 'en').format(DateTime.now());
-      final safe = carName.replaceAll(RegExp(r'[\/:*?"<>|]'), '_');
-      final file = File(p.join(dir.path, 'Masarefy_${safe}_$stamp.${pdf ? 'pdf' : 'xlsx'}'));
-      await file.writeAsBytes(bytes);
+      final safe = carName.replaceAll(RegExp(r'[^\w؀-ۿ-]+'), '_');
       final title = 'carReport.titleFor'.tr(namedArgs: {'car': carName});
-      await LockNotifier.runWithoutLock(
-        () => SharePlus.instance.share(
-          ShareParams(
-            files: [
-              XFile(file.path, mimeType: pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
-            ],
-            subject: title,
-            text: title,
-            sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-          ),
-        ),
+      if (!mounted) return;
+      await shareFile(
+        context,
+        bytes: bytes,
+        name: 'Masarefy_${safe}_$stamp.${pdf ? 'pdf' : 'xlsx'}',
+        mimeType: pdf ? pdfMime : xlsxMime,
+        subject: title,
+        text: title,
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${'export.failed'.tr()}: $e')));

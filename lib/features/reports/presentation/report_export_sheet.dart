@@ -1,20 +1,16 @@
-import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../core/db/tables.dart';
-import '../../../core/security/lock_provider.dart';
 import '../../../core/theme/ds_tokens.dart';
 import '../../../core/settings/settings_provider.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../transactions/data/transaction_repository.dart';
 import '../../transactions/presentation/transaction_providers.dart';
 import '../data/report_export.dart';
+import '../../../core/utils/file_share.dart';
 
 enum _Period { month, last3, year, custom }
 
@@ -94,24 +90,16 @@ class _ExportSheetState extends ConsumerState<_ExportSheet> {
       final list = await ref.read(transactionRepositoryProvider).watchList(TransactionFilters(from: range.$1, to: range.$2)).first;
       final data = ReportData(from: range.$1, to: range.$2, userName: ref.read(settingsProvider).userName, transactions: list);
       final bytes = pdf ? await buildReportPdf(data, labels) : buildReportXlsx(data, labels);
-      final dir = await getTemporaryDirectory();
       final stamp = DateFormat('yyyyMMdd', 'en');
       final name = 'Masarefy_${stamp.format(range.$1)}-${stamp.format(range.$2)}.${pdf ? 'pdf' : 'xlsx'}';
-      final file = File(p.join(dir.path, name));
-      await file.writeAsBytes(bytes);
       if (!mounted) return;
-      final box = context.findRenderObject() as RenderBox?;
-      await LockNotifier.runWithoutLock(
-        () => SharePlus.instance.share(
-          ShareParams(
-            files: [
-              XFile(file.path, mimeType: pdf ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
-            ],
-            subject: '${labels.title} – ${labels.period}',
-            text: '${labels.title}\n${labels.period}',
-            sharePositionOrigin: box == null ? null : box.localToGlobal(Offset.zero) & box.size,
-          ),
-        ),
+      await shareFile(
+        context,
+        bytes: bytes,
+        name: name,
+        mimeType: pdf ? pdfMime : xlsxMime,
+        subject: '${labels.title} – ${labels.period}',
+        text: '${labels.title} – ${labels.period}',
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('export.failed'.tr())));

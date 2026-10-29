@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -298,17 +299,19 @@ class TransactionFormState extends ConsumerState<TransactionForm> {
               onTap: _pickPerson,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 6),
-            child: Row(
-              children: [
-                Icon(Icons.attach_file, size: 20, color: theme.colorScheme.primary),
-                const SizedBox(width: 6),
-                Text('${'transactions.attachment'.tr()} (${'common.optional'.tr()})', style: theme.textTheme.labelLarge),
-              ],
+          // Receipt photos are files on the phone; the browser version (PWA) has no file system.
+          if (!kIsWeb)
+            Padding(
+              padding: const EdgeInsets.only(top: 12, bottom: 6),
+              child: Row(
+                children: [
+                  Icon(Icons.attach_file, size: 20, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text('${'transactions.attachment'.tr()} (${'common.optional'.tr()})', style: theme.textTheme.labelLarge),
+                ],
+              ),
             ),
-          ),
-          _attachment(theme),
+          if (!kIsWeb) _attachment(theme),
         ],
       ],
     );

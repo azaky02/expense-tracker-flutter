@@ -1,16 +1,13 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../core/db/database_provider.dart';
 import '../../../core/security/lock_provider.dart';
+import '../../../core/utils/file_share.dart';
 import '../../../core/widgets/ds_widgets.dart';
 import '../data/backup_service.dart';
 
@@ -90,13 +87,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     setState(() => _busy = true);
     try {
       final content = await _service.export(password);
-      final dir = await getTemporaryDirectory();
       final stamp = DateFormat('yyyyMMdd_HHmm').format(DateTime.now());
-      final file = File(p.join(dir.path, 'Masarefy_backup_$stamp.masarefy'));
-      await file.writeAsString(content);
-      await LockNotifier.runWithoutLock(
-        () => SharePlus.instance.share(ShareParams(files: [XFile(file.path)], subject: 'Masarefy backup $stamp')),
-      );
+      if (!mounted) return;
+      await shareTextFile(context, content: content, name: 'Masarefy_backup_$stamp.masarefy', subject: 'Masarefy backup $stamp');
     } catch (e) {
       _toast('backup.exportFailed'.tr());
     } finally {
