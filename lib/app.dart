@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -87,10 +88,25 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
           // was being filled in is still there after unlocking.
           builder: (context, child) {
             final locked = settings.appLockEnabled && settings.hasOnboarded && !ref.watch(lockProvider) && ref.watch(splashDoneProvider);
-            return Stack(children: [
+            final app = Stack(children: [
               child ?? const SizedBox(),
               if (locked) const Positioned.fill(child: LockGate()),
             ]);
+            // In a wide browser window (PWA on a computer) keep the phone layout, centred.
+            final width = MediaQuery.sizeOf(context).width;
+            if (!kIsWeb || width <= 600) return app;
+            return ColoredBox(
+              color: const Color(0xFF050B08),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: MediaQuery(
+                    data: MediaQuery.of(context).copyWith(size: Size(480, MediaQuery.sizeOf(context).height)),
+                    child: ClipRect(child: app),
+                  ),
+                ),
+              ),
+            );
           },
           debugShowCheckedModeBanner: false,
           localizationsDelegates: context.localizationDelegates,
