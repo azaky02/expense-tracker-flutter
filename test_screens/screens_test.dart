@@ -129,6 +129,7 @@ void main() {
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3;
     tester.platformDispatcher.platformBrightnessTestValue = brightness;
+    // ignore: invalid_use_of_visible_for_testing_member -- test-only mock preferences
     SharedPreferences.setMockInitialValues({
       'settings.hasOnboarded': onboarded,
       'settings.userName': 'عمرو',
@@ -150,7 +151,7 @@ void main() {
     final original = FlutterError.onError;
     FlutterError.onError = (d) {
       // ignore: avoid_print
-      print('FLUTTER ERROR: ' + d.exceptionAsString() + ' | ' + d.stack.toString().split(String.fromCharCode(10)).take(12).join(' || '));
+      print('FLUTTER ERROR: ${d.exceptionAsString()} | ${d.stack.toString().split(String.fromCharCode(10)).take(12).join(' || ')}');
       original?.call(d);
     };
     await tester.pumpWidget(RepaintBoundary(
