@@ -210,7 +210,11 @@
     "overAmount": "زيادة {amount}",
     "perDay": "متاح {amount}/يوم",
     "projectedOver": "متوقع {amount} آخر الشهر",
-    "lastMonth": "الشهر اللي فات {amount}"
+    "lastMonth": "الشهر اللي فات {amount}",
+    "cycle": "الدورة من {from} لحد {to}",
+    "weeks": "تقسيم الميزانية على الأسابيع",
+    "weekN": "أسبوع {n}",
+    "thisWeek": "الأسبوع ده"
   },
   "dates": {
     "year": "السنة",

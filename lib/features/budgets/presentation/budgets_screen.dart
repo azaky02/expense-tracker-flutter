@@ -12,9 +12,16 @@ import '../../dashboard/presentation/dashboard_screen.dart';
 import '../../transactions/presentation/widgets/transaction_tile.dart';
 import '../data/budget_repository.dart';
 import 'budget_providers.dart';
+import '../../../core/settings/settings_provider.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../core/utils/currency.dart';
 
-final budgetsMonthProvider = NotifierProvider<MonthNotifier, DateTime>(MonthNotifier.new);
+class BudgetMonthNotifier extends MonthNotifier {
+  @override
+  DateTime build() => currentBudgetMonth(ref);
+}
+
+final budgetsMonthProvider = NotifierProvider<BudgetMonthNotifier, DateTime>(BudgetMonthNotifier.new);
 
 Color budgetColor(BuildContext context, BudgetStatus b) => switch (b.level) {
   BudgetLevel.ok => colorFromHex(b.category.color),
@@ -33,8 +40,12 @@ class BudgetsScreen extends ConsumerWidget {
     final async = ref.watch(budgetsForMonthProvider(month));
     final previous = ref.watch(budgetsForMonthProvider(DateTime(month.year, month.month - 1))).value ?? const <BudgetStatus>[];
     final lastMonthSpent = {for (final b in previous) b.category.id: b.spent};
-    final pace = MonthPace(month);
+    final salaryDay = ref.watch(settingsProvider.select((s) => s.salaryDay));
+    final (cycleStart, cycleEnd) = budgetCycleRange(month, salaryDay);
+    final pace = MonthPace.range(cycleStart, cycleEnd);
+    final daily = ref.watch(budgetDailySpendProvider(month)).value ?? const <DateTime, double>{};
     final theme = Theme.of(context);
+    final dateFmt = DateFormat('d/M', context.locale.languageCode);
     return Scaffold(
       appBar: AppBar(title: Text('budgets.screenTitle'.tr())),
       body: ListView(
@@ -43,7 +54,19 @@ class BudgetsScreen extends ConsumerWidget {
           AppCard(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Center(
-              child: MonthSelector(month: month, onChanged: (m) => ref.read(budgetsMonthProvider.notifier).set(m)),
+              child: Column(
+                children: [
+                  MonthSelector(month: month, onChanged: (m) => ref.read(budgetsMonthProvider.notifier).set(m)),
+                  if (salaryDay > 1)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Text(
+                        'budgets.cycle'.tr(namedArgs: {'from': dateFmt.format(cycleStart), 'to': dateFmt.format(cycleEnd)}),
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -64,6 +87,8 @@ class BudgetsScreen extends ConsumerWidget {
                   ]
                 : [
                     _BudgetOverview(list: list, pace: pace, lastMonth: previous.fold<double>(0, (s, b) => s + b.spent)),
+                    const SizedBox(height: 12),
+                    _WeeksCard(start: cycleStart, end: cycleEnd, limit: list.fold<double>(0, (s, b) => s + b.limit), daily: daily),
                     const SizedBox(height: 12),
                     for (final b in list)
                       Padding(
@@ -354,5 +379,86 @@ class _BudgetFacts extends StatelessWidget {
       if (lastMonth != null && lastMonth! > 0) 'budgets.lastMonth'.tr(namedArgs: {'amount': formatAmount(lastMonth!.roundToDouble())}),
     ];
     return Text(parts.join(' · '), style: style);
+  }
+}
+
+/// The cycle split into 4 weeks: each week's spending against its share of the total limit.
+class _WeeksCard extends StatelessWidget {
+  const _WeeksCard({required this.start, required this.end, required this.limit, required this.daily});
+  final DateTime start;
+  final DateTime end;
+  final double limit;
+  final Map<DateTime, double> daily;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fmt = DateFormat('dd/MM', context.locale.languageCode);
+    final totalDays = end.difference(start).inDays + 1;
+    final today = todayDateOnly();
+    final weeks = splitIntoWeeks(start, end);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('budgets.weeks'.tr(), style: theme.textTheme.titleSmall),
+          const SizedBox(height: 10),
+          for (var i = 0; i < weeks.length; i++) ...[
+            Builder(
+              builder: (context) {
+                final (ws, we) = weeks[i];
+                final days = we.difference(ws).inDays + 1;
+                final weekLimit = limit * days / totalDays;
+                final spent = daily.entries.where((e) => !e.key.isBefore(ws) && !e.key.isAfter(we)).fold<double>(0, (s, e) => s + e.value);
+                final ratio = weekLimit == 0 ? 0.0 : spent / weekLimit;
+                final current = !today.isBefore(ws) && !today.isAfter(we);
+                final color = ratio > 1 ? theme.colorScheme.error : (ratio >= 0.8 ? DS.warning : theme.colorScheme.secondary);
+                return Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: current ? DS.gold : theme.dividerColor.withValues(alpha: 0.4), width: current ? 1.5 : 1),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('budgets.weekN'.tr(namedArgs: {'n': '${i + 1}'}), style: theme.textTheme.labelLarge),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${fmt.format(ws)} – ${fmt.format(we)}',
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                          if (current) Text('budgets.thisWeek'.tr(), style: theme.textTheme.labelSmall?.copyWith(color: DS.gold)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: LinearProgressIndicator(value: ratio.clamp(0, 1).toDouble(), minHeight: 7, color: color),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          AmountText(spent, size: 13),
+                          Text(' / ', style: theme.textTheme.bodySmall),
+                          AmountText(weekLimit.roundToDouble(), size: 13, color: theme.colorScheme.onSurfaceVariant),
+                          const Spacer(),
+                          Text('${(ratio * 100).round()}%', style: theme.textTheme.labelLarge?.copyWith(color: color)),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            if (i < weeks.length - 1) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
   }
 }

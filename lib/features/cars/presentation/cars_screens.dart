@@ -950,7 +950,10 @@ class _CarExpenseFormScreenState extends ConsumerState<CarExpenseFormScreen> {
                 initialValue: _fuelTypeId,
                 items: [
                   for (final f in types)
-                    DropdownMenuItem(value: f.id, child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis)),
+                    DropdownMenuItem(
+                      value: f.id,
+                      child: Text('${f.name} · ${formatAmount(f.pricePerLiter)}', overflow: TextOverflow.ellipsis),
+                    ),
                 ],
                 onChanged: (v) => setState(() {
                   _fuelTypeId = v;
@@ -1146,31 +1149,41 @@ class FuelPricesScreen extends ConsumerWidget {
                     leading: const Icon(Icons.local_gas_station_outlined),
                     title: Text(f.name),
                     subtitle: Text('${formatAmount(f.pricePerLiter)} ${'fuel.perLiter'.tr()}', style: theme.textTheme.titleSmall),
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      IconButton(tooltip: 'common.edit'.tr(), icon: const Icon(Icons.edit_outlined), onPressed: () => _edit(context, ref, f)),
-                      IconButton(
-                        tooltip: 'common.delete'.tr(),
-                        icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                        onPressed: () async {
-                          final ok = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: Text('fuel.deleteTitle'.tr(namedArgs: {'name': f.name})),
-                              content: Text('fuel.deleteHint'.tr()),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr())),
-                                FilledButton(
-                                  style: FilledButton.styleFrom(backgroundColor: theme.colorScheme.error, minimumSize: const Size(88, 44)),
-                                  onPressed: () => Navigator.pop(ctx, true),
-                                  child: Text('common.delete'.tr()),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (ok == true) await ref.read(carRepositoryProvider).deleteFuelType(f.id);
-                        },
-                      ),
-                    ]),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'common.edit'.tr(),
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: () => _edit(context, ref, f),
+                        ),
+                        IconButton(
+                          tooltip: 'common.delete'.tr(),
+                          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                          onPressed: () async {
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: Text('fuel.deleteTitle'.tr(namedArgs: {'name': f.name})),
+                                content: Text('fuel.deleteHint'.tr()),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.cancel'.tr())),
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.error,
+                                      minimumSize: const Size(88, 44),
+                                    ),
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: Text('common.delete'.tr()),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (ok == true) await ref.read(carRepositoryProvider).deleteFuelType(f.id);
+                          },
+                        ),
+                      ],
+                    ),
                     onTap: () => _edit(context, ref, f),
                   ),
               ],

@@ -88,10 +88,12 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
           // was being filled in is still there after unlocking.
           builder: (context, child) {
             final locked = settings.appLockEnabled && settings.hasOnboarded && !ref.watch(lockProvider) && ref.watch(splashDoneProvider);
-            final app = Stack(children: [
-              child ?? const SizedBox(),
-              if (locked) const Positioned.fill(child: LockGate()),
-            ]);
+            final app = Stack(
+              children: [
+                child ?? const SizedBox(),
+                if (locked) const Positioned.fill(child: LockGate()),
+              ],
+            );
             // In a wide browser window (PWA on a computer) keep the phone layout, centred.
             final width = MediaQuery.sizeOf(context).width;
             if (!kIsWeb || width <= 600) return app;

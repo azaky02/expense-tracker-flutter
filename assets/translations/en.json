@@ -210,7 +210,11 @@
     "overAmount": "{amount} over",
     "perDay": "{amount}/day available",
     "projectedOver": "{amount} expected by month end",
-    "lastMonth": "last month {amount}"
+    "lastMonth": "last month {amount}",
+    "cycle": "Cycle {from} – {to}",
+    "weeks": "Weekly breakdown",
+    "weekN": "Week {n}",
+    "thisWeek": "This week"
   },
   "dates": {
     "year": "Year",

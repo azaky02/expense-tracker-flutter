@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 /// True once the opening splash has been shown (3 seconds at every cold start).
 class SplashDoneNotifier extends Notifier<bool> {
   /// Tests and screenshot runs skip the splash.

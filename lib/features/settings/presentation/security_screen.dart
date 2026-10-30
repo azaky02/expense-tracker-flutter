@@ -124,39 +124,52 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
         builder: (ctx, setSheet) => Padding(
           padding: EdgeInsets.fromLTRB(16, 0, 16, 16 + MediaQuery.of(ctx).viewInsets.bottom),
           child: SafeArea(
-            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              Text('wizard.recoveryTitle'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text('wizard.recoveryHint'.tr(), style: Theme.of(ctx).textTheme.bodySmall),
-              FieldLabel('wizard.question'.tr()),
-              DropdownButtonFormField<String>(
-                isExpanded: true,
-                initialValue: key,
-                items: [for (final q in recoveryQuestions) DropdownMenuItem(value: q, child: Text(q.tr(), overflow: TextOverflow.ellipsis))],
-                onChanged: (v) => setSheet(() => key = v ?? key),
-              ),
-              if (key == 'wizard.q.custom') ...[
-                FieldLabel('wizard.customQuestion'.tr()),
-                TextField(controller: custom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('wizard.recoveryTitle'.tr(), style: Theme.of(ctx).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text('wizard.recoveryHint'.tr(), style: Theme.of(ctx).textTheme.bodySmall),
+                FieldLabel('wizard.question'.tr()),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  initialValue: key,
+                  items: [
+                    for (final q in recoveryQuestions)
+                      DropdownMenuItem(
+                        value: q,
+                        child: Text(q.tr(), overflow: TextOverflow.ellipsis),
+                      ),
+                  ],
+                  onChanged: (v) => setSheet(() => key = v ?? key),
+                ),
+                if (key == 'wizard.q.custom') ...[FieldLabel('wizard.customQuestion'.tr()), TextField(controller: custom)],
+                FieldLabel('wizard.answer'.tr()),
+                TextField(
+                  controller: answer,
+                  decoration: InputDecoration(hintText: 'recover.answerHint'.tr()),
+                ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(error!, style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+                  ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () async {
+                    final q = key == 'wizard.q.custom' ? custom.text.trim() : key.tr();
+                    if (q.isEmpty || answer.text.trim().length < 2) {
+                      setSheet(() => error = 'wizard.needAnswer'.tr());
+                      return;
+                    }
+                    await _store.setRecovery(q, answer.text);
+                    if (ctx.mounted) Navigator.pop(ctx, true);
+                  },
+                  child: Text('common.save'.tr()),
+                ),
               ],
-              FieldLabel('wizard.answer'.tr()),
-              TextField(controller: answer, decoration: InputDecoration(hintText: 'recover.answerHint'.tr())),
-              if (error != null)
-                Padding(padding: const EdgeInsets.only(top: 6), child: Text(error!, style: TextStyle(color: Theme.of(ctx).colorScheme.error))),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () async {
-                  final q = key == 'wizard.q.custom' ? custom.text.trim() : key.tr();
-                  if (q.isEmpty || answer.text.trim().length < 2) {
-                    setSheet(() => error = 'wizard.needAnswer'.tr());
-                    return;
-                  }
-                  await _store.setRecovery(q, answer.text);
-                  if (ctx.mounted) Navigator.pop(ctx, true);
-                },
-                child: Text('common.save'.tr()),
-              ),
-            ]),
+            ),
           ),
         ),
       ),
@@ -258,8 +271,10 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    trailing: Text((_question == null ? 'security.setQuestion' : 'security.changeQuestion').tr(),
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary)),
+                    trailing: Text(
+                      (_question == null ? 'security.setQuestion' : 'security.changeQuestion').tr(),
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                    ),
                     onTap: _editQuestion,
                   ),
                   if (biometrics) ...[

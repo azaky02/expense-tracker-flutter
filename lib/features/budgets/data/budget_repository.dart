@@ -57,6 +57,33 @@ ORDER BY spent DESC''';
         });
   }
 
+  /// Spending per day on budgeted categories (and their sub-categories).
+  Stream<Map<DateTime, double>> watchDailySpend(DateTime start, DateTime end) {
+    const sql = '''
+SELECT t.date AS d, SUM(t.amount) AS s FROM transactions t
+JOIN categories tc ON tc.id = t.category_id
+WHERE t.type = 'expense' AND t.date BETWEEN ? AND ?
+  AND EXISTS (SELECT 1 FROM category_budgets b WHERE b.is_enabled = 1
+    AND (b.category_id = tc.id OR b.category_id = tc.parent_category_id))
+GROUP BY t.date''';
+    return _db
+        .customSelect(
+          sql,
+          variables: [Variable.withDateTime(start), Variable.withDateTime(end)],
+          readsFrom: {_db.categoryBudgets, _db.categories, _db.transactions},
+        )
+        .watch()
+        .map((rows) {
+          final out = <DateTime, double>{};
+          for (final r in rows) {
+            final d = r.read<DateTime>('d');
+            final k = DateTime(d.year, d.month, d.day);
+            out[k] = (out[k] ?? 0) + r.read<double>('s');
+          }
+          return out;
+        });
+  }
+
   /// One budget per (main) category: setting it again replaces the limit.
   Future<void> setBudget(int categoryId, double monthlyLimit) async {
     final existing = await (_db.select(_db.categoryBudgets)..where((b) => b.categoryId.equals(categoryId))).getSingleOrNull();
@@ -74,12 +101,15 @@ ORDER BY spent DESC''';
 
 /// Where a month stands in time, for spending-pace indicators (budgets and reports).
 class MonthPace {
-  MonthPace(DateTime month, {DateTime? now}) : month = DateTime(month.year, month.month) {
-    final today = now ?? DateTime.now();
-    totalDays = DateTime(month.year, month.month + 1, 0).day;
-    final current = today.year == month.year && today.month == month.month;
-    final past = DateTime(today.year, today.month).isAfter(this.month);
-    elapsedDays = current ? today.day : (past ? totalDays : 0);
+  MonthPace(DateTime month, {DateTime? now})
+    : this.range(DateTime(month.year, month.month), DateTime(month.year, month.month + 1, 0), now: now);
+
+  /// A period of whole days, both ends included (e.g. a salary-day budget cycle).
+  MonthPace.range(DateTime start, DateTime end, {DateTime? now}) : month = start {
+    final t = now ?? DateTime.now();
+    final today = DateTime(t.year, t.month, t.day);
+    totalDays = end.difference(start).inDays + 1;
+    elapsedDays = today.isBefore(start) ? 0 : (today.isAfter(end) ? totalDays : today.difference(start).inDays + 1);
   }
 
   final DateTime month;

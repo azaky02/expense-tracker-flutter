@@ -162,9 +162,11 @@ class _Alerts extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pending = ref.watch(pendingIncomingProvider).value ?? 0;
     final now = DateTime.now();
-    final budgets = (ref.watch(budgetsForMonthProvider(DateTime(now.year, now.month))).value ?? const <BudgetStatus>[])
-        .where((b) => b.level != BudgetLevel.ok)
-        .toList();
+    final budgets =
+        (ref.watch(budgetsForMonthProvider(budgetCycleMonthOf(now, ref.watch(settingsProvider.select((s) => s.salaryDay))))).value ??
+                const <BudgetStatus>[])
+            .where((b) => b.level != BudgetLevel.ok)
+            .toList();
     final cards = ref.watch(activeCardsProvider).value ?? const [];
     final due = <(String, int)>[];
     for (final c in cards) {

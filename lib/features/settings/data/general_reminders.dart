@@ -83,15 +83,19 @@ Future<bool> recordSalaryIfDue(AppDatabase db, SettingsState s, {DateTime? now})
   final category = await seededCategoryId(db, 'seed-cat-10'); // راتب
   final cash = await (db.select(db.accounts)..where((a) => a.type.equalsValue(AccountType.cash))).get();
   if (category == null) return false;
-  await db.into(db.transactions).insert(TransactionsCompanion.insert(
-        amount: s.salaryAmount,
-        type: TransactionType.income,
-        categoryId: category,
-        paymentMethodType: PaymentMethodType.cash,
-        date: payDay,
-        note: const Value('راتب – تسجيل تلقائي'),
-        accountId: Value(cash.firstOrNull?.id),
-      ));
+  await db
+      .into(db.transactions)
+      .insert(
+        TransactionsCompanion.insert(
+          amount: s.salaryAmount,
+          type: TransactionType.income,
+          categoryId: category,
+          paymentMethodType: PaymentMethodType.cash,
+          date: payDay,
+          note: const Value('راتب – تسجيل تلقائي'),
+          accountId: Value(cash.firstOrNull?.id),
+        ),
+      );
   await prefs.setString(_lastSalaryKey, key);
   return true;
 }
