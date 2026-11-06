@@ -10,10 +10,11 @@ import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/ds_widgets.dart';
 import '../data/ledger_repository.dart';
 import 'people_providers.dart';
+import '../../accounts/data/account_repository.dart';
+import '../../accounts/presentation/account_providers.dart';
+import '../../accounts/presentation/account_widgets.dart';
 import 'people_screen.dart';
 import '../../../core/utils/currency.dart';
-
-const _paymentMethods = ['cash', 'bank', 'transfer', 'other'];
 
 /// Shared transaction (PPL-03, mockup 12) or settlement (PPL-05, mockup 13) with a person.
 class LedgerEntryFormScreen extends ConsumerStatefulWidget {
@@ -32,7 +33,7 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
   final _amount = TextEditingController();
   final _description = TextEditingController();
   DateTime _date = todayDateOnly();
-  String _paymentMethod = 'cash';
+  int? _accountId;
   bool _notify = true;
   bool _saving = false;
 
@@ -74,11 +75,20 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
           amount: _amountValue,
           date: _date,
           description: _description.text,
-          paymentMethod: _paymentMethod,
+          paymentMethod: _accountName(),
           notifyOtherParty: !shared || _notify,
           signedIn: ref.read(syncControllerProvider).signedIn,
         );
     if (mounted) context.pop();
+  }
+
+  /// The chosen account (cash, Visa, ...) is kept on the entry by name.
+  String? _accountName() {
+    final accounts = ref.read(accountsProvider).value ?? const <AccountWithBalance>[];
+    for (final a in accounts) {
+      if (a.account.id == _accountId) return a.account.name;
+    }
+    return accounts.isEmpty ? null : accounts.first.account.name;
   }
 
   Future<void> _pickPerson(List<PersonWithBalance> people) async {
@@ -194,32 +204,33 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
               if (d != null) setState(() => _date = d);
             },
           ),
-          OptionalSection(
-            initiallyExpanded: _description.text.isNotEmpty,
-            summary: ['ledger.pay.$_paymentMethod'.tr(), if (_description.text.isNotEmpty) _description.text].join(' · '),
-            children: [
-              FieldLabel('ledger.paymentMethod'.tr()),
-              AppCard(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: RadioGroup<String>(
-                  groupValue: _paymentMethod,
-                  onChanged: (v) => setState(() => _paymentMethod = v ?? 'cash'),
-                  child: Column(
-                    children: [
-                      for (final m in _paymentMethods) RadioListTile<String>(value: m, dense: true, title: Text('ledger.pay.$m'.tr())),
-                    ],
-                  ),
-                ),
-              ),
-              FieldLabel('ledger.description'.tr()),
-              TextField(
-                controller: _description,
-                minLines: 1,
-                maxLines: 3,
-                decoration: InputDecoration(hintText: 'ledger.descriptionHint'.tr()),
-                onChanged: (_) => setState(() {}),
-              ),
-            ],
+          FieldLabel('transactions.account'.tr()),
+          Builder(
+            builder: (context) {
+              final accounts = ref.watch(accountsProvider).value ?? const <AccountWithBalance>[];
+              AccountWithBalance? acc;
+              for (final x in accounts) {
+                if (x.account.id == _accountId) acc = x;
+              }
+              acc ??= accounts.isEmpty ? null : accounts.first;
+              return PickerField(
+                text: acc?.account.name ?? 'accounts.choose'.tr(),
+                placeholder: acc == null,
+                trailingIcon: Icons.chevron_left,
+                leading: acc == null ? null : AccountBubble(acc, size: 28),
+                onTap: () async {
+                  final id = await showAccountPicker(context, selectedId: acc?.account.id);
+                  if (id != null) setState(() => _accountId = id);
+                },
+              );
+            },
+          ),
+          FieldLabel('transactions.notes'.tr()),
+          TextField(
+            controller: _description,
+            minLines: 2,
+            maxLines: 4,
+            decoration: InputDecoration(hintText: 'ledger.descriptionHint'.tr()),
           ),
           if (shared)
             SwitchListTile(
