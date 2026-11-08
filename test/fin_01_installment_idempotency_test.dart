@@ -2,7 +2,6 @@ import 'package:drift/native.dart';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:expense_tracker_flutter/core/db/database.dart';
 import 'package:expense_tracker_flutter/core/db/seed.dart';
-import 'package:expense_tracker_flutter/core/db/tables.dart';
 import 'package:expense_tracker_flutter/features/accounts/data/account_repository.dart';
 import 'package:expense_tracker_flutter/features/installments/data/installment_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
