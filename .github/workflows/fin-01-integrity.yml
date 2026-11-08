@@ -1,0 +1,31 @@
+name: FIN-01 Installment Integrity
+
+on:
+  push:
+    branches:
+      - fix/fin-01-installment-idempotency
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installment-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Analyze FIN-01 files
+        run: flutter analyze lib/features/installments/data/installment_repository.dart test/fin_01_installment_idempotency_test.dart
+      - name: FIN-01 regression tests
+        run: flutter test test/fin_01_installment_idempotency_test.dart --reporter expanded
+      - name: Existing installment regression tests
+        run: flutter test test/v5_features_test.dart --plain-name 'installment schedule clamps the due day and payments create an expense' --reporter expanded
