@@ -765,8 +765,12 @@ class SyncService {
     // when its account dependencies have not arrived on this device yet.
     final sourceSyncId = r['accountId'] as String?;
     final destinationSyncId = r['toAccountId'] as String?;
-    if (sourceSyncId != null && !accounts.containsKey(sourceSyncId)) return null;
-    if (destinationSyncId != null && !accounts.containsKey(destinationSyncId)) return null;
+    if (sourceSyncId != null && !accounts.containsKey(sourceSyncId)) {
+      return null;
+    }
+    if (destinationSyncId != null && !accounts.containsKey(destinationSyncId)) {
+      return null;
+    }
     if (r['type'] == TransactionType.transfer.name &&
         (sourceSyncId == null || destinationSyncId == null ||
             sourceSyncId == destinationSyncId)) return null;
