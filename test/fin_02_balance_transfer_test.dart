@@ -117,4 +117,50 @@ void main() {
     expect((await accounts.watchAccount(destination).first)!.balance, 50);
   });
 
+  test('FIN-02: concurrent retries with same key charge exactly once', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    final input = TransactionInput(
+      amount: 25, type: TransactionType.transfer, categoryId: category,
+      paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+      accountId: source, toAccountId: destination, idempotencyKey: 'fin02-retry-001',
+    );
+    final results = await Future.wait([
+      repo.create(input).then((_) => 'created').catchError((Object _) => 'rejected'),
+      repo.create(input).then((_) => 'created').catchError((Object _) => 'rejected'),
+    ]);
+    expect(results.where((result) => result == 'created').length, 1);
+    expect(results.where((result) => result == 'rejected').length, 1);
+    expect((await db.select(db.transactions).get()).length, 1);
+    expect((await accounts.watchAccount(source).first)!.balance, 75);
+    expect((await accounts.watchAccount(destination).first)!.balance, 75);
+  });
+
+  test('FIN-02: reject amounts smaller than one cent', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    for (final amount in [0.001, 0.005, 1.234, 10.999]) {
+      await expectLater(repo.create(TransactionInput(
+        amount: amount, type: TransactionType.transfer, categoryId: category,
+        paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+        accountId: source, toAccountId: destination,
+      )), throwsArgumentError);
+    }
+    expect(await db.select(db.transactions).get(), isEmpty);
+  });
+
 }
