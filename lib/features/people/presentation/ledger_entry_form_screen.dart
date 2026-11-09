@@ -1,4 +1,5 @@
 import 'package:url_launcher/url_launcher.dart';
+import 'whatsapp_message.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,7 +70,8 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
     setState(() => _saving = true);
     try {
       final repo = ref.read(ledgerRepositoryProvider);
-      final entryId = await repo.createEntry(
+      final previousBalance = (await repo.currentConfirmedBalance(personId)).net;
+      await repo.createEntry(
         personId: personId,
         kind: _kind,
         direction: direction,
@@ -81,6 +83,7 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
         signedIn: ref.read(syncControllerProvider).signedIn,
       );
       if (!mounted) return;
+      final currentBalance = (await repo.currentConfirmedBalance(personId)).net;
       final number = await repo.whatsAppNumber(personId);
       if (!mounted) return;
       final wantsShare = await showDialog<bool>(
@@ -96,25 +99,26 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
       );
       if (!mounted) return;
       if (wantsShare == true) {
-        final digits = (number ?? '').replaceAll(RegExp(r'[^0-9]'), '');
-        if (digits.isEmpty) {
+        final digits = whatsAppDigits(number);
+        if (digits == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('سجل رقم واتساب للشخص أولاً. المعاملة محفوظة.')),
+            const SnackBar(content: Text('رقم واتساب غير صالح. استخدم رقمًا بكود الدولة. المعاملة محفوظة.')),
           );
         } else {
           final selectedPerson = (ref.read(peopleWithBalancesProvider).value ?? const <PersonWithBalance>[])
               .where((p) => p.person.id == personId);
           final name = selectedPerson.isEmpty ? 'الطرف الآخر' : selectedPerson.first.person.name;
-          final message = [
-            'إشعار معاملة - مصروفي',
-            'الطرف: $name',
-            'النوع: ${_kind == LedgerKind.settlement ? 'تسوية' : 'عهدة'}',
-            'الاتجاه: ${direction == LedgerDirection.gave ? 'سلمت' : 'استلمت'}',
-            'المبلغ: ${_amountValue.toStringAsFixed(2)} EGP',
-            'التاريخ: ${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
-            if (_description.text.trim().isNotEmpty) 'الوصف: ${_description.text.trim()}',
-            'المرجع: $entryId',
-          ].join('\\n');
+          final message = buildLedgerWhatsAppMessage(
+            personName: name,
+            kind: _kind,
+            direction: direction,
+            amount: _amountValue,
+            date: _date,
+            previousBalance: previousBalance,
+            currentBalance: currentBalance,
+            confirmed: (currentBalance - previousBalance).abs() > 0.005,
+            description: _description.text,
+          );
           final uri = Uri.https('wa.me', '/$digits', {'text': message});
           if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
