@@ -561,6 +561,9 @@
     "recoveredNotice": "The previous data on this phone could not be opened (its encryption key was lost, usually after uninstalling and reinstalling), so the app started fresh. If you have a backup, restore it from More → Backup."
   },
   "installments": {
+    "alreadyPaid": "This installment is already paid. No additional charge was made.",
+    "invalidPayment": "Invalid installment number or payment amount.",
+    "paymentFailed": "Could not record the payment. Please try again.",
     "title": "Installments & loans",
     "add": "Add installment plan",
     "edit": "Edit installment plan",
