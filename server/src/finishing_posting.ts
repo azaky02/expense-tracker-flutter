@@ -21,7 +21,7 @@ export async function reserveFinishingPosting(
   if (!userId.trim() || !eventId.trim() || !/^[a-f0-9]{64}$/.test(payloadHash)) {
     throw new Error('invalid posting reservation');
   }
-  await tx.query(
+  const inserted = await tx.query(
     `INSERT INTO finishing_posting_requests (user_id,event_id,payload_hash)
      VALUES ($1,$2,$3) ON CONFLICT (user_id,event_id) DO NOTHING`,
     [userId, eventId, payloadHash],
@@ -38,5 +38,5 @@ export async function reserveFinishingPosting(
   }
   if (row.state === 'committed') return 'already_committed';
   // A reserved row may be retried; actual posting requires separate atomic server logic.
-  return 'already_reserved';
+  return (inserted.rowCount ?? 0) > 0 ? 'reserved' : 'already_reserved';
 }
