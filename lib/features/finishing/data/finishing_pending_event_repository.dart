@@ -62,4 +62,103 @@ class FinishingPendingEventRepository {
       );
     });
   }
+  /// Atomically stages a cost and its split; no account posting takes place.
+  /// All ids must remain stable across retries.
+  Future<void> enqueueCost({
+    required String eventId,
+    required String projectId,
+    required String tradeId,
+    required String occurredAt,
+    required int createdAt,
+    required int amountPiasters,
+    required int custodyPiasters,
+    required int personalPiasters,
+    required String description,
+    required String costType,
+    String? payee,
+  }) async {
+    if (amountPiasters <= 0 ||
+        custodyPiasters < 0 ||
+        personalPiasters < 0 ||
+        custodyPiasters + personalPiasters != amountPiasters) {
+      throw ArgumentError('invalid cost funding split');
+    }
+    if (!{'materials', 'labor', 'other'}.contains(costType)) {
+      throw ArgumentError.value(costType, 'costType');
+    }
+    if (description.trim().isEmpty) throw ArgumentError('description required');
+    await _db.transaction(() async {
+      final existing = await _db.customSelect(
+        'SELECT id FROM finishing_events WHERE id = ?',
+        variables: [Variable.withString(eventId)],
+      ).get();
+      if (existing.isNotEmpty) {
+        final detail = await _db.customSelect(
+          'SELECT trade_id, cost_type, amount_piasters, description, payee '
+          'FROM finishing_cost_details WHERE event_id = ?',
+          variables: [Variable.withString(eventId)],
+        ).getSingleOrNull();
+        final allocations = await _db.customSelect(
+          'SELECT funding_source, amount_piasters FROM finishing_allocations '
+          'WHERE event_id = ?',
+          variables: [Variable.withString(eventId)],
+        ).get();
+        final split = {
+          for (final row in allocations)
+            row.read<String>('funding_source'): row.read<int>('amount_piasters'),
+        };
+        if (detail == null ||
+            detail.read<String>('trade_id') != tradeId ||
+            detail.read<String>('cost_type') != costType ||
+            detail.read<int>('amount_piasters') != amountPiasters ||
+            detail.read<String>('description') != description ||
+            detail.read<String?>('payee') != payee ||
+            (split['client_custody'] ?? 0) != custodyPiasters ||
+            (split['personal'] ?? 0) != personalPiasters) {
+          throw StateError('duplicate event id with different cost');
+        }
+        await enqueue(
+          eventId: eventId,
+          projectId: projectId,
+          kind: 'cost',
+          occurredAt: occurredAt,
+          createdAt: createdAt,
+        );
+        return;
+      }
+      final trade = await _db.customSelect(
+        'SELECT id FROM finishing_trades WHERE id = ? AND project_id = ?',
+        variables: [Variable.withString(tradeId), Variable.withString(projectId)],
+      ).getSingleOrNull();
+      if (trade == null) throw StateError('trade does not belong to project');
+      await enqueue(
+        eventId: eventId,
+        projectId: projectId,
+        kind: 'cost',
+        occurredAt: occurredAt,
+        createdAt: createdAt,
+      );
+      await _db.customStatement(
+        'INSERT INTO finishing_cost_details '
+        '(event_id,trade_id,cost_type,amount_piasters,description,payee) '
+        'VALUES (?,?,?,?,?,?)',
+        [eventId, tradeId, costType, amountPiasters, description, payee],
+      );
+      if (custodyPiasters > 0) {
+        await _db.customStatement(
+          'INSERT INTO finishing_allocations '
+          '(id,event_id,funding_source,amount_piasters) VALUES (?,?,?,?)',
+          ['$eventId:custody', eventId, 'client_custody', custodyPiasters],
+        );
+      }
+      if (personalPiasters > 0) {
+        await _db.customStatement(
+          'INSERT INTO finishing_allocations '
+          '(id,event_id,funding_source,amount_piasters) VALUES (?,?,?,?)',
+          ['$eventId:personal', eventId, 'personal', personalPiasters],
+        );
+      }
+    });
+  }
+
 }
