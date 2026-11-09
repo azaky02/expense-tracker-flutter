@@ -188,7 +188,7 @@ class TransactionRepository {
     }
   }
 
-  Future<int> create(TransactionInput input) async {
+  Future<int> create(TransactionInput input) => _db.transaction(() async {
     await _validateFinancialInput(input);
     final id = await _db
         .into(_db.transactions)
@@ -209,9 +209,9 @@ class TransactionRepository {
         );
     await _upsertBeneficiary(input.beneficiaryName);
     return id;
-  }
+  });
 
-  Future<void> update(int id, TransactionInput input) async {
+  Future<void> update(int id, TransactionInput input) => _db.transaction(() async {
     await _validateFinancialInput(input);
     await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
       TransactionsCompanion(
@@ -229,7 +229,7 @@ class TransactionRepository {
       ),
     );
     await _upsertBeneficiary(input.beneficiaryName);
-  }
+  });
 
   Future<void> updateNote(int id, String note) {
     return (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(TransactionsCompanion(note: Value(note)));
