@@ -1,4 +1,5 @@
 import '../../../core/db/tables.dart';
+import '../data/ledger_repository.dart';
 
 /// Returns digits suitable for wa.me. Egyptian local mobiles are converted to +20.
 String? whatsAppDigits(String? raw) {
@@ -52,6 +53,46 @@ String buildLedgerWhatsAppMessage({
     'الرصيد الحالي: ${_money(currentBalance.abs())} جنيه — ${balanceDescription(currentBalance)}',
     if (!confirmed) pendingLabel.trim(),
     '',
+    'يرجى مراجعة البيانات وإبلاغي إذا كان هناك اختلاف.',
+    'تم إعداد الرسالة باستخدام تطبيق مصروفي.',
+  ].join('\n');
+}
+
+ 
+/// WhatsApp statement uses the same signed, confirmed-only running balances as the statement screen.
+String buildStatementWhatsAppMessage({
+  required String personName,
+  required List<StatementLine> lines,
+}) {
+  final balance = lines.isEmpty ? 0.0 : lines.last.runningBalance;
+  final obligations = lines.where((l) => l.entry.kind != LedgerKind.settlement)
+      .fold<double>(0, (sum, l) => sum + l.entry.amount);
+  final settlements = lines.where((l) => l.entry.kind == LedgerKind.settlement)
+      .fold<double>(0, (sum, l) => sum + l.entry.amount);
+  return [
+    '📋 كشف حساب مالي - مصروفي',
+    '',
+    'أهلاً $personName 👋',
+    'إليك تفاصيل المعاملات المؤكدة بيننا:',
+    '',
+    for (var i = 0; i < lines.length; i++) ...[
+      '━━━━━━━━━━━━',
+      'المعاملة ${i + 1} — ${_date(lines[i].entry.date)}',
+      'النوع: ${lines[i].entry.kind == LedgerKind.settlement ? 'تسوية' : 'عهدة'}',
+      'التفاصيل: ${lines[i].entry.direction == LedgerDirection.received ? 'استلمت منك' : 'سلمتك'} ${_money(lines[i].entry.amount)} جنيه',
+      if (lines[i].entry.description?.trim().isNotEmpty ?? false)
+        'ملاحظات: ${lines[i].entry.description!.trim()}',
+      'الرصيد بعد المعاملة: ${_money(lines[i].runningBalance.abs())} جنيه — ${balanceDescription(lines[i].runningBalance)}',
+    ],
+    '━━━━━━━━━━━━',
+    '',
+    '📊 ملخص كشف الحساب',
+    'عدد المعاملات: ${lines.length}',
+    'إجمالي العهد: ${_money(obligations)} جنيه',
+    'إجمالي التسويات: ${_money(settlements)} جنيه',
+    '💰 الرصيد الحالي: ${_money(balance.abs())} جنيه — ${balanceDescription(balance)}',
+    '',
+    'ملاحظة: كشف الحساب يشمل المعاملات المؤكدة فقط، ولا يشمل المعلقة أو الملغاة.',
     'يرجى مراجعة البيانات وإبلاغي إذا كان هناك اختلاف.',
     'تم إعداد الرسالة باستخدام تطبيق مصروفي.',
   ].join('\n');
