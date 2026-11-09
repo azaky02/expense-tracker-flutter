@@ -71,10 +71,12 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
           final repo = ref.read(ledgerRepositoryProvider);
           final usePhone = await repo.usesPhoneForWhatsApp(p.id);
           final number = await repo.whatsAppNumber(p.id);
-          if (mounted) setState(() {
+          if (mounted) {
+            setState(() {
             _usePhoneForWhatsApp = usePhone;
             _whatsApp.text = usePhone ? '' : (number ?? '');
-          });
+            });
+          }
         });
       }
     }
