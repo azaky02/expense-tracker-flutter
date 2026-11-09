@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../sync/sync_schema.dart';
 import 'connection/connection.dart';
 import 'tables.dart';
+import 'finishing_schema_v9.dart';
 
 export 'connection/connection.dart' show ensureDatabaseReadable;
 
@@ -41,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -51,6 +52,7 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('CREATE INDEX idx_transactions_category ON transactions(category_id);');
       await customStatement('CREATE INDEX idx_transactions_card ON transactions(card_id);');
       await createSyncObjects(this);
+      await createFinishingSchemaV9(this);
     },
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
@@ -123,6 +125,9 @@ class AppDatabase extends _$AppDatabase {
       if (from >= 5 && from < 8) {
         // v8: tips on car expenses.
         await m.addColumn(carExpenses, carExpenses.tips);
+      }
+      if (from < 9) {
+        await createFinishingSchemaV9(this);
       }
     },
   );
