@@ -52,7 +52,7 @@ export async function postFinishingClientAdvance(
       if (category.rowCount !== 1) throw new Error('trust category unavailable');
       // Project row must already exist; project creation/ownership API is a separate prerequisite.
       const balance = await t.query(
-        `SELECT 1 FROM finishing_project_balances WHERE user_id=$1 AND project_id=$2 FOR UPDATE`,
+        `SELECT 1 FROM finishing_project_balances WHERE user_id=$1 AND project_id=$2 AND financial_status='open' FOR UPDATE`,
         [userId, input.projectId],
       );
       if (balance.rowCount !== 1) throw new Error('project balance not initialized');
@@ -81,5 +81,6 @@ export async function postFinishingClientAdvance(
       );
       if (cash.rowCount !== 1) throw new Error('advance cash transaction collision');
     },
+    input.projectId,
   );
 }
