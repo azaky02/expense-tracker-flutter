@@ -163,4 +163,23 @@ void main() {
     expect(await db.select(db.transactions).get(), isEmpty);
   });
 
+  test('FIN-02: retry identity remains the synced transaction identity', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    final id = await repo.create(TransactionInput(
+      amount: 10, type: TransactionType.transfer, categoryId: category,
+      paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+      accountId: source, toAccountId: destination, idempotencyKey: 'fin02-stable-sync-id',
+    ));
+    final saved = await (db.select(db.transactions)..where((t) => t.id.equals(id))).getSingle();
+    expect(saved.syncId, 'fin02-stable-sync-id');
+  });
+
 }
