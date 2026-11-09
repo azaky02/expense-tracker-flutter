@@ -28,3 +28,25 @@ jobs:
         run: flutter analyze lib/features/accounts/data/account_repository.dart lib/core/db/database.dart lib/core/db/finishing_schema_v9.dart lib/features/finishing/domain/finishing_financial_rules.dart lib/features/finishing/data/finishing_pending_event_repository.dart lib/features/finishing/data/finishing_posting_preflight.dart lib/features/finishing/data/finishing_local_cost_posting.dart test/finishing_pending_event_repository_test.dart test/finishing_account_balance_test.dart test/finishing_local_cost_posting_test.dart test/finishing_schema_v9_test.dart test/finishing_financial_rules_test.dart
       - name: Finishing schema and accounting tests
         run: flutter test test/finishing_local_cost_posting_test.dart test/finishing_account_balance_test.dart test/finishing_schema_v9_test.dart test/finishing_financial_rules_test.dart test/finishing_pending_event_repository_test.dart --reporter expanded
+
+  finishing-server:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck server
+        run: npm run typecheck
+      - name: Run server unit tests
+        run: npm test
