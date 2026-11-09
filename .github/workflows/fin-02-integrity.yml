@@ -24,6 +24,6 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Analyze FIN-02 changes
-        run: flutter analyze lib/features/transactions/data/transaction_repository.dart lib/features/transactions/presentation/add_transaction_screen.dart test/fin_02_balance_transfer_test.dart
+        run: flutter analyze lib/core/sync/sync_service.dart lib/features/transactions/data/transaction_repository.dart lib/features/transactions/presentation/add_transaction_screen.dart test/fin_02_balance_transfer_test.dart
       - name: Run FIN-02 isolated regression tests
         run: flutter test test/fin_02_balance_transfer_test.dart --reporter expanded
