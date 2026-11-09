@@ -20,6 +20,59 @@ void main() {
       repo.enqueue(eventId: id, projectId: 'p1', kind: kind,
           occurredAt: '2026-11-09', createdAt: 1);
 
+  Future<void> addTrade() => db.customStatement(
+    "INSERT INTO finishing_trades(id,project_id,label) VALUES ('t1','p1','Paint')",
+  );
+
+  Future<void> cost({int custody = 7000, int personal = 3000, String trade = 't1'}) =>
+      repo.enqueueCost(
+        eventId: 'cost-1',
+        projectId: 'p1',
+        tradeId: trade,
+        occurredAt: '2026-11-09',
+        createdAt: 1,
+        amountPiasters: 10000,
+        custodyPiasters: custody,
+        personalPiasters: personal,
+        description: 'Paint supplies',
+        costType: 'materials',
+      );
+
+  test('atomic cost staging creates exactly one cost and two allocations', () async {
+    await addTrade();
+    await cost();
+    await cost();
+    final events = await db.customSelect(
+      "SELECT count(*) AS n FROM finishing_events WHERE id = 'cost-1'",
+    ).getSingle();
+    final split = await db.customSelect(
+      "SELECT sum(amount_piasters) AS total FROM finishing_allocations WHERE event_id = 'cost-1'",
+    ).getSingle();
+    expect(events.read<int>('n'), 1);
+    expect(split.read<int>('total'), 10000);
+  });
+
+  test('cost retry with different split is rejected', () async {
+    await addTrade();
+    await cost();
+    await expectLater(cost(custody: 6000, personal: 4000), throwsStateError);
+  });
+
+  test('invalid trade rolls back entire cost event', () async {
+    await expectLater(cost(), throwsStateError);
+    final rows = await db.customSelect(
+      "SELECT count(*) AS n FROM finishing_events WHERE id = 'cost-1'",
+    ).getSingle();
+    expect(rows.read<int>('n'), 0);
+  });
+
+  test('cost staging does not create real cash transaction', () async {
+    await addTrade();
+    await cost();
+    final row = await db.customSelect('SELECT count(*) AS n FROM transactions').getSingle();
+    expect(row.read<int>('n'), 0);
+  });
+
   test('same pending event retried creates only one row', () async {
     await enqueue();
     await enqueue();
