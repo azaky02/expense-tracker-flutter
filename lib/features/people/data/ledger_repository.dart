@@ -86,6 +86,34 @@ class LedgerRepository {
   LedgerRepository(this._db);
   final AppDatabase _db;
 
+  // WhatsApp contact preferences stay local: no phone number is sent to the
+  // sync server by this feature. Keys use the stable person sync id when present.
+  String _whatsAppKey(Person person) => 'people.whatsapp.${person.syncId ?? person.id}';
+
+  Future<String?> whatsAppNumber(int personId) async {
+    final person = await (_db.select(_db.people)..where((p) => p.id.equals(personId))).getSingleOrNull();
+    if (person == null) return null;
+    final value = await (_db.select(_db.meta)..where((m) => m.key.equals(_whatsAppKey(person)))).getSingleOrNull();
+    return value?.value == '@phone' ? person.phone : value?.value;
+  }
+
+  Future<bool> usesPhoneForWhatsApp(int personId) async {
+    final person = await (_db.select(_db.people)..where((p) => p.id.equals(personId))).getSingleOrNull();
+    if (person == null) return false;
+    return (await (_db.select(_db.meta)..where((m) => m.key.equals(_whatsAppKey(person)))).getSingleOrNull())?.value == '@phone';
+  }
+
+  Future<void> setWhatsAppNumber(int personId, {required bool usePhone, String? number}) async {
+    final person = await (_db.select(_db.people)..where((p) => p.id.equals(personId))).getSingle();
+    final key = _whatsAppKey(person);
+    final value = usePhone ? '@phone' : (number?.trim() ?? '');
+    if (value.isEmpty) {
+      await (_db.delete(_db.meta)..where((m) => m.key.equals(key))).go();
+    } else {
+      await _db.into(_db.meta).insertOnConflictUpdate(MetaCompanion.insert(key: key, value: value));
+    }
+  }
+
   // ───────────── people ─────────────
 
   Stream<List<PersonWithBalance>> watchPeopleWithBalances() {

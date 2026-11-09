@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,22 +65,74 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
 
   Future<void> _save(LedgerDirection direction, bool shared) async {
     final personId = _personId;
-    if (personId == null || _amountValue <= 0) return;
+    if (personId == null || _amountValue <= 0 || _saving) return;
     setState(() => _saving = true);
-    await ref
-        .read(ledgerRepositoryProvider)
-        .createEntry(
-          personId: personId,
-          kind: _kind,
-          direction: direction,
-          amount: _amountValue,
-          date: _date,
-          description: _description.text,
-          paymentMethod: _accountName(),
-          notifyOtherParty: !shared || _notify,
-          signedIn: ref.read(syncControllerProvider).signedIn,
+    try {
+      final repo = ref.read(ledgerRepositoryProvider);
+      final entryId = await repo.createEntry(
+        personId: personId,
+        kind: _kind,
+        direction: direction,
+        amount: _amountValue,
+        date: _date,
+        description: _description.text,
+        paymentMethod: _accountName(),
+        notifyOtherParty: !shared || _notify,
+        signedIn: ref.read(syncControllerProvider).signedIn,
+      );
+      if (!mounted) return;
+      final number = await repo.whatsAppNumber(personId);
+      if (!mounted) return;
+      final wantsShare = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('تم حفظ المعاملة'),
+          content: const Text('هل تريد مشاركة بيانات المعاملة مع الشخص عبر واتساب؟'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('لا')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('نعم، واتساب')),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (wantsShare == true) {
+        final digits = (number ?? '').replaceAll(RegExp(r'[^0-9]'), '');
+        if (digits.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('سجل رقم واتساب للشخص أولاً. المعاملة محفوظة.')),
+          );
+        } else {
+          final selectedPerson = (ref.read(peopleWithBalancesProvider).value ?? const <PersonWithBalance>[])
+              .where((p) => p.person.id == personId);
+          final name = selectedPerson.isEmpty ? 'الطرف الآخر' : selectedPerson.first.person.name;
+          final message = [
+            'إشعار معاملة - مصروفي',
+            'الطرف: $name',
+            'النوع: ${_kind == LedgerKind.settlement ? 'تسوية' : 'عهدة'}',
+            'الاتجاه: ${direction == LedgerDirection.gave ? 'سلمت' : 'استلمت'}',
+            'المبلغ: ${_amountValue.toStringAsFixed(2)} EGP',
+            'التاريخ: ${_date.year}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
+            if (_description.text.trim().isNotEmpty) 'الوصف: ${_description.text.trim()}',
+            'المرجع: $entryId',
+          ].join('\\n');
+          final uri = Uri.https('wa.me', '/$digits', {'text': message});
+          if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('تعذر فتح واتساب. المعاملة محفوظة.')),
+            );
+          }
+        }
+      }
+      if (mounted) context.pop();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر حفظ المعاملة. حاول مرة أخرى.')),
         );
-    if (mounted) context.pop();
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   /// The chosen account (cash, Visa, ...) is kept on the entry by name.
