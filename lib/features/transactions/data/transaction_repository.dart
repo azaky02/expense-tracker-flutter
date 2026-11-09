@@ -170,7 +170,26 @@ class TransactionRepository {
     );
   }
 
+  Future<void> _validateFinancialInput(TransactionInput input) async {
+    if (!input.amount.isFinite || input.amount <= 0) {
+      throw ArgumentError.value(input.amount, 'amount', 'transaction_invalid_amount');
+    }
+    if (input.type != TransactionType.transfer) return;
+    if (input.accountId == null || input.toAccountId == null) {
+      throw ArgumentError('transfer_requires_two_accounts');
+    }
+    if (input.accountId == input.toAccountId) {
+      throw ArgumentError('transfer_same_account');
+    }
+    final from = await (_db.select(_db.accounts)..where((a) => a.id.equals(input.accountId!))).getSingleOrNull();
+    final to = await (_db.select(_db.accounts)..where((a) => a.id.equals(input.toAccountId!))).getSingleOrNull();
+    if (from == null || to == null) {
+      throw ArgumentError('transfer_account_not_found');
+    }
+  }
+
   Future<int> create(TransactionInput input) async {
+    await _validateFinancialInput(input);
     final id = await _db
         .into(_db.transactions)
         .insert(
@@ -193,6 +212,7 @@ class TransactionRepository {
   }
 
   Future<void> update(int id, TransactionInput input) async {
+    await _validateFinancialInput(input);
     await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
       TransactionsCompanion(
         amount: Value(input.amount),
