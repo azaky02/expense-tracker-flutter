@@ -69,4 +69,52 @@ void main() {
     expect((await accounts.watchAccount(from).first)!.balance, 10000);
     expect((await accounts.watchAccount(to).first)!.balance, 2000);
   });
+  test('FIN-02: decimal transfers conserve balances within cent precision', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    for (final amount in [0.1, 0.2, 0.3, 12.35, 0.01]) {
+      await repo.create(TransactionInput(
+        amount: amount, type: TransactionType.transfer, categoryId: category,
+        paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+        accountId: source, toAccountId: destination,
+      ));
+    }
+    final fromBalance = (await accounts.watchAccount(source).first)!.balance;
+    final toBalance = (await accounts.watchAccount(destination).first)!.balance;
+    expect(fromBalance, closeTo(87.04, 0.000001));
+    expect(toBalance, closeTo(62.96, 0.000001));
+    expect(fromBalance + toBalance, closeTo(150, 0.000001));
+  });
+
+  test('FIN-02: beneficiary write failure rolls back transfer insert', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    await db.customStatement("""
+      CREATE TRIGGER fin02_fail_beneficiary BEFORE INSERT ON beneficiaries
+      BEGIN SELECT RAISE(ABORT, 'fin02_injected_failure'); END
+    """);
+    await expectLater(repo.create(TransactionInput(
+      amount: 25, type: TransactionType.transfer, categoryId: category,
+      paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+      accountId: source, toAccountId: destination, beneficiaryName: 'Rollback Probe',
+    )), throwsA(anything));
+    expect(await db.select(db.transactions).get(), isEmpty);
+    expect((await accounts.watchAccount(source).first)!.balance, 100);
+    expect((await accounts.watchAccount(destination).first)!.balance, 50);
+  });
+
 }
