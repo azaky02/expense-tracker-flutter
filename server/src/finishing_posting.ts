@@ -40,3 +40,33 @@ export async function reserveFinishingPosting(
   // A reserved row may be retried; actual posting requires separate atomic server logic.
   return (inserted.rowCount ?? 0) > 0 ? 'reserved' : 'already_reserved';
 }
+
+
+/**
+ * Transaction-scoped posting coordinator. Caller MUST invoke this from withTx,
+ * and postCashMovements MUST write authoritative, uniquely keyed cash rows
+ * using this same tx. Never call external services from the callback.
+ *
+ * A successful callback and committed marker are committed together by withTx.
+ * If callback or marker fails, withTx rolls both back.
+ */
+export async function commitFinishingPosting(
+  tx: Tx,
+  userId: string,
+  eventId: string,
+  payloadHash: string,
+  postCashMovements: (tx: Tx) => Promise<void>,
+): Promise<'posted' | 'already_committed'> {
+  const reservation = await reserveFinishingPosting(tx, userId, eventId, payloadHash);
+  if (reservation === 'already_committed') return 'already_committed';
+
+  await postCashMovements(tx);
+  const result = await tx.query(
+    `UPDATE finishing_posting_requests
+     SET state='committed', committed_at=now()
+     WHERE user_id=$1 AND event_id=$2 AND payload_hash=$3 AND state='reserved'`,
+    [userId, eventId, payloadHash],
+  );
+  if (result.rowCount !== 1) throw new Error('posting commit marker failed');
+  return 'posted';
+}
