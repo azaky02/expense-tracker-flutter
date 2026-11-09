@@ -17,6 +17,7 @@ class TransactionInput {
     this.beneficiaryName,
     this.accountId,
     this.toAccountId,
+    this.idempotencyKey,
   });
 
   final double amount;
@@ -30,6 +31,8 @@ class TransactionInput {
   final String? beneficiaryName;
   final int? accountId;
   final int? toAccountId;
+  /// Stable key for retries of the same create request; omit for distinct operations.
+  final String? idempotencyKey;
 }
 
 class TransactionFilters {
@@ -174,6 +177,9 @@ class TransactionRepository {
     if (!input.amount.isFinite || input.amount <= 0) {
       throw ArgumentError.value(input.amount, 'amount', 'transaction_invalid_amount');
     }
+    if ((input.amount * 100 - (input.amount * 100).round()).abs() > 0.000001) {
+      throw ArgumentError.value(input.amount, 'amount', 'transaction_excess_decimal_places');
+    }
     if (input.type != TransactionType.transfer) return;
     if (input.accountId == null || input.toAccountId == null) {
       throw ArgumentError('transfer_requires_two_accounts');
@@ -190,11 +196,18 @@ class TransactionRepository {
 
   Future<int> create(TransactionInput input) => _db.transaction(() async {
     await _validateFinancialInput(input);
+    final key = input.idempotencyKey;
+    if (key != null) {
+      if (key.trim().isEmpty) throw ArgumentError('transaction_empty_idempotency_key');
+      final previous = await (_db.select(_db.transactions)..where((t) => t.syncId.equals(key))).getSingleOrNull();
+      if (previous != null) throw StateError('transaction_duplicate_submission');
+    }
     final id = await _db
         .into(_db.transactions)
         .insert(
           TransactionsCompanion.insert(
             amount: input.amount,
+            syncId: Value(key),
             type: input.type,
             categoryId: input.categoryId,
             paymentMethodType: input.paymentMethodType,
