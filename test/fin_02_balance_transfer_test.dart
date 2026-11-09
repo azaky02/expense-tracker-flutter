@@ -182,4 +182,56 @@ void main() {
     expect(saved.syncId, 'fin02-stable-sync-id');
   });
 
+  test('FIN-02: failed beneficiary update preserves existing transfer', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    TransactionInput input(double amount, {String? beneficiary}) => TransactionInput(
+      amount: amount, type: TransactionType.transfer, categoryId: category,
+      paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+      accountId: source, toAccountId: destination, beneficiaryName: beneficiary,
+    );
+    final id = await repo.create(input(20));
+    await db.customStatement("""
+      CREATE TRIGGER fin02_fail_beneficiary_update BEFORE INSERT ON beneficiaries
+      BEGIN SELECT RAISE(ABORT, 'fin02_update_failure'); END
+    """);
+    await expectLater(repo.update(id, input(35, beneficiary: 'Fail Update')), throwsA(anything));
+    final saved = await (db.select(db.transactions)..where((t) => t.id.equals(id))).getSingle();
+    expect(saved.amount, 20);
+    expect(saved.beneficiaryName, isNull);
+    expect((await accounts.watchAccount(source).first)!.balance, 80);
+    expect((await accounts.watchAccount(destination).first)!.balance, 70);
+  });
+
+  test('FIN-02: different retry identities represent distinct transfers', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    final accounts = AccountRepository(db);
+    final source = await accounts.create(name: 'Source', type: AccountType.cash, openingBalance: 100);
+    final destination = await accounts.create(name: 'Destination', type: AccountType.cash, openingBalance: 50);
+    final repo = TransactionRepository(db);
+    final category = await repo.systemCategoryId(CategoryType.transfer);
+    for (final key in ['fin02-operation-a', 'fin02-operation-b']) {
+      await repo.create(TransactionInput(
+        amount: 10, type: TransactionType.transfer, categoryId: category,
+        paymentMethodType: PaymentMethodType.cash, date: DateTime(2026, 11, 9),
+        accountId: source, toAccountId: destination, idempotencyKey: key,
+      ));
+    }
+    final rows = await db.select(db.transactions).get();
+    expect(rows.length, 2);
+    expect(rows.map((row) => row.syncId).toSet(), {'fin02-operation-a', 'fin02-operation-b'});
+    expect((await accounts.watchAccount(source).first)!.balance, 80);
+    expect((await accounts.watchAccount(destination).first)!.balance, 70);
+  });
+
 }
