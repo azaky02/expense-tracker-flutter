@@ -31,7 +31,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
           TransactionType.transfer => 'transactions.addTransfer',
           _ => 'transactions.addExpense',
         }.tr(),
-        onSave: () => _form.currentState?.submit(),
+        onSave: () {
+          if (!_isSubmitting) _form.currentState?.submit();
+        },
       ),
       body: TransactionForm(
         key: _form,
@@ -45,11 +47,17 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         submitLabel: 'transactions.saveTransaction'.tr(),
         isSubmitting: _isSubmitting,
         onSubmit: (values) async {
-          if (!values.isValid) return;
+          if (!values.isValid || _isSubmitting) return;
           setState(() => _isSubmitting = true);
           try {
             await ref.read(transactionRepositoryProvider).create(values.toInput());
             if (context.mounted) context.pop();
+          } on Object {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not save transaction. Please retry.')),
+              );
+            }
           } finally {
             if (mounted) setState(() => _isSubmitting = false);
           }
