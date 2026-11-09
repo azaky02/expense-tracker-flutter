@@ -34,7 +34,7 @@ export async function applyFinishingCostToLedger(
   const total = validateFinishingCostAllocation(input);
   const balance = await tx.query(
     `SELECT custody_piasters FROM finishing_project_balances
-     WHERE user_id=$1 AND project_id=$2 FOR UPDATE`,
+     WHERE user_id=$1 AND project_id=$2 AND financial_status='open' FOR UPDATE`,
     [userId, input.projectId],
   );
   if (balance.rowCount !== 1) throw new Error('project balance not initialized');
