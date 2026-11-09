@@ -21,6 +21,8 @@ SELECT a.*, a.opening_balance + COALESCE((
   SELECT SUM(CASE
     WHEN t.type = 'income'   AND t.account_id = a.id    THEN t.amount
     WHEN t.type = 'expense'  AND t.account_id = a.id    THEN -t.amount
+    WHEN t.type = 'trustIn'  AND t.account_id = a.id    THEN t.amount
+    WHEN t.type = 'trustOut' AND t.account_id = a.id    THEN -t.amount
     WHEN t.type = 'transfer' AND t.account_id = a.id    THEN -t.amount
     WHEN t.type = 'transfer' AND t.to_account_id = a.id THEN t.amount
     ELSE 0 END)
