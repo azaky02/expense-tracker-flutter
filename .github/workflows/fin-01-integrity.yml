@@ -24,7 +24,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Analyze FIN-01 files
-        run: flutter analyze lib/features/installments/data/installment_repository.dart test/fin_01_installment_idempotency_test.dart
+        run: flutter analyze lib/features/installments/data/installment_repository.dart lib/features/installments/presentation/installments_screens.dart test/fin_01_installment_idempotency_test.dart
       - name: FIN-01 regression tests
         run: flutter test test/fin_01_installment_idempotency_test.dart --reporter expanded
       - name: Existing installment regression tests
