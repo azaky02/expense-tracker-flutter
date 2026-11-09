@@ -1,0 +1,30 @@
+name: Finishing Foundation Validation
+
+on:
+  push:
+    branches:
+      - feature/finishing-foundation
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finishing-foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+      - name: Dependencies
+        run: flutter pub get
+      - name: Static analysis
+        run: flutter analyze lib/core/db/database.dart lib/core/db/finishing_schema_v9.dart lib/features/finishing/domain/finishing_financial_rules.dart test/finishing_schema_v9_test.dart test/finishing_financial_rules_test.dart
+      - name: Finishing schema and accounting tests
+        run: flutter test test/finishing_schema_v9_test.dart test/finishing_financial_rules_test.dart --reporter expanded
