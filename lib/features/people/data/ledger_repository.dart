@@ -97,6 +97,13 @@ class LedgerRepository {
     return value?.value == '@phone' ? person.phone : value?.value;
   }
 
+  Future<PersonBalance> currentConfirmedBalance(int personId) async {
+    final entries = await (_db.select(_db.ledgerEntries)
+          ..where((e) => e.personId.equals(personId)))
+        .get();
+    return PersonBalance.of(entries);
+  }
+
   Future<bool> usesPhoneForWhatsApp(int personId) async {
     final person = await (_db.select(_db.people)..where((p) => p.id.equals(personId))).getSingleOrNull();
     if (person == null) return false;
