@@ -1,6 +1,7 @@
 # Builds the PWA (Flutter web) and publishes it on GitHub Pages:
 #   https://azaky02.github.io/expense-tracker-flutter/
 # Runs on every push to master that touches the app, or by hand from the Actions tab.
+# Deployment refresh: publish the latest merged master including FIN-01, FIN-02 and WhatsApp sharing.
 name: PWA (GitHub Pages)
 
 on:
