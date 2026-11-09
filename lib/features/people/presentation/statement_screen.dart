@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/db/tables.dart';
 import '../../../core/utils/currency.dart';
@@ -9,6 +10,7 @@ import '../data/ledger_repository.dart';
 import 'people_providers.dart';
 import 'people_screen.dart';
 import 'person_screen.dart';
+import 'whatsapp_message.dart';
 
 /// Statement (كشف حساب): confirmed entries only, oldest first, with a running balance.
 class StatementScreen extends ConsumerWidget {
@@ -57,6 +59,40 @@ class StatementScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text('statement.title'.tr(namedArgs: {'name': name}, context: context)),
         actions: [
+          if (lines.isNotEmpty)
+            IconButton(
+              tooltip: 'مشاركة كشف الحساب عبر واتساب',
+              icon: const Icon(Icons.chat_outlined),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  final repo = ref.read(ledgerRepositoryProvider);
+                  final number = await repo.whatsAppNumber(personId);
+                  final digits = whatsAppDigits(number);
+                  if (digits == null) {
+                    messenger.showSnackBar(const SnackBar(
+                      content: Text('أضف رقم واتساب صحيحًا للشخص أولاً من بياناته.'),
+                    ));
+                    return;
+                  }
+                  final message = buildStatementWhatsAppMessage(
+                    personName: name,
+                    lines: lines,
+                  );
+                  final uri = Uri.https('wa.me', '/$digits', {'text': message});
+                  final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  if (!launched) {
+                    messenger.showSnackBar(const SnackBar(
+                      content: Text('تعذر فتح واتساب. يمكنك استخدام زر المشاركة العادي.'),
+                    ));
+                  }
+                } catch (_) {
+                  messenger.showSnackBar(const SnackBar(
+                    content: Text('تعذر مشاركة كشف الحساب عبر واتساب.'),
+                  ));
+                }
+              },
+            ),
           if (lines.isNotEmpty)
             IconButton(
               tooltip: 'statement.share'.tr(context: context),
