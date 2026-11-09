@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/people-whatsapp-share
+      - fix/people-whatsapp-message-balance
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,5 +17,5 @@ jobs:
           flutter-version: 3.44.7
           channel: stable
       - run: flutter pub get
-      - run: flutter analyze lib/features/people/data/ledger_repository.dart lib/features/people/presentation/person_form_screen.dart lib/features/people/presentation/ledger_entry_form_screen.dart test/people_whatsapp_share_test.dart
-      - run: flutter test test/people_whatsapp_share_test.dart --reporter expanded
+      - run: flutter analyze lib/features/people/data/ledger_repository.dart lib/features/people/presentation/person_form_screen.dart lib/features/people/presentation/ledger_entry_form_screen.dart test/people_whatsapp_share_test.dart lib/features/people/presentation/whatsapp_message.dart test/people_whatsapp_message_test.dart
+      - run: flutter test test/people_whatsapp_share_test.dart test/people_whatsapp_message_test.dart --reporter expanded
