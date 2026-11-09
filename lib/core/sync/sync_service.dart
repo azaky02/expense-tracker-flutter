@@ -765,11 +765,12 @@ class SyncService {
     // when its account dependencies have not arrived on this device yet.
     final sourceSyncId = r['accountId'] as String?;
     final destinationSyncId = r['toAccountId'] as String?;
-    if (sourceSyncId != null && !accounts.containsKey(sourceSyncId)) {
-      return null;
-    }
-    if (destinationSyncId != null && !accounts.containsKey(destinationSyncId)) {
-      return null;
+    if ((sourceSyncId != null && !accounts.containsKey(sourceSyncId)) ||
+        (destinationSyncId != null && !accounts.containsKey(destinationSyncId))) {
+      // A skipped transaction plus an advanced cursor would permanently lose
+      // this financial entry on the device. Abort the apply transaction so the
+      // cursor remains unchanged and the next sync can retry safely.
+      throw StateError('sync_transaction_account_dependency_missing');
     }
     if (r['type'] == TransactionType.transfer.name &&
         (sourceSyncId == null || destinationSyncId == null ||
