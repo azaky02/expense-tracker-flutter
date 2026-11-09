@@ -82,4 +82,61 @@ void main() {
     expect(await db.select(db.installmentPayments).get(), hasLength(1));
     expect(await db.select(db.transactions).get(), isEmpty);
   });
+  test('FIN-01: invalid payment inputs never create records', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    final repo = InstallmentRepository(db);
+    await repo.create(InstallmentsCompanion.insert(
+      title: 'Laptop',
+      provider: 'Bank',
+      totalAmount: 2000,
+      installmentAmount: 1000,
+      months: 2,
+      dueDay: 10,
+      startMonth: DateTime(2026, 11),
+    ));
+    final plan = (await repo.loadAll()).single.plan;
+    for (final number in [0, -1, 3]) {
+      await expectLater(repo.markPaid(plan, number, amount: 1000), throwsArgumentError);
+    }
+    for (final amount in [0.0, -1.0, double.nan, double.infinity, double.negativeInfinity]) {
+      await expectLater(repo.markPaid(plan, 1, amount: amount), throwsArgumentError);
+    }
+    expect(await db.select(db.installmentPayments).get(), isEmpty);
+    expect(await db.select(db.transactions).get(), isEmpty);
+  });
+
+  test('FIN-01: concurrent submissions yield exactly one payment and expense', () async {
+    final db = AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(db.close);
+    await seedIfNeeded(db);
+    await ensureTrustCategory(db);
+    await migrateToAccounts(db);
+    final accounts = AccountRepository(db);
+    final cash = (await accounts.watchAccounts().first).first.account.id;
+    await accounts.update(cash, name: 'Cash', openingBalance: 10000);
+    final repo = InstallmentRepository(db);
+    await repo.create(InstallmentsCompanion.insert(
+      title: 'TV',
+      provider: 'Bank',
+      totalAmount: 3000,
+      installmentAmount: 1000,
+      months: 3,
+      dueDay: 10,
+      startMonth: DateTime(2026, 11),
+    ));
+    final plan = (await repo.loadAll()).single.plan;
+    final outcomes = await Future.wait([
+      repo.markPaid(plan, 1, amount: 1000, accountId: cash)
+          .then((_) => true, onError: (Object _) => false),
+      repo.markPaid(plan, 1, amount: 1000, accountId: cash)
+          .then((_) => true, onError: (Object _) => false),
+    ]);
+    expect(outcomes.where((success) => success).length, 1);
+    expect(await db.select(db.installmentPayments).get(), hasLength(1));
+    expect(await db.select(db.transactions).get(), hasLength(1));
+    expect((await accounts.watchAccount(cash).first)!.balance, 9000);
+  });
+
 }
