@@ -81,5 +81,5 @@ export async function postFinishingCostCash(
       );
       if (result.rowCount !== 1) throw new Error('cash leg id collision');
     }
-  });
+  }, input.projectId);
 }
