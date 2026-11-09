@@ -761,11 +761,32 @@ class SyncService {
     final local = await (_db.select(_db.transactions)..where((t) => t.syncId.equals(id))).getSingleOrNull();
     if (!_newer(local?.updatedAt, r)) return false;
     final accounts = await _idMap('accounts');
+    // Do not silently turn a remote transfer into an unlinked transaction
+    // when its account dependencies have not arrived on this device yet.
+    final sourceSyncId = r['accountId'] as String?;
+    final destinationSyncId = r['toAccountId'] as String?;
+    if ((sourceSyncId != null && !accounts.containsKey(sourceSyncId)) ||
+        (destinationSyncId != null && !accounts.containsKey(destinationSyncId))) {
+      // A skipped transaction plus an advanced cursor would permanently lose
+      // this financial entry on the device. Abort the apply transaction so the
+      // cursor remains unchanged and the next sync can retry safely.
+      throw StateError('sync_transaction_account_dependency_missing');
+    }
+    if (r['type'] == TransactionType.transfer.name &&
+        (sourceSyncId == null || destinationSyncId == null ||
+            sourceSyncId == destinationSyncId)) {
+      return null;
+    }
+    final amount = (r['amount'] as num).toDouble();
+    if (!amount.isFinite || amount <= 0 ||
+        (amount * 100 - (amount * 100).round()).abs() > 0.000001) {
+      return null;
+    }
     final comp = TransactionsCompanion(
       accountId: Value(r['accountId'] == null ? null : accounts[r['accountId'] as String]),
       toAccountId: Value(r['toAccountId'] == null ? null : accounts[r['toAccountId'] as String]),
       syncId: Value(id),
-      amount: Value((r['amount'] as num).toDouble()),
+      amount: Value(amount),
       type: Value(_enum(TransactionType.values, r['type'], TransactionType.expense)),
       categoryId: Value(categoryId),
       paymentMethodType: Value(_enum(PaymentMethodType.values, r['paymentMethodType'], PaymentMethodType.cash)),
