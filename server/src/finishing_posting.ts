@@ -17,25 +17,27 @@ export async function reserveFinishingPosting(
   userId: string,
   eventId: string,
   payloadHash: string,
+  projectId?: string,
 ): Promise<PostingReservation> {
   if (!userId.trim() || !eventId.trim() || !/^[a-f0-9]{64}$/.test(payloadHash)) {
     throw new Error('invalid posting reservation');
   }
   const inserted = await tx.query(
-    `INSERT INTO finishing_posting_requests (user_id,event_id,payload_hash)
-     VALUES ($1,$2,$3) ON CONFLICT (user_id,event_id) DO NOTHING`,
-    [userId, eventId, payloadHash],
+    `INSERT INTO finishing_posting_requests (user_id,event_id,payload_hash,project_id)
+     VALUES ($1,$2,$3,$4) ON CONFLICT (user_id,event_id) DO NOTHING`,
+    [userId, eventId, payloadHash, projectId ?? null],
   );
   // Locks the row until the caller's transaction commits; serialises concurrent retries.
   const row = (await tx.query(
-    `SELECT payload_hash,state FROM finishing_posting_requests
+    `SELECT payload_hash,state,project_id FROM finishing_posting_requests
      WHERE user_id=$1 AND event_id=$2 FOR UPDATE`,
     [userId, eventId],
-  )).rows[0] as { payload_hash: string; state: string } | undefined;
+  )).rows[0] as { payload_hash: string; state: string; project_id: string | null } | undefined;
   if (!row) throw new Error('posting reservation missing');
   if (row.payload_hash !== payloadHash) {
     throw new Error('posting event id reused with different payload');
   }
+  if (projectId && row.project_id !== projectId) throw new Error('posting project mismatch');
   if (row.state === 'committed') return 'already_committed';
   // A reserved row may be retried; actual posting requires separate atomic server logic.
   return (inserted.rowCount ?? 0) > 0 ? 'reserved' : 'already_reserved';
@@ -56,8 +58,9 @@ export async function commitFinishingPosting(
   eventId: string,
   payloadHash: string,
   postCashMovements: (tx: Tx) => Promise<void>,
+  projectId?: string,
 ): Promise<'posted' | 'already_committed'> {
-  const reservation = await reserveFinishingPosting(tx, userId, eventId, payloadHash);
+  const reservation = await reserveFinishingPosting(tx, userId, eventId, payloadHash, projectId);
   if (reservation === 'already_committed') return 'already_committed';
 
   await postCashMovements(tx);
