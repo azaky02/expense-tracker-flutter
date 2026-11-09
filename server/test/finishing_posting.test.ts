@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { commitFinishingPosting, postingPayloadHash } from '../src/finishing_posting.ts';
 
-type Row = { payload_hash: string; state: 'reserved' | 'committed' };
+type Row = { payload_hash: string; state: 'reserved' | 'committed'; project_id: string | null };
 function fakeTx() {
   const rows = new Map<string, Row>();
   const movements: string[] = [];
@@ -11,7 +11,7 @@ function fakeTx() {
       const key = String(params[0]) + ':' + String(params[1]);
       if (sql.includes('INSERT INTO finishing_posting_requests')) {
         if (rows.has(key)) return { rowCount: 0, rows: [] };
-        rows.set(key, { payload_hash: String(params[2]), state: 'reserved' });
+        rows.set(key, { payload_hash: String(params[2]), state: 'reserved', project_id: params[3] == null ? null : String(params[3]) });
         return { rowCount: 1, rows: [] };
       }
       if (sql.includes('SELECT payload_hash,state')) {
@@ -54,4 +54,14 @@ test('callback failure never marks the request committed', async () => {
   await assert.rejects(() => commitFinishingPosting(tx as never, 'u1', 'e1',
     postingPayloadHash({ a: 1 }), async () => { throw new Error('cash write failed'); }));
   assert.equal(rows.get('u1:e1')?.state, 'reserved');
+});
+
+test('project-scoped retry is idempotent but rejects cross-project reuse', async () => {
+  const { tx, movements } = fakeTx();
+  const hash = postingPayloadHash({ amount: 100 });
+  const callback = async () => { movements.push('posted'); };
+  assert.equal(await commitFinishingPosting(tx as never, 'u1', 'e1', hash, callback, 'p1'), 'posted');
+  assert.equal(await commitFinishingPosting(tx as never, 'u1', 'e1', hash, callback, 'p1'), 'already_committed');
+  await assert.rejects(() => commitFinishingPosting(tx as never, 'u1', 'e1', hash, callback, 'p2'), /project mismatch/);
+  assert.deepEqual(movements, ['posted']);
 });
