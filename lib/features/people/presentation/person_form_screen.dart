@@ -18,13 +18,15 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
   final _name = TextEditingController();
   final _phone = TextEditingController();
   final _email = TextEditingController();
+  final _whatsApp = TextEditingController();
+  bool _usePhoneForWhatsApp = true;
   final _notes = TextEditingController();
   bool _loaded = false;
   bool _saving = false;
 
   @override
   void dispose() {
-    for (final c in [_name, _phone, _email, _notes]) {
+    for (final c in [_name, _phone, _whatsApp, _email, _notes]) {
       c.dispose();
     }
     super.dispose();
@@ -36,9 +38,11 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
     final repo = ref.read(ledgerRepositoryProvider);
     if (widget.personId == null) {
       final id = await repo.createPerson(name: _name.text, phone: _phone.text, email: _email.text, notes: _notes.text);
+      await repo.setWhatsAppNumber(id, usePhone: _usePhoneForWhatsApp, number: _whatsApp.text);
       if (mounted) context.pushReplacement('/people/$id');
     } else {
       await repo.updatePerson(widget.personId!, name: _name.text, phone: _phone.text, email: _email.text, notes: _notes.text);
+      await repo.setWhatsAppNumber(widget.personId!, usePhone: _usePhoneForWhatsApp, number: _whatsApp.text);
       if (mounted) context.pop();
     }
   }
@@ -63,6 +67,15 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
         _email.text = p.email ?? '';
         _notes.text = p.notes ?? '';
         _loaded = true;
+        Future<void>(() async {
+          final repo = ref.read(ledgerRepositoryProvider);
+          final usePhone = await repo.usesPhoneForWhatsApp(p.id);
+          final number = await repo.whatsAppNumber(p.id);
+          if (mounted) setState(() {
+            _usePhoneForWhatsApp = usePhone;
+            _whatsApp.text = usePhone ? '' : (number ?? '');
+          });
+        });
       }
     }
     return Scaffold(
@@ -93,6 +106,23 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
               labelText: '${'people.phone'.tr(context: context)} (${'common.optional'.tr(context: context)})',
             ),
           ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('استخدام رقم التليفون لواتساب'),
+            value: _usePhoneForWhatsApp,
+            onChanged: (v) => setState(() => _usePhoneForWhatsApp = v),
+          ),
+          if (!_usePhoneForWhatsApp) ...[
+            TextField(
+              controller: _whatsApp,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(
+                labelText: 'رقم واتساب',
+                hintText: '+201012345678',
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           const SizedBox(height: 12),
           TextField(
             controller: _email,
