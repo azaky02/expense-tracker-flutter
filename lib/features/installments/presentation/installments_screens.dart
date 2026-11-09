@@ -222,7 +222,21 @@ class InstallmentDetailsScreen extends ConsumerWidget {
       builder: (_) => _PaySheet(plan: plan, due: due),
     );
     if (result == null) return;
-    await ref.read(installmentRepositoryProvider).markPaid(plan, due.number, amount: result.amount, accountId: result.accountId);
+    try {
+      await ref.read(installmentRepositoryProvider).markPaid(plan, due.number, amount: result.amount, accountId: result.accountId);
+    } on StateError catch (e) {
+      if (!context.mounted) return;
+      final message = e.message == 'installment_already_paid'
+          ? 'installments.alreadyPaid'.tr()
+          : 'installments.paymentFailed'.tr();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } on ArgumentError {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('installments.invalidPayment'.tr())));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('installments.paymentFailed'.tr())));
+    }
   }
 
   Future<void> _undo(BuildContext context, WidgetRef ref, InstallmentDue due) async {

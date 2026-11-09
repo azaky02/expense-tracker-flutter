@@ -78,8 +78,23 @@ class InstallmentRepository {
   /// Marks installment [number] paid. With [accountId] it is also recorded as an expense under
   /// "أقساط" from that account.
   Future<void> markPaid(Installment plan, int number, {required double amount, DateTime? paidAt, int? accountId}) async {
+    if (number < 1 || number > plan.months) {
+      throw ArgumentError.value(number, 'number', 'installment_invalid_number');
+    }
+    if (!amount.isFinite || amount <= 0) {
+      throw ArgumentError.value(amount, 'amount', 'installment_invalid_amount');
+    }
     final when = paidAt ?? DateTime.now();
     await _db.transaction(() async {
+      // Reject duplicate submissions before creating any expense. The unique
+      // (installment_id, number) constraint also protects concurrent writers.
+      final existing = await (_db.select(_db.installmentPayments)
+            ..where((p) => p.installmentId.equals(plan.id) & p.number.equals(number)))
+          .getSingleOrNull();
+      if (existing != null) {
+        throw StateError('installment_already_paid');
+      }
+
       int? txId;
       if (accountId != null) {
         final account = await (_db.select(_db.accounts)..where((a) => a.id.equals(accountId))).getSingleOrNull();
@@ -112,7 +127,6 @@ class InstallmentRepository {
               paidAt: when,
               transactionId: Value(txId),
             ),
-            mode: InsertMode.insertOrReplace,
           );
     });
   }
