@@ -1,8 +1,10 @@
 import type { Tx } from './db.ts';
 import { commitFinishingPosting, postingPayloadHash } from './finishing_posting.ts';
+import { applyFinishingCostToLedger } from './finishing_project_ledger.ts';
 
 export interface FinishingCostPost {
   eventId: string;
+  projectId: string;
   accountId: string;
   custodyCategoryId: string;
   expenseCategoryId: string;
@@ -56,6 +58,12 @@ export async function postFinishingCostCash(
         types.get(input.expenseCategoryId) !== 'expense') {
       throw new Error('category mismatch');
     }
+    await applyFinishingCostToLedger(t, userId, {
+      projectId: input.projectId,
+      eventId: input.eventId,
+      custodyPiasters: input.custodyPiasters,
+      personalPiasters: input.personalPiasters,
+    });
     for (const leg of [
       { suffix: 'custody', amount: input.custodyPiasters, type: 'trustOut', category: input.custodyCategoryId },
       { suffix: 'personal', amount: input.personalPiasters, type: 'expense', category: input.expenseCategoryId },
