@@ -1,3 +1,4 @@
+import { createFinishingProject, getFinishingProject, listFinishingProjects } from './finishing_projects.ts';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import express, { type NextFunction, type Request, type Response } from 'express';
@@ -225,6 +226,36 @@ export function createApp() {
       return true;
     });
     res.status(done ? 200 : 403).json(done ? { ok: true } : { error: 'invalid_credentials' });
+  });
+
+  // Finishing project metadata only. Financial posting endpoints remain disabled
+  // until the full reconciliation and sync safety review is complete.
+  const finishingProjectSchema = z.object({
+    projectId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
+    clientName: z.string().trim().min(1).max(150),
+    projectName: z.string().trim().min(1).max(150),
+    description: z.string().max(2000).optional(),
+  }).strict();
+
+  api.post('/finishing/projects', requireAuth, async (req, res) => {
+    const body = finishingProjectSchema.parse(req.body);
+    const result = await withTx((tx) => createFinishingProject(tx, req.userId!, body));
+    if (result === 'already_exists') {
+      res.status(200).json({ status: result, projectId: body.projectId });
+      return;
+    }
+    res.status(201).json({ status: result, projectId: body.projectId });
+  });
+
+  api.get('/finishing/projects', requireAuth, async (req, res) => {
+    res.json({ projects: await withTx((tx) => listFinishingProjects(tx, req.userId!)) });
+  });
+
+  api.get('/finishing/projects/:projectId', requireAuth, async (req, res) => {
+    const projectId = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).parse(req.params.projectId);
+    const project = await withTx((tx) => getFinishingProject(tx, req.userId!, projectId));
+    if (!project) { res.status(404).json({ error: 'project_not_found' }); return; }
+    res.json({ project });
   });
 
   api.post('/sync', requireAuth, async (req, res) => {
