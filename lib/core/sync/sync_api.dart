@@ -202,6 +202,87 @@ class SyncApi {
 
   Future<Map<String, dynamic>> sync(Map<String, dynamic> body) => _authed('POST', '/sync', body);
 
+  /// Server-authoritative finishing projects. Never write financial balances locally.
+  Future<List<Map<String, dynamic>>> listFinishingProjects() async {
+    final response = await _authed('GET', '/finishing/projects', null);
+    final items = response['projects'];
+    if (items is! List) throw const FormatException('Invalid finishing projects response');
+    return items.map((item) {
+      if (item is! Map<String, dynamic>) throw const FormatException('Invalid finishing project');
+      return item;
+    }).toList(growable: false);
+  }
+
+  Future<Map<String, dynamic>?> getFinishingProject(String projectId) async {
+    if (!RegExp(r'^[A-Za-z0-9_-]{1,100}
+  Future<Map<String, dynamic>> _authed(String method, String path, Object? body) async {
+    final s = _session;
+    if (s == null) throw ApiException(401, 'unauthorized');
+    try {
+      return await _send(method, path, body, token: s.accessToken);
+    } on ApiException catch (e) {
+      if (e.status != 401) rethrow;
+    }
+    final refreshed = _sessionFrom(await _send('POST', '/auth/refresh', {'refreshToken': s.refreshToken}));
+    _session = refreshed;
+    onSessionChanged?.call(refreshed);
+    return _send(method, path, body, token: refreshed.accessToken);
+  }
+
+  void close() => _client.close();
+}
+).hasMatch(projectId)) {
+      throw ArgumentError.value(projectId, 'projectId');
+    }
+    try {
+      final response = await _authed('GET', '/finishing/projects/${Uri.encodeComponent(projectId)}', null);
+      final project = response['project'];
+      if (project is! Map<String, dynamic>) throw const FormatException('Invalid finishing project response');
+      return project;
+    } on ApiException catch (e) {
+      if (e.status == 404) return null;
+      rethrow;
+    }
+  }
+
+  /// Caller must keep projectId stable when retrying a failed network request.
+  Future<Map<String, dynamic>> createFinishingProject({
+    required String projectId,
+    required String clientName,
+    required String projectName,
+    String description = '',
+  }) async {
+    if (!RegExp(r'^[A-Za-z0-9_-]{1,100}
+  Future<Map<String, dynamic>> _authed(String method, String path, Object? body) async {
+    final s = _session;
+    if (s == null) throw ApiException(401, 'unauthorized');
+    try {
+      return await _send(method, path, body, token: s.accessToken);
+    } on ApiException catch (e) {
+      if (e.status != 401) rethrow;
+    }
+    final refreshed = _sessionFrom(await _send('POST', '/auth/refresh', {'refreshToken': s.refreshToken}));
+    _session = refreshed;
+    onSessionChanged?.call(refreshed);
+    return _send(method, path, body, token: refreshed.accessToken);
+  }
+
+  void close() => _client.close();
+}
+).hasMatch(projectId) ||
+        clientName.trim().isEmpty || clientName.trim().length > 150 ||
+        projectName.trim().isEmpty || projectName.trim().length > 150 ||
+        description.length > 2000) {
+      throw ArgumentError('Invalid finishing project details');
+    }
+    return _authed('POST', '/finishing/projects', {
+      'projectId': projectId,
+      'clientName': clientName.trim(),
+      'projectName': projectName.trim(),
+      'description': description.trim(),
+    });
+  }
+
   /// Calls an authenticated endpoint; on 401 refreshes the tokens once and retries.
   Future<Map<String, dynamic>> _authed(String method, String path, Object? body) async {
     final s = _session;
