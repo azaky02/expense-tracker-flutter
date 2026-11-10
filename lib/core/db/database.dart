@@ -4,6 +4,7 @@ import '../sync/sync_schema.dart';
 import 'connection/connection.dart';
 import 'tables.dart';
 import 'finishing_schema_v9.dart';
+import 'finishing_schema_v10.dart';
 
 export 'connection/connection.dart' show ensureDatabaseReadable;
 
@@ -42,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +54,7 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('CREATE INDEX idx_transactions_card ON transactions(card_id);');
       await createSyncObjects(this);
       await createFinishingSchemaV9(this);
+      await migrateFinishingCashLegsV10(this);
     },
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
@@ -128,6 +130,9 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) {
         await createFinishingSchemaV9(this);
+      }
+      if (from < 10) {
+        await migrateFinishingCashLegsV10(this);
       }
     },
   );
