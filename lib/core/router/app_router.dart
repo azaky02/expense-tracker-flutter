@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
+import '../../features/finishing/presentation/finishing_projects_screen.dart';
 import '../../features/associations/presentation/associations_screens.dart';
 import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/auth/presentation/setup_screen.dart';
@@ -179,6 +180,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             MaterialPage(fullscreenDialog: true, child: EditCardScreen(cardId: int.parse(state.pathParameters['id']!))),
       ),
       GoRoute(path: '/cards', builder: (context, state) => const PaymentMethodsScreen()),
+      GoRoute(path: '/finishing', builder: (context, state) => const FinishingProjectsScreen()),
+      GoRoute(path: '/finishing/new', builder: (context, state) => const FinishingNewProjectScreen()),
       GoRoute(path: '/accounts', builder: (context, state) => const AccountsScreen()),
       GoRoute(
         path: '/accounts/new',
