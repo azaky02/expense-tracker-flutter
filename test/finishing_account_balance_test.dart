@@ -17,15 +17,17 @@ void main() {
     final accounts = AccountRepository(db);
     final before = await accounts.watchAccount(100).first;
     expect(before!.balance, 100);
-    await db.customStatement(
+    await db.customUpdate(
       "INSERT INTO transactions(amount,type,category_id,payment_method_type,date,account_id) "
       "VALUES (500,'trustIn',100,'cash',1,100)",
+      updates: {db.transactions},
     );
     final afterReceipt = await accounts.watchAccount(100).first;
     expect(afterReceipt!.balance, 600);
     await db.customStatement(
       "INSERT INTO transactions(amount,type,category_id,payment_method_type,date,account_id) "
       "VALUES (175,'trustOut',100,'cash',1,100)",
+      updates: {db.transactions},
     );
     final afterPayout = await accounts.watchAccount(100).first;
     expect(afterPayout!.balance, 425);
