@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
 import '../../features/finishing/presentation/finishing_projects_screen.dart';
+import '../../features/finishing/presentation/finishing_project_details_screen.dart';
 import '../../features/associations/presentation/associations_screens.dart';
 import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/auth/presentation/setup_screen.dart';
@@ -182,6 +183,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/cards', builder: (context, state) => const PaymentMethodsScreen()),
       GoRoute(path: '/finishing', builder: (context, state) => const FinishingProjectsScreen()),
       GoRoute(path: '/finishing/new', builder: (context, state) => const FinishingNewProjectScreen()),
+      GoRoute(path: '/finishing/:projectId', builder: (context, state) => FinishingProjectDetailsScreen(projectId: state.pathParameters['projectId']!)),
       GoRoute(path: '/accounts', builder: (context, state) => const AccountsScreen()),
       GoRoute(
         path: '/accounts/new',
