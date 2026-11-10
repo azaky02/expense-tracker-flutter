@@ -115,7 +115,10 @@ class _FinishingProjectsScreenState extends ConsumerState<FinishingProjectsScree
                             ),
                           for (final project in _projects ?? <Map<String, dynamic>>[]) ...[
                             Card(
-                              child: Padding(
+                              clipBehavior: Clip.antiAlias,
+                              child: InkWell(
+                                onTap: () => context.push('/finishing/${Uri.encodeComponent(project['project_id'].toString())}'),
+                                child: Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                   Row(children: [
