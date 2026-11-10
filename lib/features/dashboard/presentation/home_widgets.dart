@@ -283,9 +283,18 @@ class HomeActions extends ConsumerWidget {
                         Colors.white,
                         () => context.push('/associations'),
                       ),
+                    if (settings.moduleShown(AppModule.finishing.key))
+                      tile(
+                        Icons.home_repair_service_rounded,
+                        'home.finishing'.tr(),
+                        const Color(0xFFDDEFE6),
+                        DS.primary,
+                        () => context.push('/finishing'),
+                      ),
                     if (!settings.moduleShown(AppModule.cars.key) &&
                         !settings.moduleShown(AppModule.installments.key) &&
-                        !settings.moduleShown(AppModule.associations.key))
+                        !settings.moduleShown(AppModule.associations.key) &&
+                        !settings.moduleShown(AppModule.finishing.key))
                       tile(Icons.insights_rounded, 'stats.title'.tr(), const Color(0xFFDDEFE6), DS.primary, () => context.push('/stats')),
                   ],
                 ),

@@ -45,6 +45,8 @@ jobs:
             --dart-define=RELEASE_CODE="$STAMP" --dart-define=APP_VERSION="$NAME"
           # Deep links such as /expense-tracker-flutter/#/stats work; 404.html covers others.
           cp build/web/index.html build/web/404.html
+          # Network-first worker so phones get updates on the next launch (not cache-first).
+          cp web/network_first_sw.js build/web/flutter_service_worker.js
 
       - uses: actions/upload-pages-artifact@v3
         with:
