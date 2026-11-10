@@ -60,6 +60,7 @@ class SettingsScreen extends ConsumerWidget {
             _Item(Icons.people_alt_outlined, 'nav.people'.tr(), () => context.go('/people')),
             _Item(Icons.event_repeat, 'installments.title'.tr(), () => context.push('/installments')),
             _Item(Icons.groups_2_outlined, 'associations.title'.tr(), () => context.push('/associations')),
+            _Item(Icons.home_repair_service_outlined, 'finishing.title'.tr(), () => context.push('/finishing')),
             _Item(Icons.directions_car_outlined, 'cars.title'.tr(), () => context.push('/cars')),
             _Item(Icons.local_gas_station_outlined, 'fuel.title'.tr(), () => context.push('/fuel-prices')),
             _Item(Icons.pie_chart_outline, 'budgets.screenTitle'.tr(), () => context.push('/budgets')),

@@ -105,6 +105,7 @@ enum AppModule {
   cars('cars', 'cars.title'),
   installments('installments', 'installments.title'),
   associations('associations', 'associations.title'),
+  finishing('finishing', 'finishing.title'),
   custody('custody', 'modules.custody'),
   budgets('budgets', 'budgets.screenTitle'),
   stats('stats', 'stats.title'),

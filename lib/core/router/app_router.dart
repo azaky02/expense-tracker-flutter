@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
 import '../../features/associations/presentation/associations_screens.dart';
+import '../../features/finishing/domain/finishing_rules.dart';
+import '../../features/finishing/presentation/finishing_screens.dart';
 import '../../features/auth/presentation/auth_screens.dart';
 import '../../features/auth/presentation/setup_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
@@ -91,6 +93,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/installments',
         builder: (context, state) => InstallmentsScreen(initialFilter: state.uri.queryParameters['kind']),
+      ),
+      GoRoute(path: '/finishing', builder: (context, state) => const FinishingProjectsScreen()),
+      GoRoute(
+        path: '/finishing/new',
+        pageBuilder: (context, state) => const MaterialPage(fullscreenDialog: true, child: FinishingProjectFormScreen()),
+      ),
+      GoRoute(
+        path: '/finishing/:id',
+        builder: (context, state) => FinishingProjectScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/finishing/:id/edit',
+        pageBuilder: (context, state) =>
+            MaterialPage(fullscreenDialog: true, child: FinishingProjectFormScreen(id: int.parse(state.pathParameters['id']!))),
+      ),
+      GoRoute(
+        path: '/finishing/:id/event/:kind',
+        pageBuilder: (context, state) => MaterialPage(
+          fullscreenDialog: true,
+          child: FinishingEventFormScreen(
+            projectId: int.parse(state.pathParameters['id']!),
+            kind: FinishingKind.parse(state.pathParameters['kind']!),
+          ),
+        ),
       ),
       GoRoute(path: '/associations', builder: (context, state) => const AssociationsScreen()),
       GoRoute(

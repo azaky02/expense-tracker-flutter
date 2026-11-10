@@ -24,7 +24,8 @@ SELECT a.*, a.opening_balance + COALESCE((
     WHEN t.type = 'transfer' AND t.account_id = a.id    THEN -t.amount
     WHEN t.type = 'transfer' AND t.to_account_id = a.id THEN t.amount
     ELSE 0 END)
-  FROM transactions t WHERE t.account_id = a.id OR t.to_account_id = a.id), 0) AS balance
+  FROM transactions t WHERE t.account_id = a.id OR t.to_account_id = a.id), 0)
+  + COALESCE((SELECT SUM(l.amount) FROM finishing_cash_legs l WHERE l.account_id = a.id), 0) / 100.0 AS balance
 FROM accounts a''';
 
 class AccountRepository {
@@ -36,7 +37,7 @@ class AccountRepository {
     return _db
         .customSelect(
           '$_balanceSql$where ORDER BY CASE a.type WHEN \'cash\' THEN 0 ELSE 1 END, a.id',
-          readsFrom: {_db.accounts, _db.transactions},
+          readsFrom: {_db.accounts, _db.transactions, _db.finishingCashLegs},
         )
         .watch()
         .map(
@@ -48,7 +49,7 @@ class AccountRepository {
 
   Stream<AccountWithBalance?> watchAccount(int id) {
     return _db
-        .customSelect('$_balanceSql WHERE a.id = ?', variables: [Variable.withInt(id)], readsFrom: {_db.accounts, _db.transactions})
+        .customSelect('$_balanceSql WHERE a.id = ?', variables: [Variable.withInt(id)], readsFrom: {_db.accounts, _db.transactions, _db.finishingCashLegs})
         .watchSingleOrNull()
         .map((r) => r == null ? null : AccountWithBalance(_db.accounts.map(r.data), r.read<double>('balance')));
   }

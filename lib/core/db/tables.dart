@@ -376,3 +376,73 @@ class AssociationPayments extends Table {
     {associationId, number, type},
   ];
 }
+
+// ---- Finishing projects (مشروعات التشطيب) — v9 ----
+// All money columns are integer piasters (قرش) so balances never drift.
+
+class FinishingProjects extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get clientName => text().withLength(min: 1, max: 150)();
+  TextColumn get name => text().withLength(min: 1, max: 150)();
+  TextColumn get description => text().nullable()();
+  TextColumn get location => text().nullable()();
+  DateTimeColumn get startDate => dateTime()();
+  DateTimeColumn get plannedEndDate => dateTime().nullable()();
+  IntColumn get plannedBudget => integer().withDefault(const Constant(0))();
+
+  /// new | active | paused | completed.
+  TextColumn get workStatus => text().withDefault(const Constant('active'))();
+  BoolColumn get closed => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// بنود التشطيب (كهرباء، سباكة، ...), unique per project.
+class FinishingTrades extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get projectId => integer().references(FinishingProjects, #id, onDelete: KeyAction.cascade)();
+  TextColumn get name => text().withLength(min: 1, max: 100)();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {projectId, name},
+  ];
+}
+
+/// One business event on a project. Never edited: mistakes are undone by a reversal event.
+class FinishingEvents extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// Stable id: saving the same event twice is a no-op.
+  TextColumn get eventId => text().unique()();
+  IntColumn get projectId => integer().references(FinishingProjects, #id, onDelete: KeyAction.cascade)();
+
+  /// clientAdvance | personalAllocation | cost | reimburseFromCustody | clientRepayPersonal | returnCustody | reversal.
+  TextColumn get kind => text()();
+  IntColumn get amount => integer()();
+  IntColumn get custodyShare => integer().withDefault(const Constant(0))();
+  IntColumn get personalShare => integer().withDefault(const Constant(0))();
+  IntColumn get tradeId => integer().nullable().references(FinishingTrades, #id)();
+
+  /// materials | labor | other (costs only).
+  TextColumn get costType => text().nullable()();
+  TextColumn get description => text().nullable()();
+  TextColumn get beneficiary => text().nullable()();
+  DateTimeColumn get date => dateTime()();
+
+  /// For a reversal: the event it cancels.
+  IntColumn get reversesId => integer().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+/// Real money movement in one of the user's accounts caused by an event (signed piasters:
+/// + into the account, − out of it). A mixed cost can have two legs.
+class FinishingCashLegs extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get eventId => integer().references(FinishingEvents, #id, onDelete: KeyAction.cascade)();
+  IntColumn get accountId => integer().references(Accounts, #id)();
+  IntColumn get amount => integer()();
+
+  /// custody | personal | client.
+  TextColumn get source => text()();
+}

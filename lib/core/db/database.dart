@@ -32,6 +32,10 @@ part 'database.g.dart';
     CarExpenses,
     Associations,
     AssociationPayments,
+    FinishingProjects,
+    FinishingTrades,
+    FinishingEvents,
+    FinishingCashLegs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -41,7 +45,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -123,6 +127,13 @@ class AppDatabase extends _$AppDatabase {
       if (from >= 5 && from < 8) {
         // v8: tips on car expenses.
         await m.addColumn(carExpenses, carExpenses.tips);
+      }
+      if (from < 9) {
+        // v9: finishing projects.
+        await m.createTable(finishingProjects);
+        await m.createTable(finishingTrades);
+        await m.createTable(finishingEvents);
+        await m.createTable(finishingCashLegs);
       }
     },
   );

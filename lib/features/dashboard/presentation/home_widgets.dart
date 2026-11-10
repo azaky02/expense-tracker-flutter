@@ -334,6 +334,7 @@ void showHomeMoreSheet(BuildContext context) {
     if (on(AppModule.stats)) (Icons.insights_rounded, 'stats.title', '/stats'),
     if (on(AppModule.installments)) (Icons.account_balance_rounded, 'home.loansAndInstallments', '/installments'),
     if (on(AppModule.associations)) (Icons.groups_2_outlined, 'associations.title', '/associations'),
+    if (on(AppModule.finishing)) (Icons.home_repair_service_outlined, 'finishing.title', '/finishing'),
     if (on(AppModule.custody)) (Icons.handshake_outlined, 'home.loan', '/ledger/new'),
     if (on(AppModule.custody)) (Icons.people_alt_outlined, 'nav.people', '/people'),
     if (on(AppModule.cars)) (Icons.directions_car_filled_outlined, 'home.myCars', '/cars'),
