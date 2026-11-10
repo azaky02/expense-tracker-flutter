@@ -61,6 +61,7 @@ class SettingsScreen extends ConsumerWidget {
             _Item(Icons.event_repeat, 'installments.title'.tr(), () => context.push('/installments')),
             _Item(Icons.groups_2_outlined, 'associations.title'.tr(), () => context.push('/associations')),
             _Item(Icons.directions_car_outlined, 'cars.title'.tr(), () => context.push('/cars')),
+            _Item(Icons.construction_outlined, context.locale.languageCode == 'ar' ? 'مشروعات التشطيبات' : 'Finishing projects', () => context.push('/finishing')),
             _Item(Icons.local_gas_station_outlined, 'fuel.title'.tr(), () => context.push('/fuel-prices')),
             _Item(Icons.pie_chart_outline, 'budgets.screenTitle'.tr(), () => context.push('/budgets')),
             _Item(Icons.bar_chart_rounded, 'reports.title'.tr(), () => context.push('/reports')),
