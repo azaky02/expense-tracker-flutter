@@ -87,7 +87,8 @@ String normalizeServerUrl(String input) {
 }
 
 class SyncApi {
-  SyncApi(this.serverUrl, {this._session, this.onSessionChanged, http.Client? client}) : _client = client ?? http.Client();
+  SyncApi(this.serverUrl, {SyncSession? session, this.onSessionChanged, http.Client? client})
+      : _session = session, _client = client ?? http.Client();
 
   final String serverUrl;
   final void Function(SyncSession)? onSessionChanged;
