@@ -51,8 +51,11 @@ class FinishingPostingPreflight {
     ).get();
     if (existingLeg.isNotEmpty) throw StateError('event already has cash legs');
     final existingTx = await db.customSelect(
-      'SELECT id FROM transactions WHERE sync_id = ?',
-      variables: [Variable.withString('finishing:$eventId:cash')],
+      'SELECT id FROM transactions WHERE sync_id IN (?, ?)',
+      variables: [
+        Variable.withString('finishing:$eventId:custody'),
+        Variable.withString('finishing:$eventId:personal'),
+      ],
     ).get();
     if (existingTx.isNotEmpty) throw StateError('event already has a cash transaction');
   }
