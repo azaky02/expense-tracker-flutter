@@ -11845,6 +11845,32 @@ class $FinishingProjectsTable extends FinishingProjects
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _clientPhoneMeta = const VerificationMeta(
+    'clientPhone',
+  );
+  @override
+  late final GeneratedColumn<String> clientPhone = GeneratedColumn<String>(
+    'client_phone',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _whatsAppMeta = const VerificationMeta(
+    'whatsApp',
+  );
+  @override
+  late final GeneratedColumn<bool> whatsApp = GeneratedColumn<bool>(
+    'whats_app',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("whats_app" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -11968,6 +11994,8 @@ class $FinishingProjectsTable extends FinishingProjects
   List<GeneratedColumn> get $columns => [
     id,
     clientName,
+    clientPhone,
+    whatsApp,
     name,
     description,
     location,
@@ -12001,6 +12029,21 @@ class $FinishingProjectsTable extends FinishingProjects
       );
     } else if (isInserting) {
       context.missing(_clientNameMeta);
+    }
+    if (data.containsKey('client_phone')) {
+      context.handle(
+        _clientPhoneMeta,
+        clientPhone.isAcceptableOrUnknown(
+          data['client_phone']!,
+          _clientPhoneMeta,
+        ),
+      );
+    }
+    if (data.containsKey('whats_app')) {
+      context.handle(
+        _whatsAppMeta,
+        whatsApp.isAcceptableOrUnknown(data['whats_app']!, _whatsAppMeta),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -12092,6 +12135,14 @@ class $FinishingProjectsTable extends FinishingProjects
         DriftSqlType.string,
         data['${effectivePrefix}client_name'],
       )!,
+      clientPhone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}client_phone'],
+      ),
+      whatsApp: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}whats_app'],
+      )!,
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -12145,6 +12196,10 @@ class FinishingProject extends DataClass
     implements Insertable<FinishingProject> {
   final int id;
   final String clientName;
+
+  /// Client mobile; with [whatsApp] on, each movement can be sent to them on WhatsApp. v11.
+  final String? clientPhone;
+  final bool whatsApp;
   final String name;
   final String? description;
   final String? location;
@@ -12160,6 +12215,8 @@ class FinishingProject extends DataClass
   const FinishingProject({
     required this.id,
     required this.clientName,
+    this.clientPhone,
+    required this.whatsApp,
     required this.name,
     this.description,
     this.location,
@@ -12176,6 +12233,10 @@ class FinishingProject extends DataClass
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['client_name'] = Variable<String>(clientName);
+    if (!nullToAbsent || clientPhone != null) {
+      map['client_phone'] = Variable<String>(clientPhone);
+    }
+    map['whats_app'] = Variable<bool>(whatsApp);
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
@@ -12199,6 +12260,10 @@ class FinishingProject extends DataClass
     return FinishingProjectsCompanion(
       id: Value(id),
       clientName: Value(clientName),
+      clientPhone: clientPhone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(clientPhone),
+      whatsApp: Value(whatsApp),
       name: Value(name),
       description: description == null && nullToAbsent
           ? const Value.absent()
@@ -12226,6 +12291,8 @@ class FinishingProject extends DataClass
     return FinishingProject(
       id: serializer.fromJson<int>(json['id']),
       clientName: serializer.fromJson<String>(json['clientName']),
+      clientPhone: serializer.fromJson<String?>(json['clientPhone']),
+      whatsApp: serializer.fromJson<bool>(json['whatsApp']),
       name: serializer.fromJson<String>(json['name']),
       description: serializer.fromJson<String?>(json['description']),
       location: serializer.fromJson<String?>(json['location']),
@@ -12244,6 +12311,8 @@ class FinishingProject extends DataClass
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'clientName': serializer.toJson<String>(clientName),
+      'clientPhone': serializer.toJson<String?>(clientPhone),
+      'whatsApp': serializer.toJson<bool>(whatsApp),
       'name': serializer.toJson<String>(name),
       'description': serializer.toJson<String?>(description),
       'location': serializer.toJson<String?>(location),
@@ -12260,6 +12329,8 @@ class FinishingProject extends DataClass
   FinishingProject copyWith({
     int? id,
     String? clientName,
+    Value<String?> clientPhone = const Value.absent(),
+    bool? whatsApp,
     String? name,
     Value<String?> description = const Value.absent(),
     Value<String?> location = const Value.absent(),
@@ -12273,6 +12344,8 @@ class FinishingProject extends DataClass
   }) => FinishingProject(
     id: id ?? this.id,
     clientName: clientName ?? this.clientName,
+    clientPhone: clientPhone.present ? clientPhone.value : this.clientPhone,
+    whatsApp: whatsApp ?? this.whatsApp,
     name: name ?? this.name,
     description: description.present ? description.value : this.description,
     location: location.present ? location.value : this.location,
@@ -12292,6 +12365,10 @@ class FinishingProject extends DataClass
       clientName: data.clientName.present
           ? data.clientName.value
           : this.clientName,
+      clientPhone: data.clientPhone.present
+          ? data.clientPhone.value
+          : this.clientPhone,
+      whatsApp: data.whatsApp.present ? data.whatsApp.value : this.whatsApp,
       name: data.name.present ? data.name.value : this.name,
       description: data.description.present
           ? data.description.value
@@ -12318,6 +12395,8 @@ class FinishingProject extends DataClass
     return (StringBuffer('FinishingProject(')
           ..write('id: $id, ')
           ..write('clientName: $clientName, ')
+          ..write('clientPhone: $clientPhone, ')
+          ..write('whatsApp: $whatsApp, ')
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('location: $location, ')
@@ -12336,6 +12415,8 @@ class FinishingProject extends DataClass
   int get hashCode => Object.hash(
     id,
     clientName,
+    clientPhone,
+    whatsApp,
     name,
     description,
     location,
@@ -12353,6 +12434,8 @@ class FinishingProject extends DataClass
       (other is FinishingProject &&
           other.id == this.id &&
           other.clientName == this.clientName &&
+          other.clientPhone == this.clientPhone &&
+          other.whatsApp == this.whatsApp &&
           other.name == this.name &&
           other.description == this.description &&
           other.location == this.location &&
@@ -12368,6 +12451,8 @@ class FinishingProject extends DataClass
 class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
   final Value<int> id;
   final Value<String> clientName;
+  final Value<String?> clientPhone;
+  final Value<bool> whatsApp;
   final Value<String> name;
   final Value<String?> description;
   final Value<String?> location;
@@ -12381,6 +12466,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
   const FinishingProjectsCompanion({
     this.id = const Value.absent(),
     this.clientName = const Value.absent(),
+    this.clientPhone = const Value.absent(),
+    this.whatsApp = const Value.absent(),
     this.name = const Value.absent(),
     this.description = const Value.absent(),
     this.location = const Value.absent(),
@@ -12395,6 +12482,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
   FinishingProjectsCompanion.insert({
     this.id = const Value.absent(),
     required String clientName,
+    this.clientPhone = const Value.absent(),
+    this.whatsApp = const Value.absent(),
     required String name,
     this.description = const Value.absent(),
     this.location = const Value.absent(),
@@ -12411,6 +12500,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
   static Insertable<FinishingProject> custom({
     Expression<int>? id,
     Expression<String>? clientName,
+    Expression<String>? clientPhone,
+    Expression<bool>? whatsApp,
     Expression<String>? name,
     Expression<String>? description,
     Expression<String>? location,
@@ -12425,6 +12516,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (clientName != null) 'client_name': clientName,
+      if (clientPhone != null) 'client_phone': clientPhone,
+      if (whatsApp != null) 'whats_app': whatsApp,
       if (name != null) 'name': name,
       if (description != null) 'description': description,
       if (location != null) 'location': location,
@@ -12441,6 +12534,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
   FinishingProjectsCompanion copyWith({
     Value<int>? id,
     Value<String>? clientName,
+    Value<String?>? clientPhone,
+    Value<bool>? whatsApp,
     Value<String>? name,
     Value<String?>? description,
     Value<String?>? location,
@@ -12455,6 +12550,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
     return FinishingProjectsCompanion(
       id: id ?? this.id,
       clientName: clientName ?? this.clientName,
+      clientPhone: clientPhone ?? this.clientPhone,
+      whatsApp: whatsApp ?? this.whatsApp,
       name: name ?? this.name,
       description: description ?? this.description,
       location: location ?? this.location,
@@ -12476,6 +12573,12 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
     }
     if (clientName.present) {
       map['client_name'] = Variable<String>(clientName.value);
+    }
+    if (clientPhone.present) {
+      map['client_phone'] = Variable<String>(clientPhone.value);
+    }
+    if (whatsApp.present) {
+      map['whats_app'] = Variable<bool>(whatsApp.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -12515,6 +12618,8 @@ class FinishingProjectsCompanion extends UpdateCompanion<FinishingProject> {
     return (StringBuffer('FinishingProjectsCompanion(')
           ..write('id: $id, ')
           ..write('clientName: $clientName, ')
+          ..write('clientPhone: $clientPhone, ')
+          ..write('whatsApp: $whatsApp, ')
           ..write('name: $name, ')
           ..write('description: $description, ')
           ..write('location: $location, ')
@@ -23327,6 +23432,8 @@ typedef $$FinishingProjectsTableCreateCompanionBuilder =
     FinishingProjectsCompanion Function({
       Value<int> id,
       required String clientName,
+      Value<String?> clientPhone,
+      Value<bool> whatsApp,
       required String name,
       Value<String?> description,
       Value<String?> location,
@@ -23342,6 +23449,8 @@ typedef $$FinishingProjectsTableUpdateCompanionBuilder =
     FinishingProjectsCompanion Function({
       Value<int> id,
       Value<String> clientName,
+      Value<String?> clientPhone,
+      Value<bool> whatsApp,
       Value<String> name,
       Value<String?> description,
       Value<String?> location,
@@ -23449,6 +23558,16 @@ class $$FinishingProjectsTableFilterComposer
 
   ColumnFilters<String> get clientName => $composableBuilder(
     column: $table.clientName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get clientPhone => $composableBuilder(
+    column: $table.clientPhone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get whatsApp => $composableBuilder(
+    column: $table.whatsApp,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -23597,6 +23716,16 @@ class $$FinishingProjectsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get clientPhone => $composableBuilder(
+    column: $table.clientPhone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get whatsApp => $composableBuilder(
+    column: $table.whatsApp,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -23664,6 +23793,14 @@ class $$FinishingProjectsTableAnnotationComposer
     column: $table.clientName,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get clientPhone => $composableBuilder(
+    column: $table.clientPhone,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get whatsApp =>
+      $composableBuilder(column: $table.whatsApp, builder: (column) => column);
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -23819,6 +23956,8 @@ class $$FinishingProjectsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> clientName = const Value.absent(),
+                Value<String?> clientPhone = const Value.absent(),
+                Value<bool> whatsApp = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String?> location = const Value.absent(),
@@ -23832,6 +23971,8 @@ class $$FinishingProjectsTableTableManager
               }) => FinishingProjectsCompanion(
                 id: id,
                 clientName: clientName,
+                clientPhone: clientPhone,
+                whatsApp: whatsApp,
                 name: name,
                 description: description,
                 location: location,
@@ -23847,6 +23988,8 @@ class $$FinishingProjectsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String clientName,
+                Value<String?> clientPhone = const Value.absent(),
+                Value<bool> whatsApp = const Value.absent(),
                 required String name,
                 Value<String?> description = const Value.absent(),
                 Value<String?> location = const Value.absent(),
@@ -23860,6 +24003,8 @@ class $$FinishingProjectsTableTableManager
               }) => FinishingProjectsCompanion.insert(
                 id: id,
                 clientName: clientName,
+                clientPhone: clientPhone,
+                whatsApp: whatsApp,
                 name: name,
                 description: description,
                 location: location,

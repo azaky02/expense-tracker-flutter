@@ -15,6 +15,9 @@ import '../../accounts/presentation/account_widgets.dart';
 import '../data/finishing_repository.dart';
 import '../domain/finishing_rules.dart';
 import 'finishing_reports.dart';
+import 'project_whatsapp.dart';
+import '../../../core/utils/whatsapp.dart';
+import '../../people/presentation/whatsapp_message.dart' show whatsAppDigits;
 
 final finishingProjectsProvider = StreamProvider<List<ProjectSummary>>((ref) => ref.watch(finishingRepositoryProvider).watchProjects());
 final finishingProjectProvider = StreamProvider.family<ProjectDetails?, int>(
@@ -44,11 +47,10 @@ String _statusLabel(FinishingProject p) => p.closed ? 'finishing.closed'.tr() : 
 
 /// One figure in a summary grid.
 class _Figure extends StatelessWidget {
-  const _Figure(this.label, this.piasters, {this.color, this.hint});
+  const _Figure(this.label, this.piasters, {this.color});
   final String label;
   final int piasters;
   final Color? color;
-  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,6 @@ class _Figure extends StatelessWidget {
         Text(label, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         const SizedBox(height: 2),
         AmountText(_egp(piasters), size: 15, color: color),
-        if (hint != null) Text(hint!, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -127,8 +128,8 @@ class _FinishingProjectsScreenState extends ConsumerState<FinishingProjectsScree
                 child: Row(
                   children: [
                     Expanded(child: _Figure('finishing.totalCost'.tr(), sum((b) => b.cost))),
-                    Expanded(child: _Figure('finishing.custody'.tr(), sum((b) => b.custody), color: DS.teal)),
-                    Expanded(child: _Figure('finishing.receivable'.tr(), sum((b) => b.receivable), color: DS.gold)),
+                    Expanded(child: _Figure('finishing.netOnMeTotal'.tr(), sum((b) => b.custody), color: DS.teal)),
+                    Expanded(child: _Figure('finishing.netForMeTotal'.tr(), sum((b) => b.receivable), color: DS.gold)),
                   ],
                 ),
               ),
@@ -199,9 +200,9 @@ class _ProjectCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _Figure('finishing.cost'.tr(), b.cost)),
-              Expanded(child: _Figure('finishing.custody'.tr(), b.custody, color: DS.teal)),
-              Expanded(child: _Figure('finishing.receivable'.tr(), b.receivable, color: DS.gold)),
+              Expanded(child: _Figure('finishing.received'.tr(), b.received, color: DS.teal)),
+              Expanded(child: _Figure('finishing.spent'.tr(), b.cost)),
+              Expanded(child: _NetFigure(b.net)),
             ],
           ),
           if (budgetRatio != null) ...[
@@ -238,6 +239,8 @@ class FinishingProjectFormScreen extends ConsumerStatefulWidget {
 
 class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFormScreen> {
   final _client = TextEditingController();
+  final _phone = TextEditingController();
+  bool _whatsApp = false;
   final _name = TextEditingController();
   final _description = TextEditingController();
   final _location = TextEditingController();
@@ -257,6 +260,8 @@ class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFor
         final p = d.project;
         setState(() {
           _client.text = p.clientName;
+          _phone.text = p.clientPhone ?? '';
+          _whatsApp = p.whatsApp;
           _name.text = p.name;
           _description.text = p.description ?? '';
           _location.text = p.location ?? '';
@@ -271,7 +276,7 @@ class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFor
 
   @override
   void dispose() {
-    for (final c in [_client, _name, _description, _location, _budget]) {
+    for (final c in [_client, _phone, _name, _description, _location, _budget]) {
       c.dispose();
     }
     super.dispose();
@@ -281,6 +286,10 @@ class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFor
     if (_saving) return;
     if (_client.text.trim().isEmpty || _name.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('finishing.err.required'.tr())));
+      return;
+    }
+    if (_whatsApp && whatsAppDigits(_phone.text) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('finishing.err.phone'.tr())));
       return;
     }
     if (_end != null && _end!.isBefore(_start)) {
@@ -293,6 +302,8 @@ class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFor
       if (widget.id == null) {
         final id = await repo.createProject(
           clientName: _client.text,
+          clientPhone: _phone.text,
+          whatsApp: _whatsApp,
           name: _name.text,
           description: _description.text,
           location: _location.text,
@@ -306,6 +317,8 @@ class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFor
         await repo.updateProject(
           widget.id!,
           clientName: _client.text,
+          clientPhone: _phone.text,
+          whatsApp: _whatsApp,
           name: _name.text,
           description: _description.text,
           location: _location.text,
@@ -341,6 +354,20 @@ class _FinishingProjectFormScreenState extends ConsumerState<FinishingProjectFor
             controller: _client,
             maxLength: 150,
             decoration: InputDecoration(hintText: 'finishing.clientHint'.tr(), counterText: ''),
+          ),
+          FieldLabel('finishing.clientPhone'.tr()),
+          TextField(
+            controller: _phone,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(hintText: 'finishing.clientPhoneHint'.tr()),
+            onChanged: (_) => setState(() {}),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _whatsApp,
+            onChanged: (v) => setState(() => _whatsApp = v),
+            title: Text('finishing.wa.flag'.tr()),
+            subtitle: Text('finishing.wa.flagHint'.tr(), style: theme.textTheme.bodySmall),
           ),
           FieldLabel('finishing.projectName'.tr()),
           TextField(
@@ -548,6 +575,31 @@ Future<bool> _confirm(BuildContext context, String title, String body, {bool dan
     ) ??
     false;
 
+/// The project balance with who owes whom.
+class _NetFigure extends StatelessWidget {
+  const _NetFigure(this.net, {this.size = 15});
+  final int net;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = net > 0 ? DS.teal : (net < 0 ? DS.gold : theme.colorScheme.onSurfaceVariant);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('finishing.net'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 2),
+        AmountText(_egp(net.abs()), size: size, color: color),
+        Text(
+          (net > 0 ? 'finishing.netOnMe' : (net < 0 ? 'finishing.netForMe' : 'finishing.netZero')).tr(),
+          style: theme.textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+}
+
 class _SummaryTab extends StatelessWidget {
   const _SummaryTab(this.d);
   final ProjectDetails d;
@@ -582,6 +634,10 @@ class _SummaryTab extends StatelessWidget {
               Row(
                 children: [
                   Expanded(child: Text(p.clientName, style: theme.textTheme.titleSmall)),
+                  if (p.whatsApp && (p.clientPhone ?? '').isNotEmpty) ...[
+                    const Icon(Icons.chat_outlined, size: 16, color: DS.success),
+                    const SizedBox(width: 6),
+                  ],
                   StatusPill(_statusLabel(p), color: _statusColor(context, p)),
                 ],
               ),
@@ -594,19 +650,15 @@ class _SummaryTab extends StatelessWidget {
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _Figure('finishing.cost'.tr(), b.cost)),
-                  Expanded(
-                    child: _Figure('finishing.custody'.tr(), b.custody, color: DS.teal, hint: 'finishing.custodyHint'.tr()),
-                  ),
+                  Expanded(child: _Figure('finishing.received'.tr(), b.received, color: DS.teal)),
+                  Expanded(child: _Figure('finishing.spent'.tr(), b.cost, color: theme.colorScheme.error)),
                 ],
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  Expanded(
-                    child: _Figure('finishing.receivable'.tr(), b.receivable, color: DS.gold, hint: 'finishing.receivableHint'.tr()),
-                  ),
-                  Expanded(child: _Figure('finishing.allocation'.tr(), b.allocation, hint: 'finishing.allocationHint'.tr())),
+                  Expanded(child: _NetFigure(b.net, size: 18)),
+                  if (b.returned > 0) Expanded(child: _Figure('finishing.returnedLabel'.tr(), b.returned)),
                 ],
               ),
               if (budget > 0) ...[
@@ -644,20 +696,10 @@ class _SummaryTab extends StatelessWidget {
               const SizedBox(width: 8),
               action(Icons.call_received_rounded, 'finishing.kind.clientAdvance', FinishingKind.clientAdvance, color: DS.teal),
               const SizedBox(width: 8),
-              action(Icons.swap_horiz_rounded, 'finishing.settle', FinishingKind.reimburseFromCustody, color: DS.gold),
+              action(Icons.keyboard_return_rounded, 'finishing.kind.returnCustody', FinishingKind.returnCustody, color: DS.gold),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              action(Icons.payments_outlined, 'finishing.kind.clientRepayPersonal', FinishingKind.clientRepayPersonal),
-              const SizedBox(width: 8),
-              action(Icons.keyboard_return_rounded, 'finishing.kind.returnCustody', FinishingKind.returnCustody),
-              const SizedBox(width: 8),
-              action(Icons.savings_outlined, 'finishing.kind.personalAllocation', FinishingKind.personalAllocation),
-            ],
-          ),
-          if (b.canClose && (b.cost > 0))
+          if (b.canClose && b.cost > 0)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
@@ -703,16 +745,6 @@ class _SummaryTab extends StatelessWidget {
         AppCard(
           child: Row(
             children: [for (final t in CostType.values) Expanded(child: _Figure('finishing.costType.${t.name}'.tr(), d.byType[t] ?? 0))],
-          ),
-        ),
-        SectionHeader('finishing.custodyStatement'.tr()),
-        AppCard(
-          child: Row(
-            children: [
-              Expanded(child: _Figure('finishing.custodyIn'.tr(), d.custodyIn, color: DS.teal)),
-              Expanded(child: _Figure('finishing.custodyUsed'.tr(), d.custodyIn - d.custodyOut - b.custody)),
-              Expanded(child: _Figure('finishing.custodyReturned'.tr(), d.custodyOut)),
-            ],
           ),
         ),
         if ((p.description ?? '').isNotEmpty) ...[SectionHeader('finishing.description'.tr()), AppCard(child: Text(p.description!))],
@@ -788,10 +820,6 @@ class _MovesTab extends ConsumerWidget {
           _d(context, ev.date),
           if (e.tradeName != null) e.tradeName!,
           if (ev.costType != null) 'finishing.costType.${ev.costType}'.tr(),
-          if (k == FinishingKind.cost && ev.custodyShare > 0 && ev.personalShare > 0)
-            'finishing.splitLine'.tr(namedArgs: {'c': formatAmount(_egp(ev.custodyShare)), 'p': formatAmount(_egp(ev.personalShare))})
-          else if (k == FinishingKind.cost)
-            (ev.custodyShare > 0 ? 'finishing.fromCustody' : 'finishing.fromPocket').tr(),
           if (d.attachments.any((a) => a.eventId == ev.id)) '📎 ${d.attachments.where((a) => a.eventId == ev.id).length}',
           if (original != null) 'finishing.reversesLine'.tr(namedArgs: {'kind': 'finishing.kind.${original.event.kind}'.tr()}),
           for (final l in e.legs) '${l.accountName} ${l.amount > 0 ? '+' : '−'}${formatAmount(_egp(l.amount.abs()))}',
@@ -923,9 +951,9 @@ class _TradesTab extends ConsumerWidget {
   }
 }
 
-// ============================================================ UI-05..08 Event forms
+// ============================================================ Movement form
 
-/// Cost entry (with funding split), client advance, allocation and the settlements.
+/// Cost, money received from the client, or money returned to them.
 class FinishingEventFormScreen extends ConsumerStatefulWidget {
   const FinishingEventFormScreen({super.key, required this.projectId, required this.kind});
   final int projectId;
@@ -935,26 +963,21 @@ class FinishingEventFormScreen extends ConsumerStatefulWidget {
   ConsumerState<FinishingEventFormScreen> createState() => _FinishingEventFormScreenState();
 }
 
-enum _Funding { custody, pocket, mixed }
-
 class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScreen> {
-  late FinishingKind _kind = widget.kind;
+  late final FinishingKind _kind = widget.kind;
   final _eventId = newFinishingEventId(); // stable across retries of this form
   final _amount = TextEditingController();
-  final _custodyPart = TextEditingController();
   final _description = TextEditingController();
   final _beneficiary = TextEditingController();
   DateTime _date = todayDateOnly();
   int? _tradeId;
   CostType _costType = CostType.materials;
-  _Funding? _funding;
   int? _accountId;
-  int? _personalAccountId;
   bool _saving = false;
 
   @override
   void dispose() {
-    for (final c in [_amount, _custodyPart, _description, _beneficiary]) {
+    for (final c in [_amount, _description, _beneficiary]) {
       c.dispose();
     }
     super.dispose();
@@ -962,37 +985,13 @@ class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScr
 
   int get _amountP => toPiasters(parseAmount(_amount.text));
 
-  /// Custody / personal shares of a cost.
-  (int, int) _shares(FinishingBalance b) {
-    final total = _amountP;
-    final funding = _funding ?? (b.custody >= total && total > 0 ? _Funding.custody : (b.custody == 0 ? _Funding.pocket : _Funding.mixed));
-    return switch (funding) {
-      _Funding.custody => (total, 0),
-      _Funding.pocket => (0, total),
-      _Funding.mixed => () {
-        final typed = _custodyPart.text.trim().isEmpty
-            ? (b.custody < total ? b.custody : total)
-            : toPiasters(parseAmount(_custodyPart.text));
-        final c = typed.clamp(0, total);
-        return (c, total - c);
-      }(),
-    };
-  }
-
-  _Funding _effectiveFunding(FinishingBalance b) {
-    final total = _amountP;
-    return _funding ?? (b.custody >= total && total > 0 ? _Funding.custody : (b.custody == 0 ? _Funding.pocket : _Funding.mixed));
-  }
-
-  bool get _needsAccount => switch (_kind) {
-    FinishingKind.clientAdvance || FinishingKind.clientRepayPersonal || FinishingKind.returnCustody || FinishingKind.cost => true,
-    _ => false,
-  };
+  bool get _needsAccount => _kind == FinishingKind.clientAdvance || _kind == FinishingKind.returnCustody || _kind == FinishingKind.cost;
 
   Future<void> _save(ProjectDetails d, List<AccountWithBalance> accounts) async {
     if (_saving) return;
     final defaultAccount = accounts.isEmpty ? null : accounts.first.account.id;
-    final (custodyShare, personalShare) = _kind == FinishingKind.cost ? _shares(d.balance) : (0, 0);
+    final before = d.balance.net;
+    final tradeId = _tradeId ?? (d.trades.isEmpty ? null : d.trades.first.id);
     setState(() => _saving = true);
     try {
       await ref
@@ -1002,20 +1001,55 @@ class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScr
             projectId: widget.projectId,
             kind: _kind,
             amount: _amountP,
-            custodyShare: custodyShare,
-            personalShare: personalShare,
-            tradeId: _tradeId ?? (d.trades.isEmpty ? null : d.trades.first.id),
+            tradeId: tradeId,
             costType: _costType,
             description: _description.text,
             beneficiary: _beneficiary.text,
             date: _date,
             accountId: _needsAccount ? (_accountId ?? defaultAccount) : null,
-            personalAccountId: _personalAccountId ?? _accountId ?? defaultAccount,
           );
-      if (mounted) {
+      if (!mounted) return;
+      final p = d.project;
+      final digits = whatsAppDigits(p.clientPhone);
+      if (p.whatsApp && digits != null) {
+        final send = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text('finishing.saved'.tr()),
+            content: Text('finishing.wa.ask'.tr(namedArgs: {'name': p.clientName})),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('common.no'.tr())),
+              FilledButton.icon(
+                onPressed: () => Navigator.pop(ctx, true),
+                icon: const Icon(Icons.chat_outlined),
+                label: Text('finishing.wa.send'.tr()),
+              ),
+            ],
+          ),
+        );
+        if (send == true) {
+          String? trade;
+          for (final t in d.trades) {
+            if (t.id == tradeId) trade = t.name;
+          }
+          final after = before + (_kind == FinishingKind.clientAdvance ? _amountP : -_amountP);
+          final message = buildProjectWhatsAppMessage(
+            clientName: p.clientName,
+            projectName: p.name,
+            kind: _kind,
+            amount: _egp(_amountP),
+            date: _date,
+            description: _description.text,
+            trade: _kind == FinishingKind.cost ? trade : null,
+            previousBalance: _egp(before),
+            currentBalance: _egp(after),
+          );
+          await openWhatsApp(context, digits, message);
+        }
+      } else if (!p.whatsApp || digits == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('finishing.saved'.tr())));
-        context.pop();
       }
+      if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
@@ -1051,18 +1085,10 @@ class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScr
     if (d == null) return Scaffold(appBar: AppBar(), body: const SkeletonList());
     final theme = Theme.of(context);
     final b = d.balance;
-    final isSettle =
-        _kind == FinishingKind.reimburseFromCustody || _kind == FinishingKind.clientRepayPersonal || _kind == FinishingKind.returnCustody;
-    final funding = _effectiveFunding(b);
-    final (cShare, pShare) = _kind == FinishingKind.cost ? _shares(b) : (0, 0);
-    final limit = switch (_kind) {
-      FinishingKind.reimburseFromCustody => b.custody < b.receivable ? b.custody : b.receivable,
-      FinishingKind.clientRepayPersonal => b.receivable,
-      FinishingKind.returnCustody => b.custody,
-      _ => null,
-    };
+    final limit = _kind == FinishingKind.returnCustody ? b.custody : null;
     final trades = d.trades;
     final tradeId = _tradeId ?? (trades.isEmpty ? null : trades.first.id);
+    final after = b.net + (_kind == FinishingKind.clientAdvance ? _amountP : -_amountP);
     return Scaffold(
       appBar: BrandFormAppBar(title: 'finishing.kind.${_kind.name}'.tr(), onSave: _saving ? null : () => _save(d, accounts)),
       body: StickySaveLayout(
@@ -1072,26 +1098,8 @@ class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScr
             '${d.project.name} · ${d.project.clientName}',
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
-          if (isSettle) ...[
-            FieldLabel('finishing.settleType'.tr()),
-            Wrap(
-              spacing: 8,
-              runSpacing: 4,
-              children: [
-                for (final k in [FinishingKind.reimburseFromCustody, FinishingKind.clientRepayPersonal, FinishingKind.returnCustody])
-                  ChoiceChip(
-                    label: Text('finishing.kind.${k.name}'.tr()),
-                    selected: _kind == k,
-                    onSelected: (_) => setState(() => _kind = k),
-                  ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text('finishing.explain.${_kind.name}'.tr(), style: theme.textTheme.bodySmall),
-            ),
-          ] else
-            Text('finishing.explain.${_kind.name}'.tr(), style: theme.textTheme.bodySmall),
+          const SizedBox(height: 4),
+          Text('finishing.explain.${_kind.name}'.tr(), style: theme.textTheme.bodySmall),
           FieldLabel('transactions.amount'.tr()),
           AmountField(controller: _amount, autofocus: true, onChanged: (_) => setState(() {})),
           if (limit != null)
@@ -1111,6 +1119,23 @@ class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScr
                       child: Text('finishing.useAll'.tr()),
                     ),
                 ],
+              ),
+            ),
+          if (_amountP > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: AppCard(
+                color: DS.goldSoft,
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  'finishing.afterPreview'.tr(
+                    namedArgs: {
+                      'amount': formatAmount(_egp(after.abs())),
+                      'who': (after > 0 ? 'finishing.netOnMe' : (after < 0 ? 'finishing.netForMe' : 'finishing.netZero')).tr(),
+                    },
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(color: DS.text),
+                ),
               ),
             ),
           if (_kind == FinishingKind.cost) ...[
@@ -1169,47 +1194,9 @@ class _FinishingEventFormScreenState extends ConsumerState<FinishingEventFormScr
               controller: _description,
               decoration: InputDecoration(hintText: 'finishing.costDescriptionHint'.tr()),
             ),
-            FieldLabel('finishing.fundingLabel'.tr()),
-            Text(
-              'finishing.custodyAvailable'.tr(namedArgs: {'amount': formatAmount(_egp(b.custody))}),
-              style: theme.textTheme.bodySmall?.copyWith(color: DS.teal),
-            ),
-            const SizedBox(height: 6),
-            SegmentedButton<_Funding>(
-              segments: [
-                ButtonSegment(value: _Funding.custody, label: Text('finishing.fund.custody'.tr())),
-                ButtonSegment(value: _Funding.pocket, label: Text('finishing.fund.pocket'.tr())),
-                ButtonSegment(value: _Funding.mixed, label: Text('finishing.fund.mixed'.tr())),
-              ],
-              selected: {funding},
-              onSelectionChanged: (s) => setState(() => _funding = s.first),
-            ),
-            if (funding == _Funding.mixed) ...[
-              FieldLabel('finishing.custodyPart'.tr()),
-              AmountField(compact: true, controller: _custodyPart, onChanged: (_) => setState(() {})),
-            ],
-            if (_amountP > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: AppCard(
-                  color: DS.goldSoft,
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    'finishing.splitPreview'.tr(namedArgs: {'c': formatAmount(_egp(cShare)), 'p': formatAmount(_egp(pShare))}),
-                    style: theme.textTheme.bodyMedium?.copyWith(color: cShare > b.custody ? theme.colorScheme.error : DS.text),
-                  ),
-                ),
-              ),
-            if (cShare > 0) ...[
-              FieldLabel('finishing.custodyAccount'.tr()),
-              _accountPicker(accounts, _accountId, (id) => setState(() => _accountId = id)),
-            ],
-            if (pShare > 0) ...[
-              FieldLabel('finishing.personalAccount'.tr()),
-              _accountPicker(accounts, _personalAccountId ?? _accountId, (id) => setState(() => _personalAccountId = id)),
-            ],
-          ] else if (_needsAccount) ...[
-            FieldLabel((_kind == FinishingKind.returnCustody ? 'finishing.accountOut' : 'finishing.accountIn').tr()),
+          ],
+          if (_needsAccount) ...[
+            FieldLabel((_kind == FinishingKind.clientAdvance ? 'finishing.accountIn' : 'finishing.accountOut').tr()),
             _accountPicker(accounts, _accountId, (id) => setState(() => _accountId = id)),
           ],
           FieldLabel('transactions.date'.tr()),

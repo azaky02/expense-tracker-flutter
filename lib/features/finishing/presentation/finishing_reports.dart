@@ -73,9 +73,6 @@ class FinishingReportScreen extends ConsumerWidget {
             textDirection: ui.TextDirection.ltr,
             style: theme.textTheme.bodySmall?.copyWith(color: v > 0 ? DS.success : theme.colorScheme.error, fontWeight: FontWeight.w600),
           );
-    final spent = d.statement.where((l) => l.kind == FinishingKind.cost).fold(0, (s, l) => s + l.event.custodyShare);
-    final reimb = d.statement.where((l) => l.kind == FinishingKind.reimburseFromCustody).fold(0, (s, l) => s + l.event.amount);
-    final repaid = d.statement.where((l) => l.kind == FinishingKind.clientRepayPersonal).fold(0, (s, l) => s + l.event.amount);
     return Scaffold(
       appBar: AppBar(title: Text('finishing.report.title'.tr())),
       body: ListView(
@@ -107,26 +104,26 @@ class FinishingReportScreen extends ConsumerWidget {
           AppCard(
             child: Column(
               children: [
-                row('finishing.custodyIn'.tr(), AmountText(_egp(d.custodyIn), size: 13)),
-                row('finishing.report.custodySpent'.tr(), AmountText(_egp(spent), size: 13)),
-                row('finishing.kind.reimburseFromCustody'.tr(), AmountText(_egp(reimb), size: 13)),
-                row('finishing.custodyReturned'.tr(), AmountText(_egp(d.custodyOut), size: 13)),
-                row('finishing.report.custodyLeft'.tr(), AmountText(_egp(b.custody), size: 14, color: DS.teal), bold: true),
+                row('finishing.received'.tr(), AmountText(_egp(b.received), size: 13, color: DS.teal)),
+                row('finishing.spent'.tr(), AmountText(_egp(b.cost), size: 13)),
+                if (b.returned > 0) row('finishing.returnedLabel'.tr(), AmountText(_egp(b.returned), size: 13)),
                 const Divider(),
-                row('finishing.report.personalPaid'.tr(), AmountText(_egp(d.personalPaid), size: 13)),
-                row('finishing.kind.reimburseFromCustody'.tr(), AmountText(_egp(reimb), size: 13)),
-                row('finishing.kind.clientRepayPersonal'.tr(), AmountText(_egp(repaid), size: 13)),
-                row('finishing.report.receivableLeft'.tr(), AmountText(_egp(b.receivable), size: 14, color: DS.gold), bold: true),
-                const SizedBox(height: 6),
-                Text(
-                  (b.canClose ? 'finishing.report.closureOk' : 'finishing.report.closureOpen').tr(),
-                  style: theme.textTheme.bodySmall?.copyWith(color: b.canClose ? DS.success : DS.warning, fontWeight: FontWeight.w700),
+                row(
+                  'finishing.net'.tr(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      AmountText(_egp(b.net.abs()), size: 15, color: b.net > 0 ? DS.teal : (b.net < 0 ? DS.gold : null)),
+                      Text((b.net > 0 ? 'finishing.netOnMe' : (b.net < 0 ? 'finishing.netForMe' : 'finishing.netZero')).tr(), style: muted),
+                    ],
+                  ),
+                  bold: true,
                 ),
               ],
             ),
           ),
           SectionHeader('finishing.report.statement'.tr()),
-          if (d.statement.every((l) => l.custodyDelta == 0 && l.receivableDelta == 0))
+          if (d.statement.every((l) => l.delta == 0))
             AppCard(child: Text('finishing.noMoves'.tr(), style: muted))
           else
             AppCard(
@@ -134,7 +131,7 @@ class FinishingReportScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   for (final l in d.statement)
-                    if (l.custodyDelta != 0 || l.receivableDelta != 0)
+                    if (l.delta != 0)
                       ListTile(
                         dense: true,
                         title: Text(
@@ -148,21 +145,10 @@ class FinishingReportScreen extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('${'finishing.custody'.tr()} ', style: muted),
-                                signed(l.custodyDelta),
-                                Text('  = ${formatAmount(_egp(l.custodyAfter))}', textDirection: ui.TextDirection.ltr, style: muted),
-                              ],
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('${'finishing.receivable'.tr()} ', style: muted),
-                                signed(l.receivableDelta),
-                                Text('  = ${formatAmount(_egp(l.receivableAfter))}', textDirection: ui.TextDirection.ltr, style: muted),
-                              ],
+                            signed(l.delta),
+                            Text(
+                              '${formatAmount(_egp(l.after.abs()))} ${(l.after > 0 ? 'finishing.netOnMe' : (l.after < 0 ? 'finishing.netForMe' : 'finishing.netZero')).tr()}',
+                              style: muted,
                             ),
                           ],
                         ),

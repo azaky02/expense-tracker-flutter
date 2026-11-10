@@ -101,12 +101,13 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
       if (wantsShare == true) {
         final digits = whatsAppDigits(number);
         if (digits == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('رقم واتساب غير صالح. استخدم رقمًا بكود الدولة. المعاملة محفوظة.')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('رقم واتساب غير صالح. استخدم رقمًا بكود الدولة. المعاملة محفوظة.')));
         } else {
-          final selectedPerson = (ref.read(peopleWithBalancesProvider).value ?? const <PersonWithBalance>[])
-              .where((p) => p.person.id == personId);
+          final selectedPerson = (ref.read(peopleWithBalancesProvider).value ?? const <PersonWithBalance>[]).where(
+            (p) => p.person.id == personId,
+          );
           final name = selectedPerson.isEmpty ? 'الطرف الآخر' : selectedPerson.first.person.name;
           final message = buildLedgerWhatsAppMessage(
             personName: name,
@@ -121,18 +122,14 @@ class _LedgerEntryFormScreenState extends ConsumerState<LedgerEntryFormScreen> {
           );
           final uri = Uri.https('wa.me', '/$digits', {'text': message});
           if (!await launchUrl(uri, mode: LaunchMode.externalApplication) && mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('تعذر فتح واتساب. المعاملة محفوظة.')),
-            );
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر فتح واتساب. المعاملة محفوظة.')));
           }
         }
       }
       if (mounted) context.pop();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر حفظ المعاملة. حاول مرة أخرى.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر حفظ المعاملة. حاول مرة أخرى.')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -98,9 +98,7 @@ class LedgerRepository {
   }
 
   Future<PersonBalance> currentConfirmedBalance(int personId) async {
-    final entries = await (_db.select(_db.ledgerEntries)
-          ..where((e) => e.personId.equals(personId)))
-        .get();
+    final entries = await (_db.select(_db.ledgerEntries)..where((e) => e.personId.equals(personId))).get();
     return PersonBalance.of(entries);
   }
 

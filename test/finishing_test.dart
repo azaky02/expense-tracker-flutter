@@ -14,35 +14,23 @@ void main() {
 
   group('rules', () {
     const m = FinishingMove.new;
-    test('BC-03/04/05: cost from custody, pocket and mixed', () {
-      var b = FinishingRules.apply(const FinishingBalance(), const FinishingMove(FinishingKind.clientAdvance, 5000000));
-      b = FinishingRules.apply(b, const FinishingMove(FinishingKind.cost, 800000, custodyShare: 800000));
-      expect((b.custody, b.receivable, b.cost), (4200000, 0, 800000));
-      b = FinishingRules.apply(b, const FinishingMove(FinishingKind.cost, 500000, personalShare: 500000));
-      expect((b.custody, b.receivable, b.cost), (4200000, 500000, 1300000));
-      b = FinishingRules.apply(b, const FinishingMove(FinishingKind.cost, 1500000, custodyShare: 1000000, personalShare: 500000));
-      expect((b.custody, b.receivable, b.cost), (3200000, 1000000, 2800000));
-    });
-
-    test('BC-06..09 settlements and allocation', () {
-      var b = const FinishingBalance(custody: 2000000, receivable: 700000);
-      b = FinishingRules.apply(b, m(FinishingKind.reimburseFromCustody, 700000));
-      expect((b.custody, b.receivable), (1300000, 0));
-      b = FinishingRules.apply(b, m(FinishingKind.returnCustody, 1300000));
-      expect(b.custody, 0);
-      b = FinishingRules.apply(b, m(FinishingKind.personalAllocation, 2000000));
-      expect((b.allocation, b.cost, b.custody), (2000000, 0, 0));
-      expect(b.canClose, isTrue);
+    test('one project account: received − spent = balance', () {
+      var b = FinishingRules.apply(const FinishingBalance(), m(FinishingKind.clientAdvance, 5000000));
+      b = FinishingRules.apply(b, m(FinishingKind.cost, 800000));
+      expect((b.net, b.received, b.cost, b.custody, b.receivable), (4200000, 5000000, 800000, 4200000, 0));
+      // Spending beyond what was received is allowed: the client then owes me.
+      b = FinishingRules.apply(b, m(FinishingKind.cost, 5000000));
+      expect((b.net, b.custody, b.receivable), (-800000, 0, 800000));
+      // The client pays it back.
+      b = FinishingRules.apply(b, m(FinishingKind.clientAdvance, 800000));
+      expect((b.net, b.canClose), (0, true));
     });
 
     test('limits are refused', () {
-      const b = FinishingBalance(custody: 100, receivable: 50);
-      expect(() => FinishingRules.apply(b, m(FinishingKind.cost, 200, custodyShare: 200)), throwsA(isA<FinishingRuleError>()));
-      expect(() => FinishingRules.apply(b, m(FinishingKind.cost, 200, custodyShare: 100)), throwsA(isA<FinishingRuleError>()));
-      expect(() => FinishingRules.apply(b, m(FinishingKind.reimburseFromCustody, 60)), throwsA(isA<FinishingRuleError>()));
-      expect(() => FinishingRules.apply(b, m(FinishingKind.clientRepayPersonal, 51)), throwsA(isA<FinishingRuleError>()));
+      const b = FinishingBalance(net: 100);
       expect(() => FinishingRules.apply(b, m(FinishingKind.returnCustody, 101)), throwsA(isA<FinishingRuleError>()));
       expect(() => FinishingRules.apply(b, m(FinishingKind.clientAdvance, 0)), throwsA(isA<FinishingRuleError>()));
+      expect(FinishingRules.apply(b, m(FinishingKind.returnCustody, 100)).net, 0);
     });
   });
 
@@ -68,36 +56,32 @@ void main() {
       eventId: 'c1',
       projectId: pid,
       kind: FinishingKind.cost,
-      amount: 1500000,
-      custodyShare: 1000000,
-      personalShare: 500000,
+      amount: 5500000,
       tradeId: trade.id,
       costType: CostType.materials,
       description: 'خامات',
       date: DateTime(2026, 11, 3),
       accountId: cash.account.id,
-      personalAccountId: cash.account.id,
     );
     var d = (await repo.loadProject(pid))!;
-    expect((d.balance.custody, d.balance.receivable, d.balance.cost), (4000000, 500000, 1500000));
-    // Statement with running balances, account movements, personal paid.
-    expect(d.statement.map((l) => (l.custodyAfter, l.receivableAfter)).toList(), [(5000000, 0), (4000000, 500000)]);
-    expect((d.accounts.single.moneyIn, d.accounts.single.moneyOut), (5000000, 1500000));
-    expect(d.personalPaid, 500000);
+    expect((d.balance.net, d.balance.receivable, d.balance.cost), (-500000, 500000, 5500000));
+    // Statement with the balance after each movement, and account movements.
+    expect(d.statement.map((l) => l.after).toList(), [5000000, -500000]);
+    expect((d.accounts.single.moneyIn, d.accounts.single.moneyOut), (5000000, 5500000));
     String tr(String k, {Map<String, String>? args}) => k;
     expect(buildProjectXlsx(d, tr, 'ar').length, greaterThan(1000));
     expect((await buildProjectPdf(d, tr, 'ar')).length, greaterThan(1000));
     // Attachments are listed with the project.
     await repo.addAttachment(projectId: pid, path: '/tmp/x.jpg', name: 'x.jpg', type: 'image');
     expect((await repo.loadProject(pid))!.attachments.length, 1);
-    expect(d.byTrade.first.total, 1500000);
+    expect(d.byTrade.first.total, 5500000);
     var bal = (await accounts.watchAccounts().first).firstWhere((a) => a.account.id == cash.account.id).balance;
-    expect(bal - cash.balance, closeTo(50000 - 15000, 0.001));
+    expect(bal - cash.balance, closeTo(50000 - 55000, 0.001));
 
-    // Over custody: refused with no partial writes.
+    // Returning money I don't hold: refused with no partial writes.
     final before = (await db.select(db.finishingEvents).get()).length;
     await expectLater(
-      repo.record(eventId: 'c2', projectId: pid, kind: FinishingKind.cost, amount: 9000000, custodyShare: 9000000, tradeId: trade.id, description: 'x', date: DateTime(2026, 11, 3), accountId: cash.account.id),
+      repo.record(eventId: 'c2', projectId: pid, kind: FinishingKind.returnCustody, amount: 100, date: DateTime(2026, 11, 3), accountId: cash.account.id),
       throwsA(isA<FinishingRuleError>()),
     );
     expect((await db.select(db.finishingEvents).get()).length, before);

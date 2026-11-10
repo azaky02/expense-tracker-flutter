@@ -13,13 +13,54 @@ String? whatsAppDigits(String? raw) {
 }
 
 String _money(double value) => value.toStringAsFixed(2);
-String _date(DateTime value) =>
-    '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
+String _date(DateTime value) => '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 
 String balanceDescription(double net) {
   if (net > 0.005) return 'مستحق لي عندك';
   if (net < -0.005) return 'مستحق لك عندي';
   return 'الحساب متسوي';
+}
+
+/// The shared layout of every WhatsApp notice (people and projects).
+String buildWhatsAppNotice({
+  required String personName,
+  required String typeLabel,
+  required double amount,
+  required DateTime date,
+  required String details,
+  required double previousBalance,
+  required double currentBalance,
+  String Function(double)? describe,
+  List<String> extraHeader = const [],
+  String? notes,
+  String? footerNote,
+}) {
+  final d = describe ?? balanceDescription;
+  return [
+    '📱 إشعار من تطبيق مصروفي',
+    '',
+    'أهلاً أستاذ $personName 👋',
+    '',
+    'تم تسجيل معاملة مالية بيننا:',
+    '',
+    ...extraHeader,
+    '📌 نوع المعاملة: $typeLabel',
+    '💵 مبلغ المعاملة: ${_money(amount)} جنيه',
+    '📅 التاريخ: ${_date(date)}',
+    '',
+    '📝 تفاصيل المعاملة:',
+    details,
+    if (notes != null && notes.trim().isNotEmpty) 'ملاحظات: ${notes.trim()}',
+    '',
+    '────────────',
+    '💰 ملخص الحساب',
+    '',
+    'الرصيد السابق: ${_money(previousBalance.abs())} جنيه (${d(previousBalance)})',
+    'قيمة المعاملة: ${_money(amount)} جنيه',
+    '',
+    '💵 الرصيد الحالي: ${_money(currentBalance.abs())} جنيه (${d(currentBalance)})',
+    if (footerNote != null) ...['', footerNote],
+  ].join('\n');
 }
 
 String buildLedgerWhatsAppMessage({
@@ -34,25 +75,16 @@ String buildLedgerWhatsAppMessage({
   String? description,
 }) {
   final action = direction == LedgerDirection.received ? 'استلمت منك' : 'سلمتك';
-  final kindLabel = kind == LedgerKind.settlement ? 'تسوية' : 'عهدة';
-  final pendingLabel = confirmed ? '' : '\n⏳ المعاملة قيد التأكيد؛ الرصيد المعروض للمستندات المؤكدة فقط.';
-  return [
-    '💰 إشعار معاملة مالية - مصروفي',
-    '',
-    'أهلاً $personName 👋',
-    '',
-    'تم تسجيل معاملة $kindLabel بيننا.',
-    '💵 مبلغ المعاملة: ${_money(amount)} جنيه مصري',
-    '📅 التاريخ: ${_date(date)}',
-    '📝 التفاصيل: $action مبلغ ${_money(amount)} جنيه مصري ${kind == LedgerKind.settlement ? 'كتسوية' : 'كعهدة'}.',
-    if (description != null && description.trim().isNotEmpty) 'ملاحظات: ${description.trim()}',
-    '',
-    '📊 ملخص الحساب (من وجهة نظر مُرسل الرسالة)',
-    'الرصيد السابق: ${_money(previousBalance.abs())} جنيه — ${balanceDescription(previousBalance)}',
-    'الرصيد الحالي: ${_money(currentBalance.abs())} جنيه — ${balanceDescription(currentBalance)}',
-    if (!confirmed) pendingLabel.trim(),
-    '',
-    'يرجى مراجعة البيانات وإبلاغي إذا كان هناك اختلاف.',
-    'تم إعداد الرسالة باستخدام تطبيق مصروفي.',
-  ].join('\n');
+  final settlement = kind == LedgerKind.settlement;
+  return buildWhatsAppNotice(
+    personName: personName,
+    typeLabel: settlement ? 'تسوية' : 'عهدة',
+    amount: amount,
+    date: date,
+    details: '$action مبلغ ${_money(amount)} جنيه ${settlement ? 'كتسوية' : 'كعهدة'}.',
+    notes: description,
+    previousBalance: previousBalance,
+    currentBalance: currentBalance,
+    footerNote: confirmed ? null : '⏳ المعاملة قيد التأكيد؛ الرصيد المعروض للمعاملات المؤكدة فقط.',
+  );
 }

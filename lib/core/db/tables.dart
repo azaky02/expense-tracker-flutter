@@ -383,6 +383,10 @@ class AssociationPayments extends Table {
 class FinishingProjects extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get clientName => text().withLength(min: 1, max: 150)();
+
+  /// Client mobile; with [whatsApp] on, each movement can be sent to them on WhatsApp. v11.
+  TextColumn get clientPhone => text().nullable()();
+  BoolColumn get whatsApp => boolean().withDefault(const Constant(false))();
   TextColumn get name => text().withLength(min: 1, max: 150)();
   TextColumn get description => text().nullable()();
   TextColumn get location => text().nullable()();

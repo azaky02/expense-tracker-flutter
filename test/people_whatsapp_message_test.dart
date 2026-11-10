@@ -23,8 +23,8 @@ void main() {
       confirmed: true,
     );
     expect(message, contains('استلمت منك مبلغ 1.00'));
-    expect(message, contains('الرصيد السابق: 2500.00 جنيه — مستحق لك عندي'));
-    expect(message, contains('الرصيد الحالي: 2501.00 جنيه — مستحق لك عندي'));
+    expect(message, contains('الرصيد السابق: 2500.00 جنيه (مستحق لك عندي)'));
+    expect(message, contains('الرصيد الحالي: 2501.00 جنيه (مستحق لك عندي)'));
     expect(message, contains('09/11/2026'));
     expect(message, contains('\n'));
     expect(message, isNot(contains(r'\\n')));

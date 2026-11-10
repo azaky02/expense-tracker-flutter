@@ -19,7 +19,8 @@
     "viewAll": "View all",
     "yesterday": "Yesterday",
     "moreDetails": "More details (optional)",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "no": "No"
   },
   "nav": {
     "home": "Home",
@@ -1025,7 +1026,7 @@
     "deleteTitle": "Delete project",
     "deleteBody": "\"{name}\" and all its movements will be deleted and its account movements undone. This can't be undone.",
     "closedNote": "This project is closed. Reopen it from the menu to record more.",
-    "readyToClose": "✓ No custody or receivable left: ready to close.",
+    "readyToClose": "✓ Settled: ready to close.",
     "settle": "Settle",
     "costByTrade": "Cost by trade",
     "costByType": "Cost by type",
@@ -1036,20 +1037,20 @@
     "custodyReturned": "Returned",
     "kind": {
       "cost": "Cost",
-      "clientAdvance": "Receive custody",
-      "personalAllocation": "Personal allocation",
-      "reimburseFromCustody": "Reimburse from custody",
-      "clientRepayPersonal": "Client repaid me",
-      "returnCustody": "Return custody",
+      "clientAdvance": "Received from client",
+      "personalAllocation": "Allocation",
+      "reimburseFromCustody": "Reimbursed",
+      "clientRepayPersonal": "Client repaid",
+      "returnCustody": "Returned to client",
       "reversal": "Reversal"
     },
     "explain": {
-      "cost": "A project cost (materials or labor). Choose whether it was paid from client custody, your pocket, or both.",
-      "clientAdvance": "The client gave you money on account. It's custody, not your income; it adds to the receiving account.",
-      "personalAllocation": "Money of yours you plan to spend on the project. For tracking only: not a cost and no account change.",
-      "reimburseFromCustody": "Pay yourself back from the client's custody you hold. Reduces custody and receivable equally; accounts don't change.",
-      "clientRepayPersonal": "The client paid you for what you spent from your pocket. Reduces your receivable and adds to the account.",
-      "returnCustody": "You returned unused custody to the client. Reduces custody and the account."
+      "cost": "A project cost (materials or labor). Deducted from the project balance and the account you paid from.",
+      "clientAdvance": "Money received from the client. Added to the project balance and the receiving account; not your income.",
+      "personalAllocation": "",
+      "reimburseFromCustody": "",
+      "clientRepayPersonal": "",
+      "returnCustody": "Money returned to the client. Deducted from the project balance and the account you paid from."
     },
     "settleType": "Settlement type",
     "maxAllowed": "Maximum allowed: {amount}",
@@ -1099,7 +1100,7 @@
       "endDate": "End date must be after the start",
       "amount": "Enter an amount above zero",
       "split": "The split must equal the full amount",
-      "custody": "Not enough custody",
+      "custody": "More than the client money you hold",
       "receivable": "More than what you're owed",
       "trade": "Choose a trade",
       "description": "Enter a description",
@@ -1107,13 +1108,14 @@
       "closed": "The project is closed",
       "duplicate": "This movement was already saved with different data",
       "kind": "Not allowed",
-      "closeCustody": "Can't close: client custody remains",
-      "closeReceivable": "Can't close: you are still owed money",
+      "closeCustody": "Can't close: you still hold client money",
+      "closeReceivable": "Can't close: the client still owes you",
       "tradeExists": "This trade already exists",
       "tradeUsed": "This trade has costs and can't be deleted",
       "alreadyReversed": "Already reversed",
       "reverseBlocked": "Can't reverse: later movements depend on it (e.g. the custody was spent)",
-      "generic": "Something went wrong, try again"
+      "generic": "Something went wrong, try again",
+      "phone": "Enter a valid mobile number for WhatsApp"
     },
     "tradeName": {
       "electric": "Electrical",
@@ -1130,7 +1132,7 @@
       "costs": "Costs",
       "fromCustody": "From custody",
       "fromPocket": "From pocket",
-      "statement": "Custody & receivable statement",
+      "statement": "Project account statement",
       "movement": "Movement",
       "custodyBalance": "Custody balance",
       "receivableBalance": "Receivable balance",
@@ -1145,7 +1147,10 @@
       "personalPaid": "Paid from my pocket",
       "receivableLeft": "Still owed to me",
       "closureOk": "✓ Settled: no custody or receivable left",
-      "closureOpen": "Custody or receivable still open"
+      "closureOpen": "Custody or receivable still open",
+      "balanceAfter": "Balance",
+      "received": "Received",
+      "spent": "Spent"
     },
     "compare": {
       "title": "Compare projects"
@@ -1163,6 +1168,24 @@
       "delete": "Delete attachment?",
       "empty": "Add invoices, work photos and documents here.",
       "webHint": "Attachments are available in the mobile app only."
+    },
+    "received": "Received from client",
+    "spent": "Spent",
+    "net": "Balance",
+    "netOnMe": "I owe the client",
+    "netForMe": "Client owes me",
+    "netZero": "Settled",
+    "netOnMeTotal": "I owe clients",
+    "netForMeTotal": "Clients owe me",
+    "returnedLabel": "Returned to client",
+    "afterPreview": "After this: {amount} — {who}",
+    "clientPhone": "Client mobile (optional)",
+    "clientPhoneHint": "e.g. 01001234567",
+    "wa": {
+      "flag": "Send movements to the client on WhatsApp",
+      "flagHint": "After each movement you'll be asked to send the client the amount and the balance before and after.",
+      "ask": "Send the details to {name} on WhatsApp?",
+      "send": "Send on WhatsApp"
     }
   }
 }

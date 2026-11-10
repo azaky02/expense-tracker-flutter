@@ -5,6 +5,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/db/tables.dart';
 import '../../../core/utils/currency.dart';
+import '../../../core/utils/whatsapp.dart';
+import 'whatsapp_message.dart';
 import '../data/ledger_repository.dart';
 import 'people_providers.dart';
 import 'people_screen.dart';
@@ -53,10 +55,44 @@ class StatementScreen extends ConsumerWidget {
       return b.toString();
     }
 
+    /// Sends [message] to this person's WhatsApp number (or says it's missing).
+    Future<void> sendWhatsApp(String message) async {
+      final digits = whatsAppDigits(await ref.read(ledgerRepositoryProvider).whatsAppNumber(personId));
+      if (!context.mounted) return;
+      if (digits == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('مفيش رقم واتساب صحيح للشخص ده. ضيفه من تعديل بيانات الشخص.')));
+        return;
+      }
+      await openWhatsApp(context, digits, message);
+    }
+
+    /// The same notice sent when the movement was recorded, rebuilt from the statement.
+    Future<void> sendLine(int i) {
+      final l = lines[i];
+      final e = l.entry;
+      return sendWhatsApp(
+        buildLedgerWhatsAppMessage(
+          personName: name,
+          kind: e.kind,
+          direction: e.direction,
+          amount: e.amount,
+          date: e.date,
+          previousBalance: i == 0 ? 0 : lines[i - 1].runningBalance,
+          currentBalance: l.runningBalance,
+          confirmed: true,
+          description: e.description,
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('statement.title'.tr(namedArgs: {'name': name}, context: context)),
         actions: [
+          if (lines.isNotEmpty)
+            IconButton(tooltip: 'واتساب', icon: const Icon(Icons.chat_outlined), onPressed: () => sendWhatsApp(asText())),
           if (lines.isNotEmpty)
             IconButton(
               tooltip: 'statement.share'.tr(context: context),
@@ -119,48 +155,55 @@ class StatementScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                for (final l in lines)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                    decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: theme.dividerColor)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(flex: 3, child: Text(DateFormat.yMd(context.locale.languageCode).format(l.entry.date))),
-                            // Debit = it adds to what I owe (I received); credit = it adds to what they owe (I gave).
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                l.entry.direction == LedgerDirection.received ? formatAmount(l.entry.amount) : '—',
-                                textAlign: TextAlign.end,
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('اضغط على أي حركة عشان تبعت تفاصيلها على واتساب', style: theme.textTheme.bodySmall),
+                ),
+                for (final (i, l) in lines.indexed)
+                  InkWell(
+                    onTap: () => sendLine(i),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(flex: 3, child: Text(DateFormat.yMd(context.locale.languageCode).format(l.entry.date))),
+                              // Debit = it adds to what I owe (I received); credit = it adds to what they owe (I gave).
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  l.entry.direction == LedgerDirection.received ? formatAmount(l.entry.amount) : '—',
+                                  textAlign: TextAlign.end,
+                                ),
                               ),
-                            ),
-                            Expanded(
-                              flex: 3,
-                              child: Text(
-                                l.entry.direction == LedgerDirection.gave ? formatAmount(l.entry.amount) : '—',
-                                textAlign: TextAlign.end,
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  l.entry.direction == LedgerDirection.gave ? formatAmount(l.entry.amount) : '—',
+                                  textAlign: TextAlign.end,
+                                ),
                               ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: Text(
-                                _balanceText(context, l.runningBalance),
-                                textAlign: TextAlign.end,
-                                style: TextStyle(color: netColor(context, l.runningBalance)),
+                              Expanded(
+                                flex: 4,
+                                child: Text(
+                                  _balanceText(context, l.runningBalance),
+                                  textAlign: TextAlign.end,
+                                  style: TextStyle(color: netColor(context, l.runningBalance)),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          [kindLabel(context, l.entry.kind), if (l.entry.description != null) l.entry.description!].join(' · '),
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
+                            ],
+                          ),
+                          Text(
+                            [kindLabel(context, l.entry.kind), if (l.entry.description != null) l.entry.description!].join(' · '),
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],

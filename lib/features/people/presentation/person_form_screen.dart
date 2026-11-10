@@ -73,8 +73,8 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
           final number = await repo.whatsAppNumber(p.id);
           if (mounted) {
             setState(() {
-            _usePhoneForWhatsApp = usePhone;
-            _whatsApp.text = usePhone ? '' : (number ?? '');
+              _usePhoneForWhatsApp = usePhone;
+              _whatsApp.text = usePhone ? '' : (number ?? '');
             });
           }
         });
@@ -118,10 +118,7 @@ class _PersonFormScreenState extends ConsumerState<PersonFormScreen> {
             TextField(
               controller: _whatsApp,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'رقم واتساب',
-                hintText: '+201012345678',
-              ),
+              decoration: const InputDecoration(labelText: 'رقم واتساب', hintText: '+201012345678'),
             ),
             const SizedBox(height: 12),
           ],

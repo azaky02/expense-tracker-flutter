@@ -47,14 +47,14 @@ class TradeCost {
   final int count;
 }
 
-/// One line of the custody / receivable statement, oldest first, with running balances.
+/// One line of the project account statement, oldest first, with the balance after it.
 class StatementLine {
-  const StatementLine(this.event, this.custodyDelta, this.receivableDelta, this.custodyAfter, this.receivableAfter);
+  const StatementLine(this.event, this.delta, this.after);
   final FinishingEvent event;
-  final int custodyDelta;
-  final int receivableDelta;
-  final int custodyAfter;
-  final int receivableAfter;
+
+  /// Effect on the project balance (+ received, − spent / returned).
+  final int delta;
+  final int after;
   FinishingKind get kind => FinishingKind.parse(event.kind);
 }
 
@@ -75,8 +75,6 @@ class ProjectDetails {
     required this.events,
     required this.byTrade,
     required this.byType,
-    required this.custodyIn,
-    required this.custodyOut,
     this.statement = const [],
     this.accounts = const [],
     this.attachments = const [],
@@ -90,17 +88,10 @@ class ProjectDetails {
   final List<TradeCost> byTrade;
   final Map<CostType, int> byType;
 
-  /// Total custody received / returned to the client (for the statement).
-  final int custodyIn;
-  final int custodyOut;
-
-  /// Custody / receivable statement, oldest first (reversed movements left out).
+  /// Project account statement, oldest first (reversed movements left out).
   final List<StatementLine> statement;
   final List<AccountMovement> accounts;
   final List<FinishingAttachment> attachments;
-
-  /// Personal money paid in total (the personal share of all costs).
-  int get personalPaid => statement.fold(0, (s, l) => s + (l.kind == FinishingKind.cost ? l.event.personalShare : 0));
 }
 
 class FinishingRepository {
@@ -165,7 +156,6 @@ class FinishingRepository {
 
     final byTradeTotal = <int, (int, int)>{};
     final byType = {for (final t in CostType.values) t: 0};
-    var custodyIn = 0, custodyOut = 0;
     for (final e in active) {
       if (e.kind == FinishingKind.cost.name) {
         if (e.tradeId != null) {
@@ -175,25 +165,19 @@ class FinishingRepository {
         final t = CostType.values.firstWhere((c) => c.name == e.costType, orElse: () => CostType.other);
         byType[t] = byType[t]! + e.amount;
       }
-      if (e.kind == FinishingKind.clientAdvance.name) custodyIn += e.amount;
-      if (e.kind == FinishingKind.returnCustody.name) custodyOut += e.amount;
     }
     // Statement: replay active events in date order.
     final chrono = [...active]..sort((a, b) => a.date.compareTo(b.date) != 0 ? a.date.compareTo(b.date) : a.id.compareTo(b.id));
-    var cAfter = 0, rAfter = 0;
+    var after = 0;
     final statement = <StatementLine>[];
     for (final e in chrono) {
-      final (dc, dr) = switch (FinishingKind.parse(e.kind)) {
-        FinishingKind.clientAdvance => (e.amount, 0),
-        FinishingKind.cost => (-e.custodyShare, e.personalShare),
-        FinishingKind.reimburseFromCustody => (-e.amount, -e.amount),
-        FinishingKind.clientRepayPersonal => (0, -e.amount),
-        FinishingKind.returnCustody => (-e.amount, 0),
-        _ => (0, 0),
+      final delta = switch (FinishingKind.parse(e.kind)) {
+        FinishingKind.clientAdvance || FinishingKind.clientRepayPersonal => e.amount,
+        FinishingKind.cost || FinishingKind.returnCustody => -e.amount,
+        _ => 0,
       };
-      cAfter += dc;
-      rAfter += dr;
-      statement.add(StatementLine(e, dc, dr, cAfter, rAfter));
+      after += delta;
+      statement.add(StatementLine(e, delta, after));
     }
     final perAccount = <String, (int, int)>{};
     for (final l in legs) {
@@ -229,8 +213,6 @@ class FinishingRepository {
       byTrade: [for (final t in trades) TradeCost(t, byTradeTotal[t.id]?.$1 ?? 0, byTradeTotal[t.id]?.$2 ?? 0)]
         ..sort((a, b) => b.total.compareTo(a.total)),
       byType: byType,
-      custodyIn: custodyIn,
-      custodyOut: custodyOut,
     );
   }
 
@@ -271,6 +253,8 @@ class FinishingRepository {
   Future<int> createProject({
     required String clientName,
     required String name,
+    String? clientPhone,
+    bool whatsApp = false,
     String? description,
     String? location,
     required DateTime startDate,
@@ -286,6 +270,8 @@ class FinishingRepository {
           .insert(
             FinishingProjectsCompanion.insert(
               clientName: _clean(clientName, 150)!,
+              clientPhone: Value(_clean(clientPhone, 30)),
+              whatsApp: Value(whatsApp),
               name: _clean(name, 150)!,
               description: Value(_clean(description)),
               location: Value(_clean(location, 300)),
@@ -305,6 +291,8 @@ class FinishingRepository {
     int id, {
     required String clientName,
     required String name,
+    String? clientPhone,
+    bool whatsApp = false,
     String? description,
     String? location,
     required DateTime startDate,
@@ -317,6 +305,8 @@ class FinishingRepository {
     await (_db.update(_db.finishingProjects)..where((p) => p.id.equals(id))).write(
       FinishingProjectsCompanion(
         clientName: Value(_clean(clientName, 150)!),
+        clientPhone: Value(_clean(clientPhone, 30)),
+        whatsApp: Value(whatsApp),
         name: Value(_clean(name, 150)!),
         description: Value(_clean(description)),
         location: Value(_clean(location, 300)),
@@ -337,8 +327,8 @@ class FinishingRepository {
   Future<void> close(int id) => _db.transaction(() async {
     final events = await (_db.select(_db.finishingEvents)..where((e) => e.projectId.equals(id))).get();
     final b = _balanceOf(events);
-    if (b.custody != 0) throw const FinishingRuleError('closeCustody');
-    if (b.receivable != 0) throw const FinishingRuleError('closeReceivable');
+    if (b.net > 0) throw const FinishingRuleError('closeCustody');
+    if (b.net < 0) throw const FinishingRuleError('closeReceivable');
     await (_db.update(_db.finishingProjects)..where((p) => p.id.equals(id))).write(
       FinishingProjectsCompanion(closed: const Value(true), workStatus: const Value('completed'), updatedAt: Value(DateTime.now())),
     );
@@ -465,15 +455,7 @@ class FinishingRepository {
 
     // Validate against everything recorded so far.
     final events = await (_db.select(_db.finishingEvents)..where((e) => e.projectId.equals(projectId))).get();
-    FinishingRules.apply(
-      _balanceOf(events),
-      FinishingMove(
-        kind,
-        amount,
-        custodyShare: kind == FinishingKind.cost ? custodyShare : 0,
-        personalShare: kind == FinishingKind.cost ? personalShare : 0,
-      ),
-    );
+    FinishingRules.apply(_balanceOf(events), FinishingMove(kind, amount));
 
     final legs = <(int, int, String)>[];
     void leg(int? account, int signed, String source) {
@@ -486,8 +468,7 @@ class FinishingRepository {
       case FinishingKind.clientAdvance:
         leg(accountId, amount, 'client');
       case FinishingKind.cost:
-        leg(accountId, -custodyShare, 'custody');
-        leg(personalAccountId, -personalShare, 'personal');
+        leg(accountId, -amount, 'project');
       case FinishingKind.clientRepayPersonal:
         leg(accountId, amount, 'client');
       case FinishingKind.returnCustody:

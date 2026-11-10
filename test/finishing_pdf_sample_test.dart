@@ -34,14 +34,12 @@ void main() {
     final t = (await repo.loadProject(pid))!.trades;
     var n = 0;
     Future<void> rec(FinishingKind k, int egp, {int c = 0, int p = 0, int? trade, CostType? type, String? desc, String? who, int day = 1}) => repo.record(
-      eventId: 'e${n++}', projectId: pid, kind: k, amount: egp * 100, custodyShare: c * 100, personalShare: p * 100,
-      tradeId: trade, costType: type, description: desc, beneficiary: who, date: DateTime(2026, 10, day), accountId: cash, personalAccountId: cash);
+      eventId: 'e${n++}', projectId: pid, kind: k, amount: egp * 100, tradeId: trade, costType: type, description: desc, beneficiary: who, date: DateTime(2026, 10, day), accountId: cash);
     await rec(FinishingKind.clientAdvance, 50000, desc: 'دفعة أولى', day: 2);
     await rec(FinishingKind.cost, 8000, c: 8000, trade: t[0].id, type: CostType.materials, desc: 'سلك وعلب', day: 4);
     await rec(FinishingKind.cost, 5000, p: 5000, trade: t[1].id, type: CostType.materials, desc: 'مواسير', day: 6);
     await rec(FinishingKind.cost, 15000, c: 10000, p: 5000, trade: t[2].id, type: CostType.labor, desc: 'مصنعية نقاشة', who: 'معلم سيد', day: 9);
-    await rec(FinishingKind.reimburseFromCustody, 7000, day: 12);
-    await rec(FinishingKind.clientRepayPersonal, 3000, day: 15);
+    await rec(FinishingKind.clientAdvance, 10000, desc: 'دفعة تانية', day: 15);
     final d = (await repo.loadProject(pid))!;
     File('test_out/finishing_sample.pdf').writeAsBytesSync(await buildProjectPdf(d, tr, 'ar'));
     await db.close();

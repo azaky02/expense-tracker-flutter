@@ -30,23 +30,14 @@ class _Sheet {
       if (e.kind == FinishingKind.cost && !e.reversed) e,
   ];
 
-  List<String> get closureLines {
-    final s = d.statement;
-    int sum(bool Function(StatementLine) f, int Function(StatementLine) v) => s.where(f).fold(0, (a, l) => a + v(l));
-    final spent = sum((l) => l.kind == FinishingKind.cost, (l) => l.event.custodyShare);
-    final reimb = sum((l) => l.kind == FinishingKind.reimburseFromCustody, (l) => l.event.amount);
-    final repaid = sum((l) => l.kind == FinishingKind.clientRepayPersonal, (l) => l.event.amount);
-    return [
-      '${t('finishing.custodyIn')}: ${_m(d.custodyIn)}',
-      '${t('finishing.report.custodySpent')}: ${_m(spent)}',
-      '${t('finishing.kind.reimburseFromCustody')}: ${_m(reimb)}',
-      '${t('finishing.custodyReturned')}: ${_m(d.custodyOut)}',
-      '${t('finishing.report.custodyLeft')}: ${_m(d.balance.custody)}',
-      '${t('finishing.report.personalPaid')}: ${_m(d.personalPaid)}',
-      '${t('finishing.kind.clientRepayPersonal')}: ${_m(repaid)}',
-      '${t('finishing.report.receivableLeft')}: ${_m(d.balance.receivable)}',
-    ];
-  }
+  String who(int net) => t(net > 0 ? 'finishing.netOnMe' : (net < 0 ? 'finishing.netForMe' : 'finishing.netZero'));
+
+  List<String> get closureLines => [
+    '${t('finishing.received')}: ${_m(d.balance.received)}',
+    '${t('finishing.spent')}: ${_m(d.balance.cost)}',
+    if (d.balance.returned > 0) '${t('finishing.returnedLabel')}: ${_m(d.balance.returned)}',
+    '${t('finishing.net')}: ${_m(d.balance.net.abs())} — ${who(d.balance.net)}',
+  ];
 }
 
 Future<Uint8List> buildProjectPdf(ProjectDetails d, Tr t, String lang) async {
@@ -133,10 +124,9 @@ Future<Uint8List> buildProjectPdf(ProjectDetails d, Tr t, String lang) async {
         pw.SizedBox(height: 8),
         pw.Row(
           children: [
-            kpi(t('finishing.cost'), b.cost),
-            kpi(t('finishing.custody'), b.custody),
-            kpi(t('finishing.receivable'), b.receivable),
-            kpi(t('finishing.allocation'), b.allocation),
+            kpi(t('finishing.received'), b.received),
+            kpi(t('finishing.spent'), b.cost),
+            kpi('${t('finishing.net')} (${s.who(b.net)})', b.net.abs()),
             if (p.plannedBudget > 0) kpi(t('finishing.plannedBudget'), p.plannedBudget),
           ],
         ),
@@ -156,15 +146,7 @@ Future<Uint8List> buildProjectPdf(ProjectDetails d, Tr t, String lang) async {
         ),
         title(t('finishing.report.costs')),
         table(
-          [
-            t('transactions.date'),
-            t('finishing.trade'),
-            t('finishing.costTypeLabel'),
-            t('finishing.costDescription'),
-            t('finishing.report.fromCustody'),
-            t('finishing.report.fromPocket'),
-            t('finishing.cost'),
-          ],
+          [t('transactions.date'), t('finishing.trade'), t('finishing.costTypeLabel'), t('finishing.costDescription'), t('finishing.cost')],
           [
             for (final e in s.costs)
               [
@@ -172,32 +154,21 @@ Future<Uint8List> buildProjectPdf(ProjectDetails d, Tr t, String lang) async {
                 e.tradeName ?? '',
                 t('finishing.costType.${e.event.costType ?? 'other'}'),
                 [e.event.description ?? '', if ((e.event.beneficiary ?? '').isNotEmpty) '(${e.event.beneficiary})'].join(' '),
-                _m(e.event.custodyShare),
-                _m(e.event.personalShare),
                 _m(e.event.amount),
               ],
           ],
         ),
         title(t('finishing.report.statement')),
         table(
-          [
-            t('transactions.date'),
-            t('finishing.report.movement'),
-            t('finishing.custody'),
-            t('finishing.report.custodyBalance'),
-            t('finishing.receivable'),
-            t('finishing.report.receivableBalance'),
-          ],
+          [t('transactions.date'), t('finishing.report.movement'), t('transactions.amount'), t('finishing.report.balanceAfter')],
           [
             for (final l in d.statement)
-              if (l.custodyDelta != 0 || l.receivableDelta != 0)
+              if (l.delta != 0)
                 [
                   s.date(l.event.date),
                   [s.kind(l.event.kind), if ((l.event.description ?? '').isNotEmpty) l.event.description!].join(' · '),
-                  _signed(l.custodyDelta),
-                  _m(l.custodyAfter),
-                  _signed(l.receivableDelta),
-                  _m(l.receivableAfter),
+                  _signed(l.delta),
+                  '${_m(l.after.abs())} ${s.who(l.after)}',
                 ],
           ],
         ),
@@ -236,10 +207,10 @@ Uint8List buildProjectXlsx(ProjectDetails d, Tr t, String lang) {
         [h(p.name)],
         ['${t('finishing.client')}: ${p.clientName}'],
         [],
-        [h(t('finishing.cost')), m(b.cost)],
-        [h(t('finishing.custody')), m(b.custody)],
-        [h(t('finishing.receivable')), m(b.receivable)],
-        [h(t('finishing.allocation')), m(b.allocation)],
+        [h(t('finishing.received')), m(b.received)],
+        [h(t('finishing.spent')), m(b.cost)],
+        if (b.returned > 0) [h(t('finishing.returnedLabel')), m(b.returned)],
+        [h(t('finishing.net')), m(b.net), s.who(b.net)],
         if (p.plannedBudget > 0) [h(t('finishing.plannedBudget')), m(p.plannedBudget)],
         [],
         [h(t('finishing.costByTrade'))],
@@ -262,8 +233,6 @@ Uint8List buildProjectXlsx(ProjectDetails d, Tr t, String lang) {
           h(t('finishing.costTypeLabel')),
           h(t('finishing.costDescription')),
           h(t('finishing.beneficiary')),
-          h(t('finishing.report.fromCustody')),
-          h(t('finishing.report.fromPocket')),
           h(t('finishing.cost')),
         ],
         for (final e in s.costs)
@@ -273,12 +242,10 @@ Uint8List buildProjectXlsx(ProjectDetails d, Tr t, String lang) {
             t('finishing.costType.${e.event.costType ?? 'other'}'),
             e.event.description ?? '',
             e.event.beneficiary ?? '',
-            m(e.event.custodyShare),
-            m(e.event.personalShare),
             m(e.event.amount),
           ],
       ],
-      [12, 16, 12, 30, 18, 14, 14, 14],
+      [12, 16, 12, 30, 18, 14],
     ),
     (
       t('finishing.report.statement'),
@@ -286,22 +253,21 @@ Uint8List buildProjectXlsx(ProjectDetails d, Tr t, String lang) {
         [
           h(t('transactions.date')),
           h(t('finishing.report.movement')),
-          h(t('finishing.custody')),
-          h(t('finishing.report.custodyBalance')),
-          h(t('finishing.receivable')),
-          h(t('finishing.report.receivableBalance')),
+          h(t('transactions.amount')),
+          h(t('finishing.report.balanceAfter')),
+          h(''),
         ],
         for (final l in d.statement)
-          [
-            s.date(l.event.date),
-            [s.kind(l.event.kind), if ((l.event.description ?? '').isNotEmpty) l.event.description!].join(' · '),
-            m(l.custodyDelta),
-            m(l.custodyAfter),
-            m(l.receivableDelta),
-            m(l.receivableAfter),
-          ],
+          if (l.delta != 0)
+            [
+              s.date(l.event.date),
+              [s.kind(l.event.kind), if ((l.event.description ?? '').isNotEmpty) l.event.description!].join(' · '),
+              m(l.delta),
+              m(l.after),
+              s.who(l.after),
+            ],
       ],
-      [12, 34, 14, 14, 14, 14],
+      [12, 34, 14, 14, 18],
     ),
     (
       t('finishing.report.accounts'),
@@ -328,8 +294,8 @@ Uint8List buildComparisonXlsx(List<ProjectSummary> list, Map<int, ProjectDetails
           h(t('finishing.plannedBudget')),
           h(t('finishing.cost')),
           for (final c in CostType.values) h(t('finishing.costType.${c.name}')),
-          h(t('finishing.custody')),
-          h(t('finishing.receivable')),
+          h(t('finishing.received')),
+          h(t('finishing.net')),
         ],
         for (final s in list)
           [
@@ -338,8 +304,8 @@ Uint8List buildComparisonXlsx(List<ProjectSummary> list, Map<int, ProjectDetails
             m(s.project.plannedBudget),
             m(s.balance.cost),
             for (final c in CostType.values) m(details[s.project.id]?.byType[c] ?? 0),
-            m(s.balance.custody),
-            m(s.balance.receivable),
+            m(s.balance.received),
+            m(s.balance.net),
           ],
       ],
       [24, 18, 14, 14, 14, 14, 14, 14, 14],

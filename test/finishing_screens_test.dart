@@ -74,14 +74,14 @@ void main() {
     expect(find.text('الملخص'), findsOneWidget);
 
     // Receive 50,000 custody.
-    await tester.tap(find.text('استلام عهدة').first);
+    await tester.tap(find.text('استلام من العميل').first);
     await pumpFor(tester);
     await tester.enterText(find.byType(TextField).first, '٥٠٠٠٠');
     await tester.tap(find.byIcon(Icons.save_rounded));
     await pumpFor(tester, 15);
     tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger)).removeCurrentSnackBar();
 
-    // Cost 60,000: custody covers 50,000, the rest from my pocket (mixed by default).
+    // Cost 60,000 after receiving 50,000: the client owes me 10,000.
     await tester.tap(find.text('مصروف').first);
     await pumpFor(tester);
     final fields = find.byType(TextField);
@@ -89,7 +89,7 @@ void main() {
     await pumpFor(tester, 3);
     await tester.enterText(find.widgetWithText(TextField, 'مثلًا: سلك وعلب كهرباء'), 'خامات');
     await pumpFor(tester, 3);
-    expect(find.textContaining('50,000'), findsWidgets);
+    expect(find.textContaining('10,000'), findsWidgets);
     await tester.tap(find.byIcon(Icons.save_rounded));
     await pumpFor(tester, 15);
     tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger)).removeCurrentSnackBar();
@@ -100,7 +100,7 @@ void main() {
     // Movements tab lists both.
     await tester.tap(find.text('الحركات'));
     await pumpFor(tester);
-    expect(find.textContaining('استلام عهدة'), findsWidgets);
+    expect(find.textContaining('استلام من العميل'), findsWidgets);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
     await pumpFor(tester, 3);
