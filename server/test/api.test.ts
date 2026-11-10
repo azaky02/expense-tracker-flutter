@@ -224,3 +224,57 @@ describe('tombstones', () => {
     assert.equal((await call('GET', '/api/export', undefined, u.token)).body.data.transactions.length, 0);
   });
 });
+
+
+describe('finishing project API', () => {
+  it('requires authentication on create, list and detail', async () => {
+    assert.equal((await call('POST','/api/finishing/projects',{ projectId:'unauthorized',clientName:'A',projectName:'B' })).status,401);
+    assert.equal((await call('GET','/api/finishing/projects')).status,401);
+    assert.equal((await call('GET','/api/finishing/projects/unauthorized')).status,401);
+  });
+
+  it('creates zero-balance projects, retries safely and isolates users', async () => {
+    const a = await newUser();
+    const b = await newUser();
+    const projectId = 'finishing_' + Date.now() + '_' + n++;
+    const input = { projectId, clientName:'Same client',projectName:'Apartment A',description:'First project' };
+    const created = await call('POST','/api/finishing/projects',input,a.token);
+    assert.equal(created.status,201);
+    assert.equal(created.body.status,'created');
+    const retry = await call('POST','/api/finishing/projects',input,a.token);
+    assert.equal(retry.status,200);
+    assert.equal(retry.body.status,'already_exists');
+    const detail = await call('GET','/api/finishing/projects/'+projectId,undefined,a.token);
+    assert.equal(detail.status,200);
+    assert.equal(detail.body.project.client_name,input.clientName);
+    assert.equal(detail.body.project.project_name,input.projectName);
+    assert.equal(detail.body.project.custody_piasters,'0');
+    assert.equal(detail.body.project.receivable_piasters,'0');
+    assert.equal(detail.body.project.cost_piasters,'0');
+    assert.equal(detail.body.project.financial_status,'open');
+    const list = await call('GET','/api/finishing/projects',undefined,a.token);
+    assert.equal(list.status,200);
+    assert.ok(list.body.projects.some((p: {project_id:string})=>p.project_id===projectId));
+    const other = await call('GET','/api/finishing/projects/'+projectId,undefined,b.token);
+    assert.equal(other.status,404);
+    const otherList = await call('GET','/api/finishing/projects',undefined,b.token);
+    assert.equal(otherList.status,200);
+    assert.ok(!otherList.body.projects.some((p: {project_id:string})=>p.project_id===projectId));
+    // Same project ID is allowed for another user without exposing either record.
+    assert.equal((await call('POST','/api/finishing/projects',{
+      ...input,clientName:'Different owner',projectName:'Different project',
+    },b.token)).status,201);
+    assert.equal((await call('GET','/api/finishing/projects/'+projectId,undefined,a.token)).body.project.client_name,'Same client');
+  });
+
+  it('rejects malformed project payloads', async () => {
+    const a=await newUser();
+    for(const body of [
+      {projectId:'../bad',clientName:'A',projectName:'B'},
+      {projectId:'valid',clientName:' ',projectName:'B'},
+      {projectId:'valid',clientName:'A',projectName:'B',userId:'forged'},
+    ]) {
+      assert.equal((await call('POST','/api/finishing/projects',body,a.token)).status,400);
+    }
+  });
+});
