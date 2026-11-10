@@ -13967,6 +13967,500 @@ class FinishingCashLegsCompanion extends UpdateCompanion<FinishingCashLeg> {
   }
 }
 
+class $FinishingAttachmentsTable extends FinishingAttachments
+    with TableInfo<$FinishingAttachmentsTable, FinishingAttachment> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FinishingAttachmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _projectIdMeta = const VerificationMeta(
+    'projectId',
+  );
+  @override
+  late final GeneratedColumn<int> projectId = GeneratedColumn<int>(
+    'project_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES finishing_projects (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _eventIdMeta = const VerificationMeta(
+    'eventId',
+  );
+  @override
+  late final GeneratedColumn<int> eventId = GeneratedColumn<int>(
+    'event_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES finishing_events (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+    'type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    projectId,
+    eventId,
+    path,
+    name,
+    type,
+    note,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'finishing_attachments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FinishingAttachment> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('project_id')) {
+      context.handle(
+        _projectIdMeta,
+        projectId.isAcceptableOrUnknown(data['project_id']!, _projectIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_projectIdMeta);
+    }
+    if (data.containsKey('event_id')) {
+      context.handle(
+        _eventIdMeta,
+        eventId.isAcceptableOrUnknown(data['event_id']!, _eventIdMeta),
+      );
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+        _typeMeta,
+        type.isAcceptableOrUnknown(data['type']!, _typeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FinishingAttachment map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FinishingAttachment(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      projectId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}project_id'],
+      )!,
+      eventId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}event_id'],
+      ),
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      type: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}type'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $FinishingAttachmentsTable createAlias(String alias) {
+    return $FinishingAttachmentsTable(attachedDatabase, alias);
+  }
+}
+
+class FinishingAttachment extends DataClass
+    implements Insertable<FinishingAttachment> {
+  final int id;
+  final int projectId;
+  final int? eventId;
+  final String path;
+  final String name;
+
+  /// image | pdf | file.
+  final String type;
+  final String? note;
+  final DateTime createdAt;
+  const FinishingAttachment({
+    required this.id,
+    required this.projectId,
+    this.eventId,
+    required this.path,
+    required this.name,
+    required this.type,
+    this.note,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['project_id'] = Variable<int>(projectId);
+    if (!nullToAbsent || eventId != null) {
+      map['event_id'] = Variable<int>(eventId);
+    }
+    map['path'] = Variable<String>(path);
+    map['name'] = Variable<String>(name);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  FinishingAttachmentsCompanion toCompanion(bool nullToAbsent) {
+    return FinishingAttachmentsCompanion(
+      id: Value(id),
+      projectId: Value(projectId),
+      eventId: eventId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(eventId),
+      path: Value(path),
+      name: Value(name),
+      type: Value(type),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory FinishingAttachment.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FinishingAttachment(
+      id: serializer.fromJson<int>(json['id']),
+      projectId: serializer.fromJson<int>(json['projectId']),
+      eventId: serializer.fromJson<int?>(json['eventId']),
+      path: serializer.fromJson<String>(json['path']),
+      name: serializer.fromJson<String>(json['name']),
+      type: serializer.fromJson<String>(json['type']),
+      note: serializer.fromJson<String?>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'projectId': serializer.toJson<int>(projectId),
+      'eventId': serializer.toJson<int?>(eventId),
+      'path': serializer.toJson<String>(path),
+      'name': serializer.toJson<String>(name),
+      'type': serializer.toJson<String>(type),
+      'note': serializer.toJson<String?>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  FinishingAttachment copyWith({
+    int? id,
+    int? projectId,
+    Value<int?> eventId = const Value.absent(),
+    String? path,
+    String? name,
+    String? type,
+    Value<String?> note = const Value.absent(),
+    DateTime? createdAt,
+  }) => FinishingAttachment(
+    id: id ?? this.id,
+    projectId: projectId ?? this.projectId,
+    eventId: eventId.present ? eventId.value : this.eventId,
+    path: path ?? this.path,
+    name: name ?? this.name,
+    type: type ?? this.type,
+    note: note.present ? note.value : this.note,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  FinishingAttachment copyWithCompanion(FinishingAttachmentsCompanion data) {
+    return FinishingAttachment(
+      id: data.id.present ? data.id.value : this.id,
+      projectId: data.projectId.present ? data.projectId.value : this.projectId,
+      eventId: data.eventId.present ? data.eventId.value : this.eventId,
+      path: data.path.present ? data.path.value : this.path,
+      name: data.name.present ? data.name.value : this.name,
+      type: data.type.present ? data.type.value : this.type,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinishingAttachment(')
+          ..write('id: $id, ')
+          ..write('projectId: $projectId, ')
+          ..write('eventId: $eventId, ')
+          ..write('path: $path, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, projectId, eventId, path, name, type, note, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FinishingAttachment &&
+          other.id == this.id &&
+          other.projectId == this.projectId &&
+          other.eventId == this.eventId &&
+          other.path == this.path &&
+          other.name == this.name &&
+          other.type == this.type &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt);
+}
+
+class FinishingAttachmentsCompanion
+    extends UpdateCompanion<FinishingAttachment> {
+  final Value<int> id;
+  final Value<int> projectId;
+  final Value<int?> eventId;
+  final Value<String> path;
+  final Value<String> name;
+  final Value<String> type;
+  final Value<String?> note;
+  final Value<DateTime> createdAt;
+  const FinishingAttachmentsCompanion({
+    this.id = const Value.absent(),
+    this.projectId = const Value.absent(),
+    this.eventId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.name = const Value.absent(),
+    this.type = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  FinishingAttachmentsCompanion.insert({
+    this.id = const Value.absent(),
+    required int projectId,
+    this.eventId = const Value.absent(),
+    required String path,
+    required String name,
+    required String type,
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : projectId = Value(projectId),
+       path = Value(path),
+       name = Value(name),
+       type = Value(type);
+  static Insertable<FinishingAttachment> custom({
+    Expression<int>? id,
+    Expression<int>? projectId,
+    Expression<int>? eventId,
+    Expression<String>? path,
+    Expression<String>? name,
+    Expression<String>? type,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (projectId != null) 'project_id': projectId,
+      if (eventId != null) 'event_id': eventId,
+      if (path != null) 'path': path,
+      if (name != null) 'name': name,
+      if (type != null) 'type': type,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  FinishingAttachmentsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? projectId,
+    Value<int?>? eventId,
+    Value<String>? path,
+    Value<String>? name,
+    Value<String>? type,
+    Value<String?>? note,
+    Value<DateTime>? createdAt,
+  }) {
+    return FinishingAttachmentsCompanion(
+      id: id ?? this.id,
+      projectId: projectId ?? this.projectId,
+      eventId: eventId ?? this.eventId,
+      path: path ?? this.path,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (projectId.present) {
+      map['project_id'] = Variable<int>(projectId.value);
+    }
+    if (eventId.present) {
+      map['event_id'] = Variable<int>(eventId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FinishingAttachmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('projectId: $projectId, ')
+          ..write('eventId: $eventId, ')
+          ..write('path: $path, ')
+          ..write('name: $name, ')
+          ..write('type: $type, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -14010,6 +14504,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final $FinishingCashLegsTable finishingCashLegs =
       $FinishingCashLegsTable(this);
+  late final $FinishingAttachmentsTable finishingAttachments =
+      $FinishingAttachmentsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -14041,6 +14537,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     finishingTrades,
     finishingEvents,
     finishingCashLegs,
+    finishingAttachments,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -14092,6 +14589,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('finishing_cash_legs', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'finishing_projects',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('finishing_attachments', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'finishing_events',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('finishing_attachments', kind: UpdateKind.update)],
     ),
   ]);
 }
@@ -22895,6 +23406,31 @@ final class $$FinishingProjectsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $FinishingAttachmentsTable,
+    List<FinishingAttachment>
+  >
+  _finishingAttachmentsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.finishingAttachments,
+        aliasName: 'finishing_projects__id__finishing_attachments__project_id',
+      );
+
+  $$FinishingAttachmentsTableProcessedTableManager
+  get finishingAttachmentsRefs {
+    final manager = $$FinishingAttachmentsTableTableManager(
+      $_db,
+      $_db.finishingAttachments,
+    ).filter((f) => f.projectId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _finishingAttachmentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$FinishingProjectsTableFilterComposer
@@ -23007,6 +23543,31 @@ class $$FinishingProjectsTableFilterComposer
           }) => $$FinishingEventsTableFilterComposer(
             $db: $db,
             $table: $db.finishingEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> finishingAttachmentsRefs(
+    Expression<bool> Function($$FinishingAttachmentsTableFilterComposer f) f,
+  ) {
+    final $$FinishingAttachmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.finishingAttachments,
+      getReferencedColumn: (t) => t.projectId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingAttachmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.finishingAttachments,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -23191,6 +23752,32 @@ class $$FinishingProjectsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> finishingAttachmentsRefs<T extends Object>(
+    Expression<T> Function($$FinishingAttachmentsTableAnnotationComposer a) f,
+  ) {
+    final $$FinishingAttachmentsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.finishingAttachments,
+          getReferencedColumn: (t) => t.projectId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$FinishingAttachmentsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.finishingAttachments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$FinishingProjectsTableTableManager
@@ -23209,6 +23796,7 @@ class $$FinishingProjectsTableTableManager
           PrefetchHooks Function({
             bool finishingTradesRefs,
             bool finishingEventsRefs,
+            bool finishingAttachmentsRefs,
           })
         > {
   $$FinishingProjectsTableTableManager(
@@ -23292,12 +23880,17 @@ class $$FinishingProjectsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({finishingTradesRefs = false, finishingEventsRefs = false}) {
+              ({
+                finishingTradesRefs = false,
+                finishingEventsRefs = false,
+                finishingAttachmentsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (finishingTradesRefs) db.finishingTrades,
                     if (finishingEventsRefs) db.finishingEvents,
+                    if (finishingAttachmentsRefs) db.finishingAttachments,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -23342,6 +23935,26 @@ class $$FinishingProjectsTableTableManager
                           referencedColumn: 'project_id',
                           typedResults: items,
                         ),
+                      if (finishingAttachmentsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          FinishingProject,
+                          $FinishingProjectsTable,
+                          FinishingAttachment,
+                          $FinishingAttachmentsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$FinishingProjectsTableReferences
+                              ._finishingAttachmentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$FinishingProjectsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).finishingAttachmentsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'project_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -23365,6 +23978,7 @@ typedef $$FinishingProjectsTableProcessedTableManager =
       PrefetchHooks Function({
         bool finishingTradesRefs,
         bool finishingEventsRefs,
+        bool finishingAttachmentsRefs,
       })
     >;
 typedef $$FinishingTradesTableCreateCompanionBuilder =
@@ -23845,6 +24459,31 @@ final class $$FinishingEventsTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    $FinishingAttachmentsTable,
+    List<FinishingAttachment>
+  >
+  _finishingAttachmentsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.finishingAttachments,
+        aliasName: 'finishing_events__id__finishing_attachments__event_id',
+      );
+
+  $$FinishingAttachmentsTableProcessedTableManager
+  get finishingAttachmentsRefs {
+    final manager = $$FinishingAttachmentsTableTableManager(
+      $_db,
+      $_db.finishingAttachments,
+    ).filter((f) => f.eventId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _finishingAttachmentsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$FinishingEventsTableFilterComposer
@@ -23978,6 +24617,31 @@ class $$FinishingEventsTableFilterComposer
           }) => $$FinishingCashLegsTableFilterComposer(
             $db: $db,
             $table: $db.finishingCashLegs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> finishingAttachmentsRefs(
+    Expression<bool> Function($$FinishingAttachmentsTableFilterComposer f) f,
+  ) {
+    final $$FinishingAttachmentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.finishingAttachments,
+      getReferencedColumn: (t) => t.eventId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingAttachmentsTableFilterComposer(
+            $db: $db,
+            $table: $db.finishingAttachments,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -24231,6 +24895,32 @@ class $$FinishingEventsTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> finishingAttachmentsRefs<T extends Object>(
+    Expression<T> Function($$FinishingAttachmentsTableAnnotationComposer a) f,
+  ) {
+    final $$FinishingAttachmentsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.finishingAttachments,
+          getReferencedColumn: (t) => t.eventId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$FinishingAttachmentsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.finishingAttachments,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$FinishingEventsTableTableManager
@@ -24250,6 +24940,7 @@ class $$FinishingEventsTableTableManager
             bool projectId,
             bool tradeId,
             bool finishingCashLegsRefs,
+            bool finishingAttachmentsRefs,
           })
         > {
   $$FinishingEventsTableTableManager(
@@ -24342,11 +25033,13 @@ class $$FinishingEventsTableTableManager
                 projectId = false,
                 tradeId = false,
                 finishingCashLegsRefs = false,
+                finishingAttachmentsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (finishingCashLegsRefs) db.finishingCashLegs,
+                    if (finishingAttachmentsRefs) db.finishingAttachments,
                   ],
                   addJoins:
                       <
@@ -24419,6 +25112,26 @@ class $$FinishingEventsTableTableManager
                           referencedColumn: 'event_id',
                           typedResults: items,
                         ),
+                      if (finishingAttachmentsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          FinishingEvent,
+                          $FinishingEventsTable,
+                          FinishingAttachment,
+                          $FinishingAttachmentsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$FinishingEventsTableReferences
+                              ._finishingAttachmentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$FinishingEventsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).finishingAttachmentsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'event_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -24443,6 +25156,7 @@ typedef $$FinishingEventsTableProcessedTableManager =
         bool projectId,
         bool tradeId,
         bool finishingCashLegsRefs,
+        bool finishingAttachmentsRefs,
       })
     >;
 typedef $$FinishingCashLegsTableCreateCompanionBuilder =
@@ -24861,6 +25575,486 @@ typedef $$FinishingCashLegsTableProcessedTableManager =
       FinishingCashLeg,
       PrefetchHooks Function({bool eventId, bool accountId})
     >;
+typedef $$FinishingAttachmentsTableCreateCompanionBuilder =
+    FinishingAttachmentsCompanion Function({
+      Value<int> id,
+      required int projectId,
+      Value<int?> eventId,
+      required String path,
+      required String name,
+      required String type,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+    });
+typedef $$FinishingAttachmentsTableUpdateCompanionBuilder =
+    FinishingAttachmentsCompanion Function({
+      Value<int> id,
+      Value<int> projectId,
+      Value<int?> eventId,
+      Value<String> path,
+      Value<String> name,
+      Value<String> type,
+      Value<String?> note,
+      Value<DateTime> createdAt,
+    });
+
+final class $$FinishingAttachmentsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $FinishingAttachmentsTable,
+          FinishingAttachment
+        > {
+  $$FinishingAttachmentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $FinishingProjectsTable _projectIdTable(_$AppDatabase db) => db
+      .finishingProjects
+      .createAlias('finishing_attachments__project_id__finishing_projects__id');
+
+  $$FinishingProjectsTableProcessedTableManager get projectId {
+    final $_column = $_itemColumn<int>('project_id')!;
+
+    final manager = $$FinishingProjectsTableTableManager(
+      $_db,
+      $_db.finishingProjects,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_projectIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $FinishingEventsTable _eventIdTable(_$AppDatabase db) => db
+      .finishingEvents
+      .createAlias('finishing_attachments__event_id__finishing_events__id');
+
+  $$FinishingEventsTableProcessedTableManager? get eventId {
+    final $_column = $_itemColumn<int>('event_id');
+    if ($_column == null) return null;
+    final manager = $$FinishingEventsTableTableManager(
+      $_db,
+      $_db.finishingEvents,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_eventIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$FinishingAttachmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $FinishingAttachmentsTable> {
+  $$FinishingAttachmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$FinishingProjectsTableFilterComposer get projectId {
+    final $$FinishingProjectsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.projectId,
+      referencedTable: $db.finishingProjects,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingProjectsTableFilterComposer(
+            $db: $db,
+            $table: $db.finishingProjects,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$FinishingEventsTableFilterComposer get eventId {
+    final $$FinishingEventsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.eventId,
+      referencedTable: $db.finishingEvents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingEventsTableFilterComposer(
+            $db: $db,
+            $table: $db.finishingEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FinishingAttachmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $FinishingAttachmentsTable> {
+  $$FinishingAttachmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get type => $composableBuilder(
+    column: $table.type,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$FinishingProjectsTableOrderingComposer get projectId {
+    final $$FinishingProjectsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.projectId,
+      referencedTable: $db.finishingProjects,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingProjectsTableOrderingComposer(
+            $db: $db,
+            $table: $db.finishingProjects,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$FinishingEventsTableOrderingComposer get eventId {
+    final $$FinishingEventsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.eventId,
+      referencedTable: $db.finishingEvents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingEventsTableOrderingComposer(
+            $db: $db,
+            $table: $db.finishingEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FinishingAttachmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FinishingAttachmentsTable> {
+  $$FinishingAttachmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$FinishingProjectsTableAnnotationComposer get projectId {
+    final $$FinishingProjectsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.projectId,
+          referencedTable: $db.finishingProjects,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$FinishingProjectsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.finishingProjects,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+
+  $$FinishingEventsTableAnnotationComposer get eventId {
+    final $$FinishingEventsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.eventId,
+      referencedTable: $db.finishingEvents,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FinishingEventsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.finishingEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$FinishingAttachmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $FinishingAttachmentsTable,
+          FinishingAttachment,
+          $$FinishingAttachmentsTableFilterComposer,
+          $$FinishingAttachmentsTableOrderingComposer,
+          $$FinishingAttachmentsTableAnnotationComposer,
+          $$FinishingAttachmentsTableCreateCompanionBuilder,
+          $$FinishingAttachmentsTableUpdateCompanionBuilder,
+          (FinishingAttachment, $$FinishingAttachmentsTableReferences),
+          FinishingAttachment,
+          PrefetchHooks Function({bool projectId, bool eventId})
+        > {
+  $$FinishingAttachmentsTableTableManager(
+    _$AppDatabase db,
+    $FinishingAttachmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FinishingAttachmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FinishingAttachmentsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$FinishingAttachmentsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> projectId = const Value.absent(),
+                Value<int?> eventId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> type = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FinishingAttachmentsCompanion(
+                id: id,
+                projectId: projectId,
+                eventId: eventId,
+                path: path,
+                name: name,
+                type: type,
+                note: note,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int projectId,
+                Value<int?> eventId = const Value.absent(),
+                required String path,
+                required String name,
+                required String type,
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => FinishingAttachmentsCompanion.insert(
+                id: id,
+                projectId: projectId,
+                eventId: eventId,
+                path: path,
+                name: name,
+                type: type,
+                note: note,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$FinishingAttachmentsTable, FinishingAttachment>(
+                    table,
+                  ),
+                  $$FinishingAttachmentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({projectId = false, eventId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (projectId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.projectId,
+                                referencedTable:
+                                    $$FinishingAttachmentsTableReferences
+                                        ._projectIdTable(db),
+                                referencedColumn:
+                                    $$FinishingAttachmentsTableReferences
+                                        ._projectIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (eventId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.eventId,
+                                referencedTable:
+                                    $$FinishingAttachmentsTableReferences
+                                        ._eventIdTable(db),
+                                referencedColumn:
+                                    $$FinishingAttachmentsTableReferences
+                                        ._eventIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$FinishingAttachmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $FinishingAttachmentsTable,
+      FinishingAttachment,
+      $$FinishingAttachmentsTableFilterComposer,
+      $$FinishingAttachmentsTableOrderingComposer,
+      $$FinishingAttachmentsTableAnnotationComposer,
+      $$FinishingAttachmentsTableCreateCompanionBuilder,
+      $$FinishingAttachmentsTableUpdateCompanionBuilder,
+      (FinishingAttachment, $$FinishingAttachmentsTableReferences),
+      FinishingAttachment,
+      PrefetchHooks Function({bool projectId, bool eventId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -24921,4 +26115,6 @@ class $AppDatabaseManager {
       $$FinishingEventsTableTableManager(_db, _db.finishingEvents);
   $$FinishingCashLegsTableTableManager get finishingCashLegs =>
       $$FinishingCashLegsTableTableManager(_db, _db.finishingCashLegs);
+  $$FinishingAttachmentsTableTableManager get finishingAttachments =>
+      $$FinishingAttachmentsTableTableManager(_db, _db.finishingAttachments);
 }

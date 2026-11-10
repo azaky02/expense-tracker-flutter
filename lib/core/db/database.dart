@@ -36,6 +36,7 @@ part 'database.g.dart';
     FinishingTrades,
     FinishingEvents,
     FinishingCashLegs,
+    FinishingAttachments,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -45,7 +46,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -134,6 +135,10 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(finishingTrades);
         await m.createTable(finishingEvents);
         await m.createTable(finishingCashLegs);
+      }
+      if (from < 10) {
+        // v10: finishing project attachments.
+        await m.createTable(finishingAttachments);
       }
     },
   );

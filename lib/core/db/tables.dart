@@ -446,3 +446,17 @@ class FinishingCashLegs extends Table {
   /// custody | personal | client.
   TextColumn get source => text()();
 }
+
+/// Invoices, photos and documents of a finishing project (optionally tied to one movement). v10.
+class FinishingAttachments extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get projectId => integer().references(FinishingProjects, #id, onDelete: KeyAction.cascade)();
+  IntColumn get eventId => integer().nullable().references(FinishingEvents, #id, onDelete: KeyAction.setNull)();
+  TextColumn get path => text()();
+  TextColumn get name => text()();
+
+  /// image | pdf | file.
+  TextColumn get type => text()();
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}

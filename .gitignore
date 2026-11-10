@@ -47,3 +47,4 @@ app.*.map.json
 # Machine-specific SDK path, not portable across machines
 /android/local.properties
 test_screens/out/
+test_out/

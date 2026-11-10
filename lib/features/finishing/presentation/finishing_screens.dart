@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/db/database.dart';
 import '../../../core/theme/ds_tokens.dart';
+import '../../../core/utils/attachments.dart';
 import '../../../core/utils/currency.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../core/widgets/ds_widgets.dart';
@@ -13,6 +14,7 @@ import '../../accounts/presentation/account_providers.dart';
 import '../../accounts/presentation/account_widgets.dart';
 import '../data/finishing_repository.dart';
 import '../domain/finishing_rules.dart';
+import 'finishing_reports.dart';
 
 final finishingProjectsProvider = StreamProvider<List<ProjectSummary>>((ref) => ref.watch(finishingRepositoryProvider).watchProjects());
 final finishingProjectProvider = StreamProvider.family<ProjectDetails?, int>(
@@ -81,7 +83,16 @@ class _FinishingProjectsScreenState extends ConsumerState<FinishingProjectsScree
     final async = ref.watch(finishingProjectsProvider);
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text('finishing.title'.tr())),
+      appBar: AppBar(
+        title: Text('finishing.title'.tr()),
+        actions: [
+          IconButton(
+            tooltip: 'finishing.compare.title'.tr(),
+            icon: const Icon(Icons.compare_arrows_rounded),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const FinishingCompareScreen())),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         shape: const StadiumBorder(),
         onPressed: () => context.push('/finishing/new'),
@@ -467,7 +478,11 @@ class _ProjectView extends ConsumerWidget {
             danger: true,
           );
           if (ok) {
+            final files = await repo.attachmentPaths(p.id);
             await repo.deleteProject(p.id);
+            for (final f in files) {
+              await deleteAttachment(f);
+            }
             if (context.mounted) context.pop();
           }
       }
@@ -480,11 +495,16 @@ class _ProjectView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final p = d.project;
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: Text(p.name),
           actions: [
+            IconButton(
+              tooltip: 'finishing.report.title'.tr(),
+              icon: const Icon(Icons.assessment_outlined),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FinishingReportScreen(id: p.id))),
+            ),
             PopupMenuButton<String>(
               onSelected: (a) => _menu(context, ref, a),
               itemBuilder: (_) => [
@@ -500,10 +520,11 @@ class _ProjectView extends ConsumerWidget {
               Tab(text: 'finishing.tabSummary'.tr()),
               Tab(text: 'finishing.tabMoves'.tr()),
               Tab(text: 'finishing.tabTrades'.tr()),
+              Tab(text: 'finishing.tabFiles'.tr()),
             ],
           ),
         ),
-        body: TabBarView(children: [_SummaryTab(d), _MovesTab(d), _TradesTab(d)]),
+        body: TabBarView(children: [_SummaryTab(d), _MovesTab(d), _TradesTab(d), FinishingAttachmentsTab(d)]),
       ),
     );
   }
@@ -771,6 +792,7 @@ class _MovesTab extends ConsumerWidget {
             'finishing.splitLine'.tr(namedArgs: {'c': formatAmount(_egp(ev.custodyShare)), 'p': formatAmount(_egp(ev.personalShare))})
           else if (k == FinishingKind.cost)
             (ev.custodyShare > 0 ? 'finishing.fromCustody' : 'finishing.fromPocket').tr(),
+          if (d.attachments.any((a) => a.eventId == ev.id)) '📎 ${d.attachments.where((a) => a.eventId == ev.id).length}',
           if (original != null) 'finishing.reversesLine'.tr(namedArgs: {'kind': 'finishing.kind.${original.event.kind}'.tr()}),
           for (final l in e.legs) '${l.accountName} ${l.amount > 0 ? '+' : '−'}${formatAmount(_egp(l.amount.abs()))}',
         ];

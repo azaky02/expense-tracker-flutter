@@ -1122,6 +1122,47 @@
       "carpentry": "Carpentry",
       "paint": "Painting",
       "ceramic": "Ceramics"
+    },
+    "tabFiles": "Files",
+    "report": {
+      "title": "Project report",
+      "count": "Count",
+      "costs": "Costs",
+      "fromCustody": "From custody",
+      "fromPocket": "From pocket",
+      "statement": "Custody & receivable statement",
+      "movement": "Movement",
+      "custodyBalance": "Custody balance",
+      "receivableBalance": "Receivable balance",
+      "accounts": "Account movements",
+      "in": "In",
+      "out": "Out",
+      "net": "Net",
+      "noAccounts": "No account movements",
+      "closure": "Settlement statement",
+      "custodySpent": "Spent from custody",
+      "custodyLeft": "Custody left",
+      "personalPaid": "Paid from my pocket",
+      "receivableLeft": "Still owed to me",
+      "closureOk": "✓ Settled: no custody or receivable left",
+      "closureOpen": "Custody or receivable still open"
+    },
+    "compare": {
+      "title": "Compare projects"
+    },
+    "att": {
+      "title": "Attachments",
+      "add": "Add attachment",
+      "camera": "Take photo",
+      "gallery": "From photos",
+      "file": "File (PDF etc.)",
+      "linkTo": "Linked to",
+      "wholeProject": "Whole project",
+      "note": "Description (optional)",
+      "missing": "The file is not on this device",
+      "delete": "Delete attachment?",
+      "empty": "Add invoices, work photos and documents here.",
+      "webHint": "Attachments are available in the mobile app only."
     }
   }
 }

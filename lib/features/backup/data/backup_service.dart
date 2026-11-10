@@ -44,6 +44,7 @@ class BackupService {
     _db.finishingTrades,
     _db.finishingEvents,
     _db.finishingCashLegs,
+    _db.finishingAttachments,
   ];
 
   Future<SecretKey> _key(String password, List<int> salt) => Pbkdf2(

@@ -3,11 +3,13 @@ import 'package:drift/native.dart';
 import 'package:expense_tracker_flutter/core/db/database.dart';
 import 'package:expense_tracker_flutter/core/db/seed.dart';
 import 'package:expense_tracker_flutter/features/accounts/data/account_repository.dart';
+import 'package:expense_tracker_flutter/features/finishing/data/finishing_export.dart';
 import 'package:expense_tracker_flutter/features/finishing/data/finishing_repository.dart';
 import 'package:expense_tracker_flutter/features/finishing/domain/finishing_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   group('rules', () {
@@ -78,6 +80,16 @@ void main() {
     );
     var d = (await repo.loadProject(pid))!;
     expect((d.balance.custody, d.balance.receivable, d.balance.cost), (4000000, 500000, 1500000));
+    // Statement with running balances, account movements, personal paid.
+    expect(d.statement.map((l) => (l.custodyAfter, l.receivableAfter)).toList(), [(5000000, 0), (4000000, 500000)]);
+    expect((d.accounts.single.moneyIn, d.accounts.single.moneyOut), (5000000, 1500000));
+    expect(d.personalPaid, 500000);
+    String tr(String k, {Map<String, String>? args}) => k;
+    expect(buildProjectXlsx(d, tr, 'ar').length, greaterThan(1000));
+    expect((await buildProjectPdf(d, tr, 'ar')).length, greaterThan(1000));
+    // Attachments are listed with the project.
+    await repo.addAttachment(projectId: pid, path: '/tmp/x.jpg', name: 'x.jpg', type: 'image');
+    expect((await repo.loadProject(pid))!.attachments.length, 1);
     expect(d.byTrade.first.total, 1500000);
     var bal = (await accounts.watchAccounts().first).firstWhere((a) => a.account.id == cash.account.id).balance;
     expect(bal - cash.balance, closeTo(50000 - 15000, 0.001));

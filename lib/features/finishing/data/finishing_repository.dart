@@ -47,6 +47,26 @@ class TradeCost {
   final int count;
 }
 
+/// One line of the custody / receivable statement, oldest first, with running balances.
+class StatementLine {
+  const StatementLine(this.event, this.custodyDelta, this.receivableDelta, this.custodyAfter, this.receivableAfter);
+  final FinishingEvent event;
+  final int custodyDelta;
+  final int receivableDelta;
+  final int custodyAfter;
+  final int receivableAfter;
+  FinishingKind get kind => FinishingKind.parse(event.kind);
+}
+
+/// Money in / out of one account because of this project.
+class AccountMovement {
+  const AccountMovement(this.accountName, this.moneyIn, this.moneyOut);
+  final String accountName;
+  final int moneyIn;
+  final int moneyOut;
+  int get net => moneyIn - moneyOut;
+}
+
 class ProjectDetails {
   const ProjectDetails({
     required this.project,
@@ -57,6 +77,9 @@ class ProjectDetails {
     required this.byType,
     required this.custodyIn,
     required this.custodyOut,
+    this.statement = const [],
+    this.accounts = const [],
+    this.attachments = const [],
   });
   final FinishingProject project;
   final FinishingBalance balance;
@@ -70,6 +93,14 @@ class ProjectDetails {
   /// Total custody received / returned to the client (for the statement).
   final int custodyIn;
   final int custodyOut;
+
+  /// Custody / receivable statement, oldest first (reversed movements left out).
+  final List<StatementLine> statement;
+  final List<AccountMovement> accounts;
+  final List<FinishingAttachment> attachments;
+
+  /// Personal money paid in total (the personal share of all costs).
+  int get personalPaid => statement.fold(0, (s, l) => s + (l.kind == FinishingKind.cost ? l.event.personalShare : 0));
 }
 
 class FinishingRepository {
@@ -85,8 +116,16 @@ class FinishingRepository {
         "SELECT (SELECT GROUP_CONCAT(id || ':' || updated_at || ':' || closed || ':' || work_status, ',') FROM finishing_projects) AS p, "
         "(SELECT COUNT(*) || ':' || IFNULL(MAX(id), 0) FROM finishing_events) AS e, "
         "(SELECT GROUP_CONCAT(id || ':' || name, ',') FROM finishing_trades) AS t, "
-        "(SELECT GROUP_CONCAT(id || ':' || name, ',') FROM accounts) AS a",
-        readsFrom: {_db.finishingProjects, _db.finishingEvents, _db.finishingTrades, _db.finishingCashLegs, _db.accounts},
+        "(SELECT GROUP_CONCAT(id || ':' || name, ',') FROM accounts) AS a, "
+        "(SELECT COUNT(*) || ':' || IFNULL(MAX(id), 0) FROM finishing_attachments) AS f",
+        readsFrom: {
+          _db.finishingProjects,
+          _db.finishingEvents,
+          _db.finishingTrades,
+          _db.finishingCashLegs,
+          _db.accounts,
+          _db.finishingAttachments,
+        },
       )
       .watch();
 
@@ -139,7 +178,39 @@ class FinishingRepository {
       if (e.kind == FinishingKind.clientAdvance.name) custodyIn += e.amount;
       if (e.kind == FinishingKind.returnCustody.name) custodyOut += e.amount;
     }
+    // Statement: replay active events in date order.
+    final chrono = [...active]..sort((a, b) => a.date.compareTo(b.date) != 0 ? a.date.compareTo(b.date) : a.id.compareTo(b.id));
+    var cAfter = 0, rAfter = 0;
+    final statement = <StatementLine>[];
+    for (final e in chrono) {
+      final (dc, dr) = switch (FinishingKind.parse(e.kind)) {
+        FinishingKind.clientAdvance => (e.amount, 0),
+        FinishingKind.cost => (-e.custodyShare, e.personalShare),
+        FinishingKind.reimburseFromCustody => (-e.amount, -e.amount),
+        FinishingKind.clientRepayPersonal => (0, -e.amount),
+        FinishingKind.returnCustody => (-e.amount, 0),
+        _ => (0, 0),
+      };
+      cAfter += dc;
+      rAfter += dr;
+      statement.add(StatementLine(e, dc, dr, cAfter, rAfter));
+    }
+    final perAccount = <String, (int, int)>{};
+    for (final l in legs) {
+      final name = accounts[l.accountId] ?? '—';
+      final o = perAccount[name] ?? (0, 0);
+      perAccount[name] = l.amount > 0 ? (o.$1 + l.amount, o.$2) : (o.$1, o.$2 - l.amount);
+    }
+    final attachments =
+        await (_db.select(_db.finishingAttachments)
+              ..where((a) => a.projectId.equals(p.id))
+              ..orderBy([(a) => OrderingTerm.desc(a.createdAt)]))
+            .get();
     return ProjectDetails(
+      statement: statement,
+      accounts: [for (final e in perAccount.entries) AccountMovement(e.key, e.value.$1, e.value.$2)]
+        ..sort((a, b) => (b.moneyIn + b.moneyOut).compareTo(a.moneyIn + a.moneyOut)),
+      attachments: attachments,
       project: p,
       balance: _balanceOf(events),
       trades: trades,
@@ -281,10 +352,39 @@ class FinishingRepository {
   Future<void> deleteProject(int id) => _db.transaction(() async {
     final ids = (await (_db.select(_db.finishingEvents)..where((e) => e.projectId.equals(id))).get()).map((e) => e.id).toList();
     if (ids.isNotEmpty) await (_db.delete(_db.finishingCashLegs)..where((l) => l.eventId.isIn(ids))).go();
+    await (_db.delete(_db.finishingAttachments)..where((a) => a.projectId.equals(id))).go();
     await (_db.delete(_db.finishingEvents)..where((e) => e.projectId.equals(id))).go();
     await (_db.delete(_db.finishingTrades)..where((t) => t.projectId.equals(id))).go();
     await (_db.delete(_db.finishingProjects)..where((p) => p.id.equals(id))).go();
   });
+
+  // ---------- attachments ----------
+
+  Future<int> addAttachment({
+    required int projectId,
+    int? eventId,
+    required String path,
+    required String name,
+    required String type,
+    String? note,
+  }) => _db
+      .into(_db.finishingAttachments)
+      .insert(
+        FinishingAttachmentsCompanion.insert(
+          projectId: projectId,
+          eventId: Value(eventId),
+          path: path,
+          name: name,
+          type: type,
+          note: Value(_clean(note, 300)),
+        ),
+      );
+
+  Future<void> removeAttachment(int id) => (_db.delete(_db.finishingAttachments)..where((a) => a.id.equals(id))).go();
+
+  /// File paths of a project's attachments (to delete the files with the project).
+  Future<List<String>> attachmentPaths(int projectId) async =>
+      (await (_db.select(_db.finishingAttachments)..where((a) => a.projectId.equals(projectId))).get()).map((a) => a.path).toList();
 
   // ---------- trades ----------
 
