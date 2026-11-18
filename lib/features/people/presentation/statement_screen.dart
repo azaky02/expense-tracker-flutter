@@ -12,6 +12,11 @@ import 'people_providers.dart';
 import 'people_screen.dart';
 import 'person_screen.dart';
 
+/// The person's WhatsApp number (their phone, or the one set for WhatsApp).
+final _waNumberProvider = FutureProvider.autoDispose.family<String?, int>(
+  (ref, id) => ref.watch(ledgerRepositoryProvider).whatsAppNumber(id),
+);
+
 /// Statement (كشف حساب): confirmed entries only, oldest first, with a running balance.
 class StatementScreen extends ConsumerWidget {
   const StatementScreen({super.key, required this.personId});
@@ -24,6 +29,9 @@ class StatementScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final person = ref.watch(personProvider(personId)).value;
+    // Loaded up front: the tap must open WhatsApp with no wait in between, or the browser (PWA)
+    // treats it as a popup and blocks it.
+    final waNumber = ref.watch(_waNumberProvider(personId));
     final lines = ref.watch(statementProvider(personId)).value ?? const <StatementLine>[];
     final theme = Theme.of(context);
 
@@ -57,8 +65,8 @@ class StatementScreen extends ConsumerWidget {
 
     /// Sends [message] to this person's WhatsApp number (or says it's missing).
     Future<void> sendWhatsApp(String message) async {
-      final digits = whatsAppDigits(await ref.read(ledgerRepositoryProvider).whatsAppNumber(personId));
-      if (!context.mounted) return;
+      if (waNumber.isLoading) return;
+      final digits = whatsAppDigits(waNumber.value);
       if (digits == null) {
         ScaffoldMessenger.of(
           context,
