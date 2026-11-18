@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/db/database_provider.dart';
@@ -171,6 +172,26 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               padding: EdgeInsets.all(16),
               child: Center(child: CircularProgressIndicator()),
             ),
+          const SizedBox(height: 16),
+          AppCard(
+            onTap: () => context.push('/backup/email'),
+            child: Row(
+              children: [
+                IconBubble(icon: Icons.mark_email_read_outlined, color: theme.colorScheme.primary, size: 40),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('emailBackup.title'.tr(), style: theme.textTheme.titleSmall),
+                      Text('emailBackup.subtitle'.tr(), style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_left),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           Text('backup.notes'.tr(), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ],

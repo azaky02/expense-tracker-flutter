@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/accounts/presentation/accounts_screen.dart';
 import '../../features/associations/presentation/associations_screens.dart';
+import '../../features/backup/presentation/email_backup_screen.dart';
 import '../../features/finishing/domain/finishing_rules.dart';
 import '../../features/finishing/presentation/finishing_screens.dart';
 import '../../features/auth/presentation/auth_screens.dart';
@@ -94,6 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/installments',
         builder: (context, state) => InstallmentsScreen(initialFilter: state.uri.queryParameters['kind']),
       ),
+      GoRoute(path: '/backup/email', builder: (context, state) => const EmailBackupScreen()),
       GoRoute(path: '/finishing', builder: (context, state) => const FinishingProjectsScreen()),
       GoRoute(
         path: '/finishing/new',

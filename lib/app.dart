@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+
+import 'features/backup/data/email_backup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/db/database_provider.dart';
@@ -80,6 +82,8 @@ class _ExpenseTrackerAppState extends ConsumerState<ExpenseTrackerApp> {
         ref.watch(carRemindersProvider);
         ref.watch(generalRemindersProvider);
         ref.watch(salaryIncomeProvider);
+        // Daily e-mail backup (when set up), on start and on each return to the app.
+        ref.watch(emailBackupProvider);
         ref.watch(associationRemindersProvider);
         final router = ref.watch(routerProvider);
         return MaterialApp.router(

@@ -1187,5 +1187,36 @@
       "ask": "Send the details to {name} on WhatsApp?",
       "send": "Send on WhatsApp"
     }
+  },
+  "emailBackup": {
+    "title": "Daily e-mail backup",
+    "subtitle": "An encrypted backup sent to your e-mail every day",
+    "how": "Set up once:\n1) Create a free account at brevo.com (300 e-mails/day free).\n2) Under Senders, add and verify your e-mail (the sender).\n3) Under SMTP & API → API Keys, create a key and paste it here.\n4) If you get error 401: Security → Authorised IPs, turn IP blocking off.\n\nThe backup is sent the first time you open the app each day (phones don't allow sending while the app is closed). It is encrypted with your password.",
+    "enable": "Daily backup on",
+    "to": "Send backups to",
+    "from": "Sender e-mail (verified in Brevo)",
+    "fromHint": "Can be your own address, but it must be a verified sender in Brevo.",
+    "key": "Brevo API key",
+    "keySaved": "Key saved — type a new one to replace it",
+    "password": "Backup encryption password",
+    "password2": "Confirm password",
+    "passwordSaved": "Password saved — type a new one to replace it",
+    "passwordHint": "Keep this password safe: without it the backup can't be restored. It is stored encrypted on this phone only.",
+    "sendNow": "Send a backup now (test)",
+    "never": "No backup sent yet",
+    "last": "Last backup sent: {date}",
+    "lastFailed": "Last attempt failed: {reason}",
+    "clear": "Remove key and password and turn off",
+    "saved": "Saved",
+    "sent": "Backup sent to {to} ✓",
+    "failed": "Not sent: {reason}",
+    "errEmail": "Enter both e-mail addresses",
+    "errKey": "Paste your Brevo key",
+    "errPassword": "Password must be at least 6 characters",
+    "errPasswordMatch": "Passwords don't match",
+    "reason401": "Wrong key, or IP blocking is on in Brevo",
+    "reason400": "Sender not verified in Brevo, or missing data",
+    "reasonNetwork": "No internet or Brevo not responding",
+    "reasonNotReady": "Missing settings"
   }
 }
