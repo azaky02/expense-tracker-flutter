@@ -100,7 +100,26 @@ class StatementScreen extends ConsumerWidget {
         title: Text('statement.title'.tr(namedArgs: {'name': name}, context: context)),
         actions: [
           if (lines.isNotEmpty)
-            IconButton(tooltip: 'واتساب', icon: const Icon(Icons.chat_outlined), onPressed: () => sendWhatsApp(asText())),
+            IconButton(
+              tooltip: 'واتساب',
+              icon: const Icon(Icons.chat_outlined),
+              onPressed: () => sendWhatsApp(
+                buildStatementWhatsAppMessage(
+                  personName: name,
+                  lines: [
+                    for (final l in lines)
+                      StatementNoticeLine(
+                        date: l.entry.date,
+                        kind: l.entry.kind,
+                        direction: l.entry.direction,
+                        amount: l.entry.amount,
+                        balanceAfter: l.runningBalance,
+                        description: l.entry.description,
+                      ),
+                  ],
+                ),
+              ),
+            ),
           if (lines.isNotEmpty)
             IconButton(
               tooltip: 'statement.share'.tr(context: context),

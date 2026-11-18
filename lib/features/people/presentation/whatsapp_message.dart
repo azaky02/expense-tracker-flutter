@@ -88,3 +88,63 @@ String buildLedgerWhatsAppMessage({
     footerNote: confirmed ? null : '⏳ المعاملة قيد التأكيد؛ الرصيد المعروض للمعاملات المؤكدة فقط.',
   );
 }
+
+/// One movement of a statement, for [buildStatementWhatsAppMessage].
+class StatementNoticeLine {
+  const StatementNoticeLine({
+    required this.date,
+    required this.kind,
+    required this.direction,
+    required this.amount,
+    required this.balanceAfter,
+    this.description,
+  });
+  final DateTime date;
+  final LedgerKind kind;
+  final LedgerDirection direction;
+  final double amount;
+  final double balanceAfter;
+  final String? description;
+}
+
+/// The whole statement, in the same layout as the movement notice.
+String buildStatementWhatsAppMessage({required String personName, required List<StatementNoticeLine> lines}) {
+  var gave = 0.0, received = 0.0;
+  for (final l in lines) {
+    if (l.direction == LedgerDirection.gave) {
+      gave += l.amount;
+    } else {
+      received += l.amount;
+    }
+  }
+  final current = lines.isEmpty ? 0.0 : lines.last.balanceAfter;
+  return [
+    '📱 إشعار من تطبيق مصروفي',
+    '',
+    'أهلاً أستاذ $personName 👋',
+    '',
+    'ده كشف حساب المعاملات المالية بيننا:',
+    '',
+    '📋 عدد المعاملات: ${lines.length}',
+    if (lines.isNotEmpty) '📅 من ${_date(lines.first.date)} إلى ${_date(lines.last.date)}',
+    '',
+    '📝 تفاصيل المعاملات:',
+    for (final (i, l) in lines.indexed) ...[
+      '',
+      '${i + 1}) ${_date(l.date)} — ${l.kind == LedgerKind.settlement ? 'تسوية' : 'عهدة'}',
+      '${l.direction == LedgerDirection.received ? 'استلمت منك' : 'سلمتك'} مبلغ ${_money(l.amount)} جنيه',
+      if (l.description != null && l.description!.trim().isNotEmpty) 'ملاحظات: ${l.description!.trim()}',
+      'الرصيد بعدها: ${_money(l.balanceAfter.abs())} جنيه (${balanceDescription(l.balanceAfter)})',
+    ],
+    '',
+    '────────────',
+    '💰 ملخص الحساب',
+    '',
+    'إجمالي ما سلمتك: ${_money(gave)} جنيه',
+    'إجمالي ما استلمته منك: ${_money(received)} جنيه',
+    '',
+    '💵 الرصيد الحالي: ${_money(current.abs())} جنيه (${balanceDescription(current)})',
+    '',
+    'يرجى مراجعة البيانات وإبلاغي إذا كان هناك اختلاف.',
+  ].join('\n');
+}

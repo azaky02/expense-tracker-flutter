@@ -48,4 +48,20 @@ void main() {
     expect(m, contains('(بند كهرباء)'));
     expect(m, contains('💵 الرصيد الحالي: 3000.00 جنيه (مستحق لي عندك)'));
   });
+
+  test('full statement uses the same layout', () {
+    final m = buildStatementWhatsAppMessage(
+      personName: 'أحمد هلال',
+      lines: [
+        StatementNoticeLine(date: DateTime(2026, 11, 1), kind: LedgerKind.advance, direction: LedgerDirection.gave, amount: 2500, balanceAfter: 2500),
+        StatementNoticeLine(date: DateTime(2026, 11, 9), kind: LedgerKind.advance, direction: LedgerDirection.received, amount: 1, balanceAfter: 2499),
+      ],
+    );
+    expect(m, contains('أهلاً أستاذ أحمد هلال 👋'));
+    expect(m, contains('📋 عدد المعاملات: 2'));
+    expect(m, contains('1) 01/11/2026 — عهدة'));
+    expect(m, contains('💰 ملخص الحساب'));
+    expect(m, contains('💵 الرصيد الحالي: 2499.00 جنيه (مستحق لي عندك)'));
+    expect(m, isNot(contains(r'\n')));
+  });
 }
